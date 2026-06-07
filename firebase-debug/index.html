@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firebase Debug — Pickleball</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+  body{font-family:monospace;background:#0f1117;color:#e2e8f0;padding:16px;margin:0}
+  h2{color:#60a5fa;font-size:16px;margin:0 0 12px}
+  .card{background:#1e2130;border:1px solid #2d3148;border-radius:10px;padding:14px;margin-bottom:12px}
+  input{width:100%;box-sizing:border-box;background:#0f1117;border:1px solid #3d4270;border-radius:6px;
+        padding:8px 10px;color:#e2e8f0;font-size:13px;margin-top:4px}
+  button{padding:8px 16px;border-radius:7px;border:none;font-weight:700;font-size:13px;cursor:pointer;margin:4px 4px 0 0}
+  .btn-blue{background:#3b82f6;color:#fff}
+  .btn-green{background:#22c55e;color:#fff}
+  .btn-red{background:#ef4444;color:#fff}
+  .btn-gray{background:#374151;color:#e2e8f0}
+  .log{background:#080b14;border:1px solid #1e2d40;border-radius:8px;padding:10px;
+       font-size:11px;line-height:1.7;max-height:300px;overflow-y:auto;margin-top:10px}
+  .ok{color:#4ade80} .err{color:#f87171} .info{color:#60a5fa} .warn{color:#fbbf24}
+  label{font-size:11px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+  .dot-ok{background:#4ade80;box-shadow:0 0 6px #4ade80}
+  .dot-err{background:#f87171}
+  .dot-wait{background:#fbbf24;animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+</head>
+<body>
+<h2>🔥 Firebase Debug — Pickleball Assignment</h2>
+
+<div class="card">
+  <label>Firebase Database URL</label>
+  <input id="db-url" value="https://app-pickleball-default-rtdb.asia-southeast1.firebasedatabase.app" placeholder="https://...firebasedatabase.app">
+  <label style="margin-top:10px;display:block">API Key</label>
+  <input id="api-key" value="AIzaSyAJV0Ojod9lQ4vec-y90l52xX7HUTP-dvA" placeholder="AIza...">
+  <label style="margin-top:10px;display:block">SĐT Trọng tài (để lắng nghe)</label>
+  <input id="phone-key" placeholder="VD: 0901234567" value="">
+  <div style="margin-top:10px">
+    <button class="btn-blue" onclick="initFirebase()">🔌 Kết nối Firebase</button>
+    <button class="btn-gray" onclick="clearLog()">🗑 Xóa log</button>
+  </div>
+</div>
+
+<div class="card">
+  <div style="display:flex;align-items:center;margin-bottom:10px">
+    <span class="status-dot dot-wait" id="fb-dot"></span>
+    <span id="fb-status" style="font-size:13px">Chưa kết nối</span>
+  </div>
+  <button class="btn-green" onclick="writeTest()" id="btn-write" disabled>📤 Ghi test vào Firebase</button>
+  <button class="btn-blue" onclick="readOnce()" id="btn-read" disabled>📥 Đọc 1 lần</button>
+  <button class="btn-red" onclick="clearAssignment()" id="btn-clear" disabled>🗑 Xóa assignment</button>
+  <div class="log" id="log">Nhấn "Kết nối Firebase" để bắt đầu...\n</div>
+</div>
+
+<div class="card">
+  <label>Giả lập GAS ghi assignment (test thủ công)</label>
+  <input id="sim-phone" placeholder="SĐT TT (key Firebase)" style="margin-bottom:6px">
+  <input id="sim-noidung" placeholder="Nội dung" value="Test ND" style="margin-bottom:6px">
+  <input id="sim-bang" placeholder="Bảng" value="Bảng A" style="margin-bottom:6px">
+  <input id="sim-code" placeholder="Mã trận" value="A1" style="margin-bottom:6px">
+  <button class="btn-green" onclick="simAssign()" id="btn-sim" disabled>⚡ Ghi giả lập → app TT phải nhận</button>
+</div>
+
+<script>
+let _db = null;
+let _listener = null;
+const logEl = document.getElementById('log');
+
+function log(msg, cls='') {
+  const t = new Date().toLocaleTimeString('vi-VN');
+  logEl.innerHTML += `<div class="${cls}">[${t}] ${msg}</div>`;
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function clearLog() { logEl.innerHTML = ''; }
+
+function setStatus(msg, dotCls) {
+  document.getElementById('fb-status').textContent = msg;
+  const d = document.getElementById('fb-dot');
+  d.className = 'status-dot ' + dotCls;
+}
+
+function enableBtns(on) {
+  ['btn-write','btn-read','btn-clear','btn-sim'].forEach(id => {
+    document.getElementById(id).disabled = !on;
+  });
+}
+
+function initFirebase() {
+  const dbUrl  = document.getElementById('db-url').value.trim();
+  const apiKey = document.getElementById('api-key').value.trim();
+  const phone  = document.getElementById('phone-key').value.trim().replace(/\D/g,'');
+
+  if (!dbUrl || !apiKey) { log('❌ Thiếu DB URL hoặc API Key','err'); return; }
+  if (!phone) { log('⚠️ Nhập SĐT TT để bắt đầu lắng nghe','warn'); return; }
+
+  try {
+    const cfg = {
+      apiKey,
+      databaseURL: dbUrl,
+      projectId: dbUrl.split('//')[1].split('-default')[0],
+    };
+    const app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(cfg);
+    _db = app.database();
+    log('✅ Firebase khởi tạo OK','ok');
+    log(`📡 Bắt đầu lắng nghe: assignments/${phone}`, 'info');
+    setStatus(`Đang lắng nghe assignments/${phone}`, 'dot-wait');
+
+    // Unsubscribe listener cũ
+    if (_listener) { _listener(); _listener = null; }
+
+    const ref = _db.ref('assignments/' + phone);
+    ref.on('value', snap => {
+      const data = snap.val();
+      if (!data) {
+        log(`📭 assignments/${phone} = null (chưa có data)`, 'warn');
+        setStatus(`Lắng nghe OK — chưa có assignment`, 'dot-ok');
+      } else {
+        log(`🎉 NHẬN ĐƯỢC DATA từ Firebase!`, 'ok');
+        log(JSON.stringify(data, null, 2), 'ok');
+        setStatus(`✅ Nhận assignment: ${data.code || data.noidung || ''}`, 'dot-ok');
+      }
+    }, err => {
+      log(`❌ Firebase error: ${err.message}`, 'err');
+      log(`Code: ${err.code}`, 'err');
+      setStatus('Lỗi kết nối', 'dot-err');
+    });
+
+    _listener = () => ref.off('value');
+    enableBtns(true);
+
+  } catch(e) {
+    log('❌ Init error: ' + e.message, 'err');
+    setStatus('Lỗi khởi tạo', 'dot-err');
+  }
+}
+
+async function writeTest() {
+  if (!_db) return;
+  const phone = document.getElementById('phone-key').value.trim().replace(/\D/g,'');
+  const payload = {
+    ts: Date.now(), expireAt: Date.now() + 300000,
+    noidung: 'TEST', bang: 'Test', code: 'T1',
+    teamA: 'Đội A', teamB: 'Đội B', court: 'Sân 1',
+    referee: 'Test TT', _debug: true
+  };
+  try {
+    await _db.ref('assignments/' + phone).set(payload);
+    log(`✅ Ghi test OK → assignments/${phone}`, 'ok');
+  } catch(e) { log('❌ Ghi thất bại: ' + e.message, 'err'); }
+}
+
+async function readOnce() {
+  if (!_db) return;
+  const phone = document.getElementById('phone-key').value.trim().replace(/\D/g,'');
+  try {
+    const snap = await _db.ref('assignments/' + phone).once('value');
+    const data = snap.val();
+    log(`📥 Đọc assignments/${phone}:`, 'info');
+    log(data ? JSON.stringify(data, null, 2) : 'null (rỗng)', data ? 'ok' : 'warn');
+  } catch(e) { log('❌ Đọc thất bại: ' + e.message, 'err'); }
+}
+
+async function clearAssignment() {
+  if (!_db) return;
+  const phone = document.getElementById('phone-key').value.trim().replace(/\D/g,'');
+  try {
+    await _db.ref('assignments/' + phone).remove();
+    log(`🗑 Đã xóa assignments/${phone}`, 'warn');
+  } catch(e) { log('❌ Xóa thất bại: ' + e.message, 'err'); }
+}
+
+async function simAssign() {
+  if (!_db) return;
+  const phone = document.getElementById('sim-phone').value.trim().replace(/\D/g,'');
+  if (!phone) { log('⚠️ Nhập SĐT TT cần ghi','warn'); return; }
+  const payload = {
+    ts: Date.now(), expireAt: Date.now() + 300000,
+    noidung: document.getElementById('sim-noidung').value.trim(),
+    bang:    document.getElementById('sim-bang').value.trim(),
+    code:    document.getElementById('sim-code').value.trim(),
+    teamA: 'Đội A Test', teamB: 'Đội B Test',
+    court: 'Sân Test', referee: 'TT Test', _simulated: true
+  };
+  try {
+    await _db.ref('assignments/' + phone).set(payload);
+    log(`✅ Ghi giả lập → assignments/${phone}`, 'ok');
+    log(`Nội dung: ${payload.noidung} · ${payload.bang} · ${payload.code}`, 'info');
+    log(`→ App TT đang mở với phone=${phone} phải nhận ngay!`, 'info');
+  } catch(e) { log('❌ Ghi thất bại: ' + e.message + ' (kiểm tra Firebase Rules)','err'); }
+}
+</script>
+</body>
+</html>
