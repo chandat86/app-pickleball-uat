@@ -4,7 +4,7 @@
 <!-- Pickleball v91 2026-06-07: FIX pill — đã có đội thật → tra BXH lấy rank+bảng (1E,2G); chưa có → mã trận (V162,TK1) | v90 2026-06-07: FIX pill label KO — "Thắng V162"→"V162", "Thắng TK1"→"TK1" thay vì W chung chung | v89 2026-06-07: FIX cây thi đấu gọn — card width 200px cố định; tên đôi tách 2 dòng (VĐV1/VĐV2); tên dài viết tắt họ; row/pill/sbox nhỏ hơn | v88 2026-06-07: FIX bkEditMatch — TK1 đã có tên VĐV hiển thị tên thật (card A/B); chờ vòng trước hiện "Thắng VXX"; phân biệt 3 case rõ ràng | v87 2026-06-07: Ẩn hoàn toàn scrollbar native của nd-bk-wrap — chỉ dùng nd-bk-scrollbar-wrap fixed | v86 2026-06-07: FIX TRIỆT ĐỂ scroll — nd-bk-wrap (scroll container) không bao giờ bị swap innerHTML; chỉ swap nd-bk-content (con bên trong) → scrollLeft tự nhiên giữ nguyên vĩnh viễn; drag chuột+touch đơn giản sạch | v85 2026-06-07: FIX TRIỆT ĐỂ scroll cây thi đấu — flag _bkRestoring block scroll event khi restore (không bị reset về 0); drag chuột+touch dùng clientX thay pageX; MutationObserver chỉ update width, không restore; restore 3 lần delay tăng dần | v84 2026-06-07: FIX đăng nhập lỗi 10M ô — hiển thị hướng dẫn xóa EventLog/LoginLog/LiveScore thay vì "Mã không hợp lệ"; GAS không tạo sheet mới khi login | v83 2026-06-07: FIX scroll cây thi đấu — dùng biến global _bkScrollX/Y thay DOM (DOM reset về 0 sau render); MutationObserver restore scroll sau mỗi DOM change; drag chuột+touch đa chiều ngang+dọc; guard flag tránh sync loop | v82 2026-06-07: FIX (1) card cây thi đấu hiện "Thắng VXX" khi chưa có tên đội; (2) scroll ngang giữ nguyên vị trí sau render, bỏ loop sync; (3) drag-to-scroll chuột trên nd-bk-wrap | v81 2026-06-07: FIX cây thi đấu — bkEditMatch ẩn dropdown BYE khi trận đang chờ winner ("Thắng VXX"); bkSaveEditNew không ghi đè TBD khi chỉ lưu sân/giờ/TT; tạo mới Matches nếu chưa tồn tại | v80 2026-06-07: FIX saveEditMatch cho phép lưu khi chưa có tên đội — phân sân/giờ/TT trước, tên đội cập nhật sau; giữ nguyên tên đội cũ nếu field để trống | v79 2026-06-07: FIX bkApplyAndSave bỏ upsert:true (nguy hiểm — xóa toàn bộ trận KO kể cả đã có điểm); thêm scoreCleared:false khi update tên đội KO | v78 2026-06-07: FIX mất kết quả khi sửa tên VĐV — (1) openEditMatchMo đọc curSA/curSB từ getFinalScore(KetQua) thay vì Matches col[5/6]; (2) flag scoreCleared phân biệt "trống chưa có điểm" vs "chủ động xóa"; (3) chỉ gửi empty score lên GAS khi scoreCleared=true | v77 2026-06-07: FIX data integrity — bkApplyAndSave+saveRR thêm upsert:true; importCSV toast cảnh báo skip; v76 2026-06-07: FIX nút Sửa tràn khỏi bảng — dùng table-layout:auto, bỏ min-width cứng, giảm padding td, bỏ white-space:nowrap cột Sân → nút Sửa luôn nằm trong khung | v75 2026-06-07: FIX _buildLiveFromRows — index cả key 4 phần (giai|nd|bang|code) lẫn key 3 phần (nd|bang|code) vào _lK và _liveScores; admin render dùng key 3 phần nên bị miss khi GAS ghi key 4 phần | v73 2026-06-07: FIX — _lK hỗ trợ key mới 4 phần "giai|nd|bang|code" từ GAS v40; _buildLiveMatchData dùng key mới; cold-start _lK thêm cả key 3 phần để backward-compat | v72 2026-06-04: FIX Xóa tất cả bảng dùng 1 request deleteAllBangs thay vì N requests tuần tự — nhanh gấp 15x; bỏ confirm() dùng double-tap | v71 2026-06-04: FIX saveBang+importMultiBang gửi upsert=true → GAS xóa bảng cũ trước khi tạo lại, tránh dedup skip trận | v70 2026-06-04: FIX bkDeleteTree dùng double-tap thay confirm() bị browser block; GAS v37 fix giaiName undefined trong deleteBracketTree | v69 2026-06-04: FIX confirm() trong bkApplyAndSave bị browser block → return sớm không save BracketTree; thay bằng toast cảnh báo tiếp tục luôn | v68 2026-06-04: FIX saveBracketTree bị bỏ qua khi Apply lần 2 (toCreate=0, toUpdate=0 → return sớm trước khi save GSheet) | v67 2026-06-03: v6 FIX NGUỒN DUY NHẤT — buildDkFromResults/isMatchDone/getFinalScore/_syncResultCache/_buildLiveFromRows đều dùng key 4 trường "TênGiải|NộiDung|Bảng|MãTrận"; bỏ fallback Matches col[5/6] trong getFinalScore; bỏ giaiId duplicate trong _dK; bỏ fallback giaiId trong isMatchDone — badge Hoàn thành/Chưa đấu/Đang đấu giờ chính xác 100% từ KetQua | v66 2026-06-03: FIX v32 referee bugs — assignCourtToRef/assignRef/atrAssignDirect không xóa noidung cũ; _matchAllowed normalize dấu; renderMatchGrid hiển thị khi có trận phân tên | v65 2026-06-01: FIX bracket overflow + nút tràn màn hình PC | v25 | FIX: Login detailed errors, Test GAS button, Seeding cross-group verified | 2026-05-23 | Fix: s-done không nhảy loạn, _gasLastDone source-of-truth, stale localStorage invalidated | 2026-05-22 | v44 FIX: Cross-seeding cùng bảng + BYE trao đúng thành tích tốt nhất (nb=3,5,6,7) 2026-05-25 | v47 FIX: Phân công TT lỗi "Không xác định giải đấu"; Bracket full height; Toolbar nút đồng màu xanh dương, Thủ công/Tự động sáng xanh lá khi active | v49 FIX 2026-05-28: (1) Players persist localStorage — không mất khi navigate; (2) GAS dedup tính noidung | v54 2026-05-28: (3) Mỗi nội dung có danh sách VĐV độc lập (localStorage namespace by GS URL); (4) Nút Lưu danh sách / Sửa danh sách; (5) Chế độ read-only khi đã lưu | v51: Popup bốc thăm 5s + quản lý bảng | v52: Quy tắc cố định 4 đội/bảng | v53: Lưu DanhSachVDV+DanhSachBang lên GSheets | v54: skeleton loading cards, nút xóa nội dung, pre-cache, TTL 5 phút | v61 2026-06-01: (A) Nút ✏️ Sửa từng đội trong danh sách VĐV — đổi tên đồng bộ sang _bocThamGroups + Matches (GSheets renameTeamInMatches); (B) Badge bảng A/B/... hiển thị ngay trong danh sách VĐV; (C) GAS v28: action renameTeamInMatches cập nhật Matches+DanhSachVDV+DanhSachBang -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Admin v27 — Referee Pickleball / DA NANG ®</title>
+<title>Admin v28.2 — Referee Pickleball / DA NANG ®</title>
 <style>
 /* ═══════════════════════════════════════════════════════
    Pickleball Admin — Mobile-First Professional UI
@@ -7446,11 +7446,19 @@ function roundRobinParallel(teams) {
 // ── Sửa trận đấu — nâng cấp đầy đủ ──
 async function openEditMatchMo(giaiId, nd, bang, code) {
   const gName = String((_T.find(t=>String(t[0]||'')===giaiId)||[])[1]||'');
-  const m = _M.find(r=>{
+  // FIX v49: tìm theo nd+code trước (chính xác), fallback bỏ check bang cho trận KO
+  let m = _M.find(r=>{
     const v=String(r[0]||'');
     return (v===giaiId||v===gName)&&String(r[1]||'')===nd&&String(r[2]||'')===bang&&String(r[3]||'')===code;
   });
-  if (!m) { toast('Không tìm thấy trận','er'); return; }
+  if (!m) {
+    // Fallback: trận KO (V164, BK1...) có code unique, bỏ check bang
+    m = _M.find(r=>{
+      const v=String(r[0]||'');
+      return (v===giaiId||v===gName)&&String(r[1]||'')===nd&&String(r[3]||'')===code;
+    });
+  }
+  if (!m) { toast('Không tìm thấy trận: '+code,'er'); return; }
 
   // Dữ liệu hiện tại
   const curCourt = String(m[8]||'');
@@ -7690,18 +7698,27 @@ async function saveEditMatch(giaiId, nd, bang, code) {
   document.getElementById('edit-match-overlay')?.remove();
 
   const gName = String((_T.find(t=>String(t[0]||'')===giaiId)||[])[1]||'');
-  const m = _M.find(r=>{
+  // FIX v49: tìm theo nd+code (không check bang cứng để tránh mismatch round.name)
+  let m = _M.find(r=>{
     const v=String(r[0]||'');
     return (v===giaiId||v===gName)&&String(r[1]||'')===nd&&String(r[2]||'')===bang&&String(r[3]||'')===code;
   });
-  if (!m) { toast('Không tìm thấy trận','er'); return; }
+  if (!m) {
+    m = _M.find(r=>{
+      const v=String(r[0]||'');
+      return (v===giaiId||v===gName)&&String(r[1]||'')===nd&&String(r[3]||'')===code;
+    });
+  }
+  if (!m) { toast('Không tìm thấy trận: '+code,'er'); return; }
 
+  // FIX v49: đảm bảo row đủ 12 cột
   const newRow = [...m];
+  while (newRow.length < 12) newRow.push('');
   newRow[0] = gName||giaiId;
   // FIX v16: chỉ ghi tên đội nếu admin nhập — giữ nguyên TBD/rỗng nếu để trống
   if (ta) newRow[4] = ta; // Đội A — giữ nguyên nếu không nhập
   if (tb) newRow[7] = tb; // Đội B — giữ nguyên nếu không nhập
-  if (court) newRow[8] = court;
+  newRow[8] = court || String(m[8]||'');   // Sân: ghi mới hoặc giữ cũ
 
   // ── TỈ SỐ: Ghi vào Matches[5]/[6] — nguồn chính ──
   // Matches HDR: [0]Giải [1]ND [2]Bảng [3]Mã [4]ĐộiA [5]ĐiểmA [6]ĐiểmB [7]ĐộiB [8]Sân [9]VòngĐấu [10]GhiChú [11]ThoiGian
@@ -7718,17 +7735,17 @@ async function saveEditMatch(giaiId, nd, bang, code) {
   // Nếu saRaw==='' && sbRaw==='' && !scoreCleared → không ghi gì vào col 5/6
   // GAS sẽ thấy sA=undefined → không xóa KetQua
 
-  // Trọng tài → Matches col 10 (Ghi chú / referee)
-  newRow[10] = ref || note || '';
-  // Giờ thi đấu → Matches col 11
-  newRow[11] = time;
-
+  // Trọng tài → Matches col 10; Giờ → col 11 (luôn ghi, kể cả rỗng)
+  newRow[10] = ref || '';   // Trọng tài (Ghi chú)
+  newRow[11] = time || '';  // Giờ thi đấu
+  // Dùng bang từ _M (chính xác) thay vì bang tham số có thể mismatch
+  const bangActual = String(m[2]||bang||'');
   toast('⏳ Đang lưu...','in');
   let d = await gPost({action:'updateMatch',adminCode:CODE,
-    giai:gName||giaiId,giaiName:gName||giaiId,nd,bang,code,row:newRow,
-    scoreCleared: scoreCleared}); // FIX v14: báo GAS chỉ xóa KetQua khi admin chủ động xóa điểm
+    giai:gName||giaiId,giaiName:gName||giaiId,nd,bang:bangActual,code,row:newRow,
+    scoreCleared: scoreCleared});
   if (d&&!d.ok&&gName&&gName!==giaiId) {
-    d = await gPost({action:'updateMatch',adminCode:CODE,giai:giaiId,giaiName:gName,nd,bang,code,row:newRow});
+    d = await gPost({action:'updateMatch',adminCode:CODE,giai:giaiId,giaiName:gName,nd,bang:bangActual,code,row:newRow});
   }
   if (d?.ok) {
     // ── Cập nhật local cache _M ngay lập tức ──
@@ -11589,11 +11606,14 @@ function bkSaveEditNew(code) {
   const timeVal  = (document.getElementById('bk-time-inp')?.value||'').trim();
   const refVal   = (document.getElementById('bk-ref-val')?.value||'').trim();
 
+  console.log('[bkSaveEditNew] Saving:', code, '| court:', JSON.stringify(courtVal), '| time:', JSON.stringify(timeVal), '| ref:', JSON.stringify(refVal));
+
   const _giaiName3 = _resolveGiaiName(_bkGiai)||_bkGiai;
   const koM3 = _M.find(m=>{
     const v=String(m[0]||'');
     return (v===_bkGiai||v===_giaiName3)&&String(m[1]||'')===_bkNd&&String(m[3]||'')===code;
   });
+  console.log('[bkSaveEditNew] koM3:', koM3 ? 'FOUND m[0]='+koM3[0]+' m[1]='+koM3[1]+' m[2]='+koM3[2]+' m[3]='+koM3[3] : 'NULL! _bkGiai='+_bkGiai+' _bkNd='+_bkNd+' giaiName3='+_giaiName3);
 
   // Đóng modal & render TRƯỚC — để giải phóng UI
   document.getElementById('bk-edit-mo')?.remove();
