@@ -11630,9 +11630,19 @@ function bkSaveEditNew(code) {
     const newRow = [_giaiName3||_bkGiai, _bkNd, roundName, code, '', '', '', '', courtVal||'', roundName, refVal||'', timeVal||''];
     _M.push(normalizeMatchRow(newRow));
     gPost({action:'addMatchAdmin', adminCode:CODE, row:newRow})
-      .then(d=>{
-        if(d?.ok) toast(`✅ Đã lưu trận ${code}`, 'ok');
-        else toast('❌ '+(d?.reason||'Lỗi lưu'),'er');
+      .then(async d=>{
+        if(d?.ok) {
+          toast(`✅ Đã lưu trận ${code}`, 'ok');
+        } else if ((d?.reason||'').includes('tồn tại')) {
+          // Trận tồn tại trên GAS nhưng chưa load vào _M → fallback updateMatch
+          const d2 = await gPost({action:'updateMatch', adminCode:CODE,
+            giai:_giaiName3||_bkGiai, giaiName:_giaiName3||_bkGiai,
+            nd:_bkNd, bang:roundName, code, row:newRow, scoreCleared:false});
+          if(d2?.ok) toast(`✅ Đã lưu trận ${code}`, 'ok');
+          else toast('❌ '+(d2?.reason||'Lỗi lưu'),'er');
+        } else {
+          toast('❌ '+(d?.reason||'Lỗi lưu'),'er');
+        }
       }).catch(()=>toast('❌ Lỗi kết nối','er'));
   }
 
