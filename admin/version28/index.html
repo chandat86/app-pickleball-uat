@@ -4,7 +4,7 @@
 <!-- Pickleball v91 2026-06-07: FIX pill — đã có đội thật → tra BXH lấy rank+bảng (1E,2G); chưa có → mã trận (V162,TK1) | v90 2026-06-07: FIX pill label KO — "Thắng V162"→"V162", "Thắng TK1"→"TK1" thay vì W chung chung | v89 2026-06-07: FIX cây thi đấu gọn — card width 200px cố định; tên đôi tách 2 dòng (VĐV1/VĐV2); tên dài viết tắt họ; row/pill/sbox nhỏ hơn | v88 2026-06-07: FIX bkEditMatch — TK1 đã có tên VĐV hiển thị tên thật (card A/B); chờ vòng trước hiện "Thắng VXX"; phân biệt 3 case rõ ràng | v87 2026-06-07: Ẩn hoàn toàn scrollbar native của nd-bk-wrap — chỉ dùng nd-bk-scrollbar-wrap fixed | v86 2026-06-07: FIX TRIỆT ĐỂ scroll — nd-bk-wrap (scroll container) không bao giờ bị swap innerHTML; chỉ swap nd-bk-content (con bên trong) → scrollLeft tự nhiên giữ nguyên vĩnh viễn; drag chuột+touch đơn giản sạch | v85 2026-06-07: FIX TRIỆT ĐỂ scroll cây thi đấu — flag _bkRestoring block scroll event khi restore (không bị reset về 0); drag chuột+touch dùng clientX thay pageX; MutationObserver chỉ update width, không restore; restore 3 lần delay tăng dần | v84 2026-06-07: FIX đăng nhập lỗi 10M ô — hiển thị hướng dẫn xóa EventLog/LoginLog/LiveScore thay vì "Mã không hợp lệ"; GAS không tạo sheet mới khi login | v83 2026-06-07: FIX scroll cây thi đấu — dùng biến global _bkScrollX/Y thay DOM (DOM reset về 0 sau render); MutationObserver restore scroll sau mỗi DOM change; drag chuột+touch đa chiều ngang+dọc; guard flag tránh sync loop | v82 2026-06-07: FIX (1) card cây thi đấu hiện "Thắng VXX" khi chưa có tên đội; (2) scroll ngang giữ nguyên vị trí sau render, bỏ loop sync; (3) drag-to-scroll chuột trên nd-bk-wrap | v81 2026-06-07: FIX cây thi đấu — bkEditMatch ẩn dropdown BYE khi trận đang chờ winner ("Thắng VXX"); bkSaveEditNew không ghi đè TBD khi chỉ lưu sân/giờ/TT; tạo mới Matches nếu chưa tồn tại | v80 2026-06-07: FIX saveEditMatch cho phép lưu khi chưa có tên đội — phân sân/giờ/TT trước, tên đội cập nhật sau; giữ nguyên tên đội cũ nếu field để trống | v79 2026-06-07: FIX bkApplyAndSave bỏ upsert:true (nguy hiểm — xóa toàn bộ trận KO kể cả đã có điểm); thêm scoreCleared:false khi update tên đội KO | v78 2026-06-07: FIX mất kết quả khi sửa tên VĐV — (1) openEditMatchMo đọc curSA/curSB từ getFinalScore(KetQua) thay vì Matches col[5/6]; (2) flag scoreCleared phân biệt "trống chưa có điểm" vs "chủ động xóa"; (3) chỉ gửi empty score lên GAS khi scoreCleared=true | v77 2026-06-07: FIX data integrity — bkApplyAndSave+saveRR thêm upsert:true; importCSV toast cảnh báo skip; v76 2026-06-07: FIX nút Sửa tràn khỏi bảng — dùng table-layout:auto, bỏ min-width cứng, giảm padding td, bỏ white-space:nowrap cột Sân → nút Sửa luôn nằm trong khung | v75 2026-06-07: FIX _buildLiveFromRows — index cả key 4 phần (giai|nd|bang|code) lẫn key 3 phần (nd|bang|code) vào _lK và _liveScores; admin render dùng key 3 phần nên bị miss khi GAS ghi key 4 phần | v73 2026-06-07: FIX — _lK hỗ trợ key mới 4 phần "giai|nd|bang|code" từ GAS v40; _buildLiveMatchData dùng key mới; cold-start _lK thêm cả key 3 phần để backward-compat | v72 2026-06-04: FIX Xóa tất cả bảng dùng 1 request deleteAllBangs thay vì N requests tuần tự — nhanh gấp 15x; bỏ confirm() dùng double-tap | v71 2026-06-04: FIX saveBang+importMultiBang gửi upsert=true → GAS xóa bảng cũ trước khi tạo lại, tránh dedup skip trận | v70 2026-06-04: FIX bkDeleteTree dùng double-tap thay confirm() bị browser block; GAS v37 fix giaiName undefined trong deleteBracketTree | v69 2026-06-04: FIX confirm() trong bkApplyAndSave bị browser block → return sớm không save BracketTree; thay bằng toast cảnh báo tiếp tục luôn | v68 2026-06-04: FIX saveBracketTree bị bỏ qua khi Apply lần 2 (toCreate=0, toUpdate=0 → return sớm trước khi save GSheet) | v67 2026-06-03: v6 FIX NGUỒN DUY NHẤT — buildDkFromResults/isMatchDone/getFinalScore/_syncResultCache/_buildLiveFromRows đều dùng key 4 trường "TênGiải|NộiDung|Bảng|MãTrận"; bỏ fallback Matches col[5/6] trong getFinalScore; bỏ giaiId duplicate trong _dK; bỏ fallback giaiId trong isMatchDone — badge Hoàn thành/Chưa đấu/Đang đấu giờ chính xác 100% từ KetQua | v66 2026-06-03: FIX v32 referee bugs — assignCourtToRef/assignRef/atrAssignDirect không xóa noidung cũ; _matchAllowed normalize dấu; renderMatchGrid hiển thị khi có trận phân tên | v65 2026-06-01: FIX bracket overflow + nút tràn màn hình PC | v25 | FIX: Login detailed errors, Test GAS button, Seeding cross-group verified | 2026-05-23 | Fix: s-done không nhảy loạn, _gasLastDone source-of-truth, stale localStorage invalidated | 2026-05-22 | v44 FIX: Cross-seeding cùng bảng + BYE trao đúng thành tích tốt nhất (nb=3,5,6,7) 2026-05-25 | v47 FIX: Phân công TT lỗi "Không xác định giải đấu"; Bracket full height; Toolbar nút đồng màu xanh dương, Thủ công/Tự động sáng xanh lá khi active | v49 FIX 2026-05-28: (1) Players persist localStorage — không mất khi navigate; (2) GAS dedup tính noidung | v54 2026-05-28: (3) Mỗi nội dung có danh sách VĐV độc lập (localStorage namespace by GS URL); (4) Nút Lưu danh sách / Sửa danh sách; (5) Chế độ read-only khi đã lưu | v51: Popup bốc thăm 5s + quản lý bảng | v52: Quy tắc cố định 4 đội/bảng | v53: Lưu DanhSachVDV+DanhSachBang lên GSheets | v54: skeleton loading cards, nút xóa nội dung, pre-cache, TTL 5 phút | v61 2026-06-01: (A) Nút ✏️ Sửa từng đội trong danh sách VĐV — đổi tên đồng bộ sang _bocThamGroups + Matches (GSheets renameTeamInMatches); (B) Badge bảng A/B/... hiển thị ngay trong danh sách VĐV; (C) GAS v28: action renameTeamInMatches cập nhật Matches+DanhSachVDV+DanhSachBang -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Admin v28.2 — Referee Pickleball / DA NANG ®</title>
+<title>Admin v28.3 — Referee Pickleball / DA NANG ®</title>
 <style>
 /* ═══════════════════════════════════════════════════════
    Pickleball Admin — Mobile-First Professional UI
@@ -7534,22 +7534,32 @@ async function openEditMatchMo(giaiId, nd, bang, code) {
         style="margin-left:auto;background:none;border:none;font-size:18px;color:var(--tx3);cursor:pointer;padding:4px 8px;line-height:1">✕</button>
     </div>
 
-    <div style="padding:18px 20px;display:grid;gap:14px;overflow-y:auto;flex:1;min-height:0">
+    <div style="padding:16px 20px;display:grid;gap:12px;overflow-y:auto;flex:1;min-height:0">
 
-      <!-- VĐV section -->
-      <div style="background:var(--bg3);border-radius:10px;padding:14px">
-        <div style="font-size:10px;font-weight:800;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">👤 Vận động viên</div>
-        <div style="display:grid;gap:10px">
-          ${fi('em-ta','Đội A / VĐV A',String(m[4]||'').replace('TBD',''),'Để trống nếu chưa có đội (TBD)')}
-          ${fi('em-tb','Đội B / VĐV B',String(m[7]||'').replace('TBD',''),'Để trống nếu chưa có đội (TBD)')}
-          <div style="font-size:10px;color:var(--tx3);font-style:italic;margin-top:2px">Có thể phân sân, giờ, trọng tài trước khi biết đội — tên đội cập nhật sau.</div>
+      <!-- VĐV + Tỉ số: 2 cột ngang -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start">
+        <!-- VĐV -->
+        <div style="background:var(--bg3);border-radius:10px;padding:12px">
+          <div style="font-size:9px;font-weight:800;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">👤 Vận động viên</div>
+          <div style="display:grid;gap:8px">
+            <div>
+              <label style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px">Đội A / VĐV A</label>
+              <input id="em-ta" type="text" value="${String(m[4]||'').replace('TBD','')}" placeholder="Để trống nếu chưa có đội"
+                style="width:100%;background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;padding:6px 10px;font-size:12px;color:var(--tx);box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px">Đội B / VĐV B</label>
+              <input id="em-tb" type="text" value="${String(m[7]||'').replace('TBD','')}" placeholder="Để trống nếu chưa có đội"
+                style="width:100%;background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;padding:6px 10px;font-size:12px;color:var(--tx);box-sizing:border-box">
+            </div>
+            <div style="font-size:9px;color:var(--tx4);font-style:italic">Có thể phân sân, giờ, TT trước khi biết đội</div>
+          </div>
         </div>
-      </div>
 
-      <!-- Tỉ số section -->
-      <div style="background:var(--bg3);border-radius:10px;padding:14px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:10px;font-weight:800;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em">🏓 Tỉ số</div>
+        <!-- Tỉ số -->
+        <div style="background:var(--bg3);border-radius:10px;padding:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:9px;font-weight:800;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em">🏓 Tỉ số</div>
           <input type="hidden" id="em-score-cleared" value="0">
           ${(curSA!==''||curSB!=='')?`<button onclick="
             document.getElementById('em-sa').value='';
@@ -7582,7 +7592,7 @@ async function openEditMatchMo(giaiId, nd, bang, code) {
             <div style="font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:.05em;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(String(m[7]||''))}">${esc(String(m[7]||'B').slice(0,12))}${String(m[7]||'').length>12?'…':''}</div>
             <input id="em-sb" type="number" min="0" max="99" value="${curSB}"
               placeholder="—" style="background:var(--bg2);border:1.5px solid var(--bdr);border-radius:8px;
-              padding:10px;font-size:26px;font-weight:900;color:var(--gn);text-align:center;
+              padding:8px 4px;font-size:22px;font-weight:900;color:var(--gn);text-align:center;
               font-family:var(--mo);width:100%;box-sizing:border-box">
             <div style="display:flex;gap:4px">
               <button onclick="const el=document.getElementById('em-sb');el.value=Math.max(0,(+el.value||0)-1)"
@@ -7592,27 +7602,41 @@ async function openEditMatchMo(giaiId, nd, bang, code) {
             </div>
           </div>
         </div>
-        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-          <label style="font-size:11px;color:var(--tx3);display:flex;align-items:center;gap:5px;cursor:pointer">
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
+          <label style="font-size:10px;color:var(--tx3);display:flex;align-items:center;gap:4px;cursor:pointer">
             <input type="checkbox" id="em-done" ${isDoneM?'checked':''}>
-            Đánh dấu hoàn thành
+            Hoàn thành
           </label>
-          <div style="margin-left:auto;display:flex;gap:6px">
+          <div style="margin-left:auto;display:flex;gap:4px">
             <button onclick="document.getElementById('em-sa').value=11;document.getElementById('em-sb').value=0;document.getElementById('em-done').checked=true"
-              style="font-size:10px;color:var(--tx3);background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;padding:2px 7px;cursor:pointer">11–0</button>
+              style="font-size:10px;color:var(--tx3);background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;padding:2px 6px;cursor:pointer">11–0</button>
             <button onclick="document.getElementById('em-sa').value=11;document.getElementById('em-sb').value=9;document.getElementById('em-done').checked=true"
-              style="font-size:10px;color:var(--tx3);background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;padding:2px 7px;cursor:pointer">11–9</button>
+              style="font-size:10px;color:var(--tx3);background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;padding:2px 6px;cursor:pointer">11–9</button>
             <button onclick="document.getElementById('em-sa').value=0;document.getElementById('em-sb').value=11;document.getElementById('em-done').checked=true"
-              style="font-size:10px;color:var(--tx3);background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;padding:2px 7px;cursor:pointer">0–11</button>
+              style="font-size:10px;color:var(--tx3);background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;padding:2px 6px;cursor:pointer">0–11</button>
           </div>
         </div>
-      </div>
+        </div>
+      </div><!-- end 2-col grid -->
 
-      <!-- Sân & TT section -->
+      <!-- Sân & TT section: Sân → TT → Giờ -->
       <div style="background:var(--bg3);border-radius:10px;padding:14px">
         <div style="font-size:10px;font-weight:800;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">🏟 Sân & Trọng tài</div>
-        <!-- Giờ thi đấu -->
+
+        <!-- Sân thi đấu -->
         <div style="margin-bottom:12px">
+          <label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:8px">🏟 Sân thi đấu</label>
+          ${buildCourtPills(courts, curCourt, 'em-court')}
+        </div>
+
+        <!-- Trọng tài: pill multi-select -->
+        <div style="margin-bottom:12px">
+          <label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:8px">🎯 Trọng tài</label>
+          ${buildRefPills(refs, curRef, 'em-ref')}
+        </div>
+
+        <!-- Giờ thi đấu (cuối cùng) -->
+        <div>
           <label style="font-size:10px;font-weight:700;color:var(--or);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">⏱ Giờ thi đấu</label>
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
             <input id="em-time" type="time" value="${curTime}"
@@ -7620,29 +7644,13 @@ async function openEditMatchMo(giaiId, nd, bang, code) {
             <button onclick="document.getElementById('em-time').value=''"
               style="font-size:10px;color:var(--tx3);background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;padding:4px 9px;cursor:pointer">✕ Xóa</button>
             <div style="display:flex;gap:4px;flex-wrap:wrap">
-              ${['07:00','07:30','08:00','08:30','09:00','09:30'].map(t=>
+              ${['07:00','07:30','08:00','08:30','09:00','09:30','10:00','10:30'].map(t=>
                 `<button onclick="document.getElementById('em-time').value='${t}'"
                   style="font-size:10px;color:${curTime===t?'var(--or)':'var(--tx3)'};background:${curTime===t?'rgba(245,158,11,.12)':'var(--bg2)'};border:1px solid ${curTime===t?'rgba(245,158,11,.3)':'var(--bdr)'};border-radius:5px;padding:3px 7px;cursor:pointer;font-family:var(--mo)">${t}</button>`
               ).join('')}
             </div>
           </div>
         </div>
-        <div style="margin-bottom:12px">
-            <label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:8px">🏟 Sân thi đấu</label>
-            ${buildCourtPills(courts, curCourt, 'em-court')}
-          </div>
-          <!-- Trọng tài: pill multi-select -->
-          <div>
-            <label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:8px">🎯 Trọng tài</label>
-            ${buildRefPills(refs, curRef, 'em-ref')}
-          </div>
-      </div>
-
-      <!-- Ghi chú -->
-      <div>
-        <label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Ghi chú</label>
-        <input id="em-note" type="text" value="${String(m[10]||m[11]||'')}" placeholder="Ghi chú tuỳ chọn..."
-          style="width:100%;background:var(--bg3);border:1px solid var(--bdr);border-radius:7px;padding:7px 11px;font-size:13px;color:var(--tx);box-sizing:border-box">
       </div>
     </div>
 
