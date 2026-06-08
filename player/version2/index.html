@@ -498,7 +498,7 @@ function _restoreUiFromSession(){
   }catch(e){}
 }
 let _liveTimer=null;
-// v37: BracketTree GSheet cache
+// v37: BracketTree SRV cache
 let _bkTreeCache={};     // {nd: {rounds, _overrides, _byeRule, version}}
 let _bkTreeVersion=0;    // version của cây đang hiển thị
 let _permTimer=null;
@@ -526,7 +526,7 @@ function _isSessionExpired(){
   document.addEventListener(ev, _touchActive, {passive:true});
 });
 const DATA_VER_KEY='pb_pdata_ver'; // v3: version key để detect admin change
-const APP_VER_KEY ='pb_app_ver';   // version token từ GAS — detect cấu trúc giải thay đổi
+const APP_VER_KEY ='pb_app_ver';   // version token từ Máy chủ — detect cấu trúc giải thay đổi
 
 // ══ UTILS ══
 const $=id=>document.getElementById(id);
@@ -555,7 +555,7 @@ async function gGet(params,timeout=12000){
     const r=await fetch(url.toString(),{signal:ctrl.signal,cache:'no-store'});
     clearTimeout(t);
     const d=await r.json();
-    _checkAppVersion(d); // detect GAS version change → tự reload data
+    _checkAppVersion(d); // detect Máy chủ version change → tự reload data
     return d;
   }catch(e){clearTimeout(t);return {};}
 }
@@ -573,7 +573,7 @@ function loadSaved(){
       return false;
     }
     GS=j.u; USER_CODE=j.c;
-    // KHÔNG lấy USER_GIAI/USER_ND từ cache — luôn lấy từ GAS khi validate
+    // KHÔNG lấy USER_GIAI/USER_ND từ cache — luôn lấy từ Máy chủ khi validate
     USER_NAME=''; USER_GIAI=''; USER_ND='';
     return true;
   }catch(e){return false;}
@@ -589,7 +589,7 @@ async function doLogin(){
     const isPhone=phone.length>=8&&phone.length<=12&&/^\d+$/.test(phone);
     const param=isPhone?`&phone=${encodeURIComponent(phone)}`:`&code=${encodeURIComponent(id.toUpperCase())}`;
 
-    // Thử playerInit trước (GAS mới) — nếu không có thì fallback validate (GAS cũ)
+    // Thử playerInit trước (Máy chủ mới) — nếu không có thì fallback validate (Máy chủ cũ)
     let d=null;
     let usePlayerInit=false;
     try{
@@ -603,7 +603,7 @@ async function doLogin(){
       }
     }catch(e1){}
 
-    // Fallback: GAS cũ dùng validate
+    // Fallback: Máy chủ cũ dùng validate
     if(!d){
       const r2=await fetch(`${GS}?action=validate&device=player-web&_t=${Date.now()}${param}`,{cache:'no-store'});
       if(!r2.ok){showErr('Lỗi kết nối HTTP '+r2.status);btn.disabled=false;btn.textContent='Đăng nhập →';return;}
@@ -622,10 +622,10 @@ async function doLogin(){
     localStorage.setItem('pb_player_v6',JSON.stringify({u:GS,c:USER_CODE,n:USER_NAME,g:USER_GIAI,nd:USER_ND}));
 
     if(usePlayerInit && d.matches){
-      _applyPlayerInitData(d); // GAS mới: data có sẵn trong response
+      _applyPlayerInitData(d); // Máy chủ mới: data có sẵn trong response
       startApp(true);
     } else {
-      // GAS cũ: gọi loadAll bình thường
+      // Máy chủ cũ: gọi loadAll bình thường
       _clearDataCache();
       startApp(false);
     }
@@ -688,8 +688,8 @@ function _clearDataCache(){
   console.log('[v3] Data cache cleared (incl bracket snapshot)');
 }
 
-// ── App version check: GAS trả appVersion trong mọi response ──
-// Nếu version thay đổi (admin deploy GAS mới) → clear data cache + reload
+// ── App version check: Máy chủ trả appVersion trong mọi response ──
+// Nếu version thay đổi (admin deploy Máy chủ mới) → clear data cache + reload
 let _appVerChecked = false;
 function _checkAppVersion(data) {
   if (!data?.appVersion) return;
@@ -1091,7 +1091,7 @@ function renderSchedule(){
       const tA=String(m[4]||'').trim()||'TBD',tB=String(m[7]||'').trim()||'TBD';
       const court=String(m[8]||''),round=String(m[9]||'');
       const matchTimeRaw=String(m[11]||'').trim(); // giờ thi đấu col[11]
-      // Format: GAS trả về HH:MM string đúng (đã fix ở GAS v40)
+      // Format: Máy chủ trả về HH:MM string đúng (đã fix ở Máy chủ v40)
       // Fallback: nếu vẫn còn ISO (data cũ) → parse UTC rồi cộng +7h (UTC+7)
       const fmtMatchTime=(v)=>{
         if(!v)return'';
@@ -1680,7 +1680,7 @@ function _bkBuildAndRenderTree(nd,wrap){
   wrap.innerHTML=html;
 }
 
-// v37: Fetch cây thi đấu từ GSheet BracketTree (GET, public)
+// v37: Fetch cây thi đấu từ SRV BracketTree (GET, public)
 async function _fetchBracketTree(nd){
   if(!GS||!nd)return null;
   try{
@@ -1729,7 +1729,7 @@ function renderBracketTab(){
     wrap.innerHTML='<div class="empty-state"><div class="empty-icon">🏆</div><div class="empty-msg">Chọn nội dung thi đấu</div><div class="empty-sub">Dùng bộ lọc bên trên để chọn nội dung</div></div>';
     return;
   }
-  // v37: Ưu tiên snapshot từ GAS (source of truth), fallback sang rebuild local
+  // v37: Ưu tiên snapshot từ Máy chủ (source of truth), fallback sang rebuild local
   const cached=_bkTreeCache[nd];
   if(cached&&cached.rounds){
     // FIX v3.3: Có cache → update in-place, KHÔNG xóa toàn bộ innerHTML (tránh nháy)
@@ -2000,7 +2000,7 @@ function selectBkNd(nd){
 // ══ BOOT ══
 async function autoLoginFromCache(){
   try{
-    // Thử playerInit (GAS mới) — fallback validate (GAS cũ)
+    // Thử playerInit (Máy chủ mới) — fallback validate (Máy chủ cũ)
     let d=null, hasData=false;
     try{
       const r1=await fetch(`${GS}?action=playerInit&device=player-web&_t=${Date.now()}&code=${encodeURIComponent(USER_CODE)}`,{cache:'no-store'});
