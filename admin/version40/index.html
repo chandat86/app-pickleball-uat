@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<!-- Pickleball Admin v104 — FIX REALTIME 2026-06-08: v52 TRIỆT ĐỂ — (1) ADD Firebase REST poll 2s SONG SONG với SDK listener — bypass SDK disconnect silent; (2) SDK + REST cùng feed _onLiveData, dedup bằng JSON signature; (3) Safety GAS poll 6s→3s; (4) Tăng log để debug realtime |  v103 FIX renderBangList giaiId 2026-06-08: v50 REALTIME ALL FLOWS — (1) Firebase /results onValue → _dkScores cập nhật &lt;1s khi TT Lưu; (2) Firebase /matches onValue → sân/TT cập nhật &lt;1s; (3) _onLiveData patch DOM trực tiếp không gọi loadDash(); (4) _syncFinishedMatches dùng Firebase data thay vì poll GAS |  FIX pill — đã có đội thật → tra BXH lấy rank+bảng (1E,2G); chưa có → mã trận (V162,TK1) | v90 2026-06-07: FIX pill label KO — "Thắng V162"→"V162", "Thắng TK1"→"TK1" thay vì W chung chung | v89 2026-06-07: FIX cây thi đấu gọn — card width 200px cố định; tên đôi tách 2 dòng (VĐV1/VĐV2); tên dài viết tắt họ; row/pill/sbox nhỏ hơn | v88 2026-06-07: FIX bkEditMatch — TK1 đã có tên VĐV hiển thị tên thật (card A/B); chờ vòng trước hiện "Thắng VXX"; phân biệt 3 case rõ ràng | v87 2026-06-07: Ẩn hoàn toàn scrollbar native của nd-bk-wrap — chỉ dùng nd-bk-scrollbar-wrap fixed | v86 2026-06-07: FIX TRIỆT ĐỂ scroll — nd-bk-wrap (scroll container) không bao giờ bị swap innerHTML; chỉ swap nd-bk-content (con bên trong) → scrollLeft tự nhiên giữ nguyên vĩnh viễn; drag chuột+touch đơn giản sạch | v85 2026-06-07: FIX TRIỆT ĐỂ scroll cây thi đấu — flag _bkRestoring block scroll event khi restore (không bị reset về 0); drag chuột+touch dùng clientX thay pageX; MutationObserver chỉ update width, không restore; restore 3 lần delay tăng dần | v84 2026-06-07: FIX đăng nhập lỗi 10M ô — hiển thị hướng dẫn xóa EventLog/LoginLog/LiveScore thay vì "Mã không hợp lệ"; Máy chủ không tạo sheet mới khi login | v83 2026-06-07: FIX scroll cây thi đấu — dùng biến global _bkScrollX/Y thay DOM (DOM reset về 0 sau render); MutationObserver restore scroll sau mỗi DOM change; drag chuột+touch đa chiều ngang+dọc; guard flag tránh sync loop | v82 2026-06-07: FIX (1) card cây thi đấu hiện "Thắng VXX" khi chưa có tên đội; (2) scroll ngang giữ nguyên vị trí sau render, bỏ loop sync; (3) drag-to-scroll chuột trên nd-bk-wrap | v81 2026-06-07: FIX cây thi đấu — bkEditMatch ẩn dropdown BYE khi trận đang chờ winner ("Thắng VXX"); bkSaveEditNew không ghi đè TBD khi chỉ lưu sân/giờ/TT; tạo mới Matches nếu chưa tồn tại | v80 2026-06-07: FIX saveEditMatch cho phép lưu khi chưa có tên đội — phân sân/giờ/TT trước, tên đội cập nhật sau; giữ nguyên tên đội cũ nếu field để trống | v79 2026-06-07: FIX bkApplyAndSave bỏ upsert:true (nguy hiểm — xóa toàn bộ trận KO kể cả đã có điểm); thêm scoreCleared:false khi update tên đội KO | v78 2026-06-07: FIX mất kết quả khi sửa tên VĐV — (1) openEditMatchMo đọc curSA/curSB từ getFinalScore(KetQua) thay vì Matches col[5/6]; (2) flag scoreCleared phân biệt "trống chưa có điểm" vs "chủ động xóa"; (3) chỉ gửi empty score lên Máy chủ khi scoreCleared=true | v77 2026-06-07: FIX data integrity — bkApplyAndSave+saveRR thêm upsert:true; importCSV toast cảnh báo skip; v76 2026-06-07: FIX nút Sửa tràn khỏi bảng — dùng table-layout:auto, bỏ min-width cứng, giảm padding td, bỏ white-space:nowrap cột Sân → nút Sửa luôn nằm trong khung | v75 2026-06-07: FIX _buildLiveFromRows — index cả key 4 phần (giai|nd|bang|code) lẫn key 3 phần (nd|bang|code) vào _lK và _liveScores; admin render dùng key 3 phần nên bị miss khi Máy chủ ghi key 4 phần | v73 2026-06-07: FIX — _lK hỗ trợ key mới 4 phần "giai|nd|bang|code" từ Máy chủ v40; _buildLiveMatchData dùng key mới; cold-start _lK thêm cả key 3 phần để backward-compat | v72 2026-06-04: FIX Xóa tất cả bảng dùng 1 request deleteAllBangs thay vì N requests tuần tự — nhanh gấp 15x; bỏ confirm() dùng double-tap | v71 2026-06-04: FIX saveBang+importMultiBang gửi upsert=true → Máy chủ xóa bảng cũ trước khi tạo lại, tránh dedup skip trận | v70 2026-06-04: FIX bkDeleteTree dùng double-tap thay confirm() bị browser block; Máy chủ v37 fix giaiName undefined trong deleteBracketTree | v69 2026-06-04: FIX confirm() trong bkApplyAndSave bị browser block → return sớm không save BracketTree; thay bằng toast cảnh báo tiếp tục luôn | v68 2026-06-04: FIX saveBracketTree bị bỏ qua khi Apply lần 2 (toCreate=0, toUpdate=0 → return sớm trước khi save SRV) | v67 2026-06-03: v6 FIX NGUỒN DUY NHẤT — buildDkFromResults/isMatchDone/getFinalScore/_syncResultCache/_buildLiveFromRows đều dùng key 4 trường "TênGiải|NộiDung|Bảng|MãTrận"; bỏ fallback Matches col[5/6] trong getFinalScore; bỏ giaiId duplicate trong _dK; bỏ fallback giaiId trong isMatchDone — badge Hoàn thành/Chưa đấu/Đang đấu giờ chính xác 100% từ KetQua | v66 2026-06-03: FIX v32 referee bugs — assignCourtToRef/assignRef/atrAssignDirect không xóa noidung cũ; _matchAllowed normalize dấu; renderMatchGrid hiển thị khi có trận phân tên | v65 2026-06-01: FIX bracket overflow + nút tràn màn hình PC | v25 | FIX: Login detailed errors, Test Máy chủ button, Seeding cross-group verified | 2026-05-23 | Fix: s-done không nhảy loạn, _gasLastDone source-of-truth, stale localStorage invalidated | 2026-05-22 | v44 FIX: Cross-seeding cùng bảng + BYE trao đúng thành tích tốt nhất (nb=3,5,6,7) 2026-05-25 | v47 FIX: Phân công TT lỗi "Không xác định giải đấu"; Bracket full height; Toolbar nút đồng màu xanh dương, Thủ công/Tự động sáng xanh lá khi active | v49 FIX 2026-05-28: (1) Players persist localStorage — không mất khi navigate; (2) Máy chủ dedup tính noidung | v54 2026-05-28: (3) Mỗi nội dung có danh sách VĐV độc lập (localStorage namespace by GS URL); (4) Nút Lưu danh sách / Sửa danh sách; (5) Chế độ read-only khi đã lưu | v51: Popup bốc thăm 5s + quản lý bảng | v52: Quy tắc cố định 4 đội/bảng | v53: Lưu DanhSachVDV+DanhSachBang lên SRV | v54: skeleton loading cards, nút xóa nội dung, pre-cache, TTL 5 phút | v61 2026-06-01: (A) Nút ✏️ Sửa từng đội trong danh sách VĐV — đổi tên đồng bộ sang _bocThamGroups + Matches (SRV renameTeamInMatches); (B) Badge bảng A/B/... hiển thị ngay trong danh sách VĐV; (C) Máy chủ v28: action renameTeamInMatches cập nhật Matches+DanhSachVDV+DanhSachBang -->
+<!-- Pickleball Admin v105 — FIX RACE CONDITION 2026-06-08: v53 — (1) _buildLiveFromRows MERGE THEO TIMESTAMP — không cho GAS stale overwrite Firebase fresh; (2) Source tracking: firebase/rest > gas; (3) GAS safety poll chỉ chạy khi REST/SDK đã silent > 8s; (4) Force re-render every 2s while Firebase active để đảm bảo DOM sync với _liveScores | v104 v52 REST POLL: ADD Firebase REST poll 2s SONG SONG với SDK listener — bypass SDK disconnect silent;  v103 FIX renderBangList giaiId 2026-06-08: v50 REALTIME ALL FLOWS — (1) Firebase /results onValue → _dkScores cập nhật &lt;1s khi TT Lưu; (2) Firebase /matches onValue → sân/TT cập nhật &lt;1s; (3) _onLiveData patch DOM trực tiếp không gọi loadDash(); (4) _syncFinishedMatches dùng Firebase data thay vì poll GAS |  FIX pill — đã có đội thật → tra BXH lấy rank+bảng (1E,2G); chưa có → mã trận (V162,TK1) | v90 2026-06-07: FIX pill label KO — "Thắng V162"→"V162", "Thắng TK1"→"TK1" thay vì W chung chung | v89 2026-06-07: FIX cây thi đấu gọn — card width 200px cố định; tên đôi tách 2 dòng (VĐV1/VĐV2); tên dài viết tắt họ; row/pill/sbox nhỏ hơn | v88 2026-06-07: FIX bkEditMatch — TK1 đã có tên VĐV hiển thị tên thật (card A/B); chờ vòng trước hiện "Thắng VXX"; phân biệt 3 case rõ ràng | v87 2026-06-07: Ẩn hoàn toàn scrollbar native của nd-bk-wrap — chỉ dùng nd-bk-scrollbar-wrap fixed | v86 2026-06-07: FIX TRIỆT ĐỂ scroll — nd-bk-wrap (scroll container) không bao giờ bị swap innerHTML; chỉ swap nd-bk-content (con bên trong) → scrollLeft tự nhiên giữ nguyên vĩnh viễn; drag chuột+touch đơn giản sạch | v85 2026-06-07: FIX TRIỆT ĐỂ scroll cây thi đấu — flag _bkRestoring block scroll event khi restore (không bị reset về 0); drag chuột+touch dùng clientX thay pageX; MutationObserver chỉ update width, không restore; restore 3 lần delay tăng dần | v84 2026-06-07: FIX đăng nhập lỗi 10M ô — hiển thị hướng dẫn xóa EventLog/LoginLog/LiveScore thay vì "Mã không hợp lệ"; Máy chủ không tạo sheet mới khi login | v83 2026-06-07: FIX scroll cây thi đấu — dùng biến global _bkScrollX/Y thay DOM (DOM reset về 0 sau render); MutationObserver restore scroll sau mỗi DOM change; drag chuột+touch đa chiều ngang+dọc; guard flag tránh sync loop | v82 2026-06-07: FIX (1) card cây thi đấu hiện "Thắng VXX" khi chưa có tên đội; (2) scroll ngang giữ nguyên vị trí sau render, bỏ loop sync; (3) drag-to-scroll chuột trên nd-bk-wrap | v81 2026-06-07: FIX cây thi đấu — bkEditMatch ẩn dropdown BYE khi trận đang chờ winner ("Thắng VXX"); bkSaveEditNew không ghi đè TBD khi chỉ lưu sân/giờ/TT; tạo mới Matches nếu chưa tồn tại | v80 2026-06-07: FIX saveEditMatch cho phép lưu khi chưa có tên đội — phân sân/giờ/TT trước, tên đội cập nhật sau; giữ nguyên tên đội cũ nếu field để trống | v79 2026-06-07: FIX bkApplyAndSave bỏ upsert:true (nguy hiểm — xóa toàn bộ trận KO kể cả đã có điểm); thêm scoreCleared:false khi update tên đội KO | v78 2026-06-07: FIX mất kết quả khi sửa tên VĐV — (1) openEditMatchMo đọc curSA/curSB từ getFinalScore(KetQua) thay vì Matches col[5/6]; (2) flag scoreCleared phân biệt "trống chưa có điểm" vs "chủ động xóa"; (3) chỉ gửi empty score lên Máy chủ khi scoreCleared=true | v77 2026-06-07: FIX data integrity — bkApplyAndSave+saveRR thêm upsert:true; importCSV toast cảnh báo skip; v76 2026-06-07: FIX nút Sửa tràn khỏi bảng — dùng table-layout:auto, bỏ min-width cứng, giảm padding td, bỏ white-space:nowrap cột Sân → nút Sửa luôn nằm trong khung | v75 2026-06-07: FIX _buildLiveFromRows — index cả key 4 phần (giai|nd|bang|code) lẫn key 3 phần (nd|bang|code) vào _lK và _liveScores; admin render dùng key 3 phần nên bị miss khi Máy chủ ghi key 4 phần | v73 2026-06-07: FIX — _lK hỗ trợ key mới 4 phần "giai|nd|bang|code" từ Máy chủ v40; _buildLiveMatchData dùng key mới; cold-start _lK thêm cả key 3 phần để backward-compat | v72 2026-06-04: FIX Xóa tất cả bảng dùng 1 request deleteAllBangs thay vì N requests tuần tự — nhanh gấp 15x; bỏ confirm() dùng double-tap | v71 2026-06-04: FIX saveBang+importMultiBang gửi upsert=true → Máy chủ xóa bảng cũ trước khi tạo lại, tránh dedup skip trận | v70 2026-06-04: FIX bkDeleteTree dùng double-tap thay confirm() bị browser block; Máy chủ v37 fix giaiName undefined trong deleteBracketTree | v69 2026-06-04: FIX confirm() trong bkApplyAndSave bị browser block → return sớm không save BracketTree; thay bằng toast cảnh báo tiếp tục luôn | v68 2026-06-04: FIX saveBracketTree bị bỏ qua khi Apply lần 2 (toCreate=0, toUpdate=0 → return sớm trước khi save SRV) | v67 2026-06-03: v6 FIX NGUỒN DUY NHẤT — buildDkFromResults/isMatchDone/getFinalScore/_syncResultCache/_buildLiveFromRows đều dùng key 4 trường "TênGiải|NộiDung|Bảng|MãTrận"; bỏ fallback Matches col[5/6] trong getFinalScore; bỏ giaiId duplicate trong _dK; bỏ fallback giaiId trong isMatchDone — badge Hoàn thành/Chưa đấu/Đang đấu giờ chính xác 100% từ KetQua | v66 2026-06-03: FIX v32 referee bugs — assignCourtToRef/assignRef/atrAssignDirect không xóa noidung cũ; _matchAllowed normalize dấu; renderMatchGrid hiển thị khi có trận phân tên | v65 2026-06-01: FIX bracket overflow + nút tràn màn hình PC | v25 | FIX: Login detailed errors, Test Máy chủ button, Seeding cross-group verified | 2026-05-23 | Fix: s-done không nhảy loạn, _gasLastDone source-of-truth, stale localStorage invalidated | 2026-05-22 | v44 FIX: Cross-seeding cùng bảng + BYE trao đúng thành tích tốt nhất (nb=3,5,6,7) 2026-05-25 | v47 FIX: Phân công TT lỗi "Không xác định giải đấu"; Bracket full height; Toolbar nút đồng màu xanh dương, Thủ công/Tự động sáng xanh lá khi active | v49 FIX 2026-05-28: (1) Players persist localStorage — không mất khi navigate; (2) Máy chủ dedup tính noidung | v54 2026-05-28: (3) Mỗi nội dung có danh sách VĐV độc lập (localStorage namespace by GS URL); (4) Nút Lưu danh sách / Sửa danh sách; (5) Chế độ read-only khi đã lưu | v51: Popup bốc thăm 5s + quản lý bảng | v52: Quy tắc cố định 4 đội/bảng | v53: Lưu DanhSachVDV+DanhSachBang lên SRV | v54: skeleton loading cards, nút xóa nội dung, pre-cache, TTL 5 phút | v61 2026-06-01: (A) Nút ✏️ Sửa từng đội trong danh sách VĐV — đổi tên đồng bộ sang _bocThamGroups + Matches (SRV renameTeamInMatches); (B) Badge bảng A/B/... hiển thị ngay trong danh sách VĐV; (C) Máy chủ v28: action renameTeamInMatches cập nhật Matches+DanhSachVDV+DanhSachBang -->
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
@@ -2594,7 +2594,13 @@ let _curTourn=null;                                // giải đang xem (khai bá
 // ── buildLiveFromRows: build _lK + _liveScores từ LiveScore rows ──
 // Chỉ lấy row có status = 'playing' (hoặc rỗng — dữ liệu cũ trước v9)
 // Row status='finished' → đã hoàn thành, KHÔNG tính là live
-function _buildLiveFromRows(rows) {
+// v53 FIX: thêm tham số `source` — 'firebase'|'rest'|'gas-safety'|'gas-cold'
+// GAS-safety KHÔNG được overwrite Firebase fresh data (chống race condition)
+function _buildLiveFromRows(rows, source) {
+  source = source || 'gas-cold'; // default cho legacy callers
+  const isGasSafety = (source === 'gas-safety');
+  const _nowMs = Date.now();
+
   const prevLK = new Set(_lK); // snapshot trước khi update
   const newLK = new Set();
   const newLS = {};
@@ -2613,7 +2619,33 @@ function _buildLiveFromRows(rows) {
       status,
       updatedAt: String(r[8]||''),
       referee:   String(r[10]||''), // col 11 — tên trọng tài (v15+)
+      _src:      source,
+      _setAt:    _nowMs,
     };
+
+    // ── v53 FIX RACE CONDITION ──
+    // Nếu source là gas-safety VÀ có existing data từ firebase/rest gần đây (<8s),
+    // GIỮ existing — không cho GAS stale ghi đè Firebase fresh.
+    if (isGasSafety) {
+      const existing = _liveScores[key];
+      if (existing && existing._src && (existing._src === 'firebase' || existing._src === 'rest')) {
+        const age = _nowMs - (existing._setAt || 0);
+        if (age < 8000) {
+          // Firebase data còn fresh → keep nó
+          newLK.add(key);
+          newLS[key] = existing;
+          // Vẫn add alias 3-phần
+          const parts = key.split('|');
+          if (parts.length >= 4) {
+            const key3 = parts.slice(1).join('|');
+            newLK.add(key3);
+            newLS[key3] = existing;
+          }
+          return; // SKIP overwrite từ GAS
+        }
+      }
+    }
+
     // FIX v12: index cả key 4 phần (giai|nd|bang|code) lẫn key 3 phần (nd|bang|code)
     // Vì admin render dùng key 3 phần `${m[1]}|${m[2]}|${m[3]}` để lookup _lK và _liveScores
     newLK.add(key);
@@ -2625,6 +2657,24 @@ function _buildLiveFromRows(rows) {
       newLS[key3] = liveObj; // alias → cùng object
     }
   });
+
+  // ── v53 FIX: nếu GAS safety thiếu key mà Firebase vừa cập nhật → giữ key đó ──
+  // Tránh trường hợp GAS sheet chưa kịp ghi → safety poll xoá nhầm match đang live
+  if (isGasSafety) {
+    Object.keys(_liveScores).forEach(k => {
+      if (newLS[k]) return; // đã có
+      const existing = _liveScores[k];
+      if (!existing || !existing._src) return;
+      if (existing._src !== 'firebase' && existing._src !== 'rest') return;
+      const age = _nowMs - (existing._setAt || 0);
+      if (age < 8000) {
+        // Fresh Firebase data — GAS chưa có → keep
+        newLK.add(k);
+        newLS[k] = existing;
+      }
+    });
+  }
+
   _lK = newLK;
   _liveScores = newLS;
 
@@ -3386,13 +3436,14 @@ function _startResultsPolling() {
 // ── v52 FIX TRIỆT ĐỂ: bỏ _liveSig guard — luôn render khi có live data ──
 let _bangListRenderTimer = null;
 
-function _onLiveData(rows) {
-  _buildLiveFromRows(rows);
+function _onLiveData(rows, source) {
+  source = source || 'gas-cold';
+  _buildLiveFromRows(rows, source);
 
   // v52: log để verify realtime hoạt động — biết được trang nào đang re-render
   if (rows.length > 0) {
     const sample = rows[0];
-    console.log('[_onLiveData] rows=', rows.length, 'page=', _curPage,
+    console.log('[_onLiveData] src=' + source, 'rows=', rows.length, 'page=', _curPage,
                 'sample:', sample[0], '→', sample[3]+'-'+sample[4], 'lK.size=', _lK.size);
   }
 
@@ -3530,7 +3581,7 @@ function _initFirebaseLive() {
       // v52: dedup signature để REST poll không gọi lại cùng data
       try { _fbRestLastLiveSig = JSON.stringify(data || {}); } catch(e) {}
       console.log('[FB SDK] liveScores fire →', rows.length, 'row(s)');
-      _onLiveData(rows);
+      _onLiveData(rows, 'firebase');
     }, (err) => {
       console.warn('[FB] liveScores lỗi:', err.message, '→ fallback poll');
       _fbConnected = false;
@@ -3616,7 +3667,7 @@ async function _fbRestPollTick() {
           });
         }
         console.log('[FB REST] liveScores changed →', rows.length, 'row(s) — SDK silent?', _fbSdkLastFireTs ? ((Date.now()-_fbSdkLastFireTs)/1000).toFixed(1)+'s ago' : 'never');
-        _onLiveData(rows);
+        _onLiveData(rows, 'rest');
       }
     } else if (liveRes) {
       if (liveRes.status === 401 || liveRes.status === 403) {
@@ -4219,17 +4270,20 @@ async function updateLiveScores() {
     }
     if (_curPage === 'bracket' && _bkGiai && _bkNd) bkRender();
 
-    // ── v52 LƯỚI AN TOÀN 3-TẦNG: SDK + REST poll 2s + GAS poll 3s ──
-    // Lý do: nếu RTDB Security Rules chặn WRITE của trọng tài (đọc được nhưng trọng tài
-    // không ghi được), cả SDK và REST đều không có data mới. GAS sheet vẫn có
-    // điểm (qua _sendLiveRow). Poll GAS mỗi 3s (giảm từ 6s) để merge nhanh hơn.
+    // ── v53 FIX RACE: GAS safety chỉ chạy khi REST/SDK đã silent > 8s ──
+    // Lý do: GAS data CHẬM hơn Firebase (~500-2000ms). Nếu Firebase đang sống,
+    // GAS poll sẽ overwrite điểm tươi (4-8) bằng điểm cũ (2-4) → admin hiển thị sai.
+    // Chỉ kích hoạt GAS khi cả SDK lẫn REST đều ngắt (mất kết nối Firebase thực sự).
     const _nowTs = Date.now();
-    if (GS && _failCount <= 3 && (_nowTs - (_lastSafetyLivePoll||0) >= 3000)) {
+    const _lastFbActivity = Math.max(_fbSdkLastFireTs||0, _fbRestLastUpdateTs||0);
+    const _fbSilent = !_lastFbActivity || (_nowTs - _lastFbActivity >= 8000);
+    if (_fbSilent && GS && _failCount <= 3 && (_nowTs - (_lastSafetyLivePoll||0) >= 3000)) {
       _lastSafetyLivePoll = _nowTs;
+      console.warn('[GAS safety] FB đã silent', ((_nowTs-_lastFbActivity)/1000).toFixed(1)+'s → poll GAS làm fallback');
       gGet({ action: 'live', code: 'all', giai: '' }, 8000).then(d => {
         if (!d?.rows?.length) return;
-        // Chỉ merge nếu GAS có row mới hơn / khác — _onLiveData tự xử lý
-        _onLiveData(d.rows.slice(1));
+        // Source 'gas-safety' → merge logic sẽ KHÔNG overwrite Firebase fresh
+        _onLiveData(d.rows.slice(1), 'gas-safety');
       }).catch(()=>{});
     }
     return;
@@ -4240,7 +4294,7 @@ async function updateLiveScores() {
   try {
     const d = await gGet({ action: 'live', code: 'all', giai: '' }, 8000);
     if (!d?.rows?.length) return;
-    _buildLiveFromRows(d.rows.slice(1)); // chỉ dùng khi Firebase ngắt
+    _buildLiveFromRows(d.rows.slice(1), 'gas-cold'); // FB ngắt hoàn toàn → tin GAS
     if (_curPage === 'dashboard') {
       const giaiId = document.getElementById('dash-giai').value;
       const gn = giaiId ? ((_T.find(t=>String(t[0]||'')===giaiId)||[])[1]||giaiId) : '';
@@ -18017,7 +18071,8 @@ function _cpRenderHistory() {
   const _origBuild = window._buildLiveFromRows || _buildLiveFromRows;
 
   // Patch: override _buildLiveFromRows sau khi script gốc đã define
-  function _patchedBuildLive(rows) {
+  // v53: pass through source param để timestamp merge hoạt động
+  function _patchedBuildLive(rows, source) {
     // Tách CALL rows ra trước
     const callRows  = (rows || []).filter(r => String(r[0]||'').startsWith('CALL|'));
     const liveRows  = (rows || []).filter(r => !String(r[0]||'').startsWith('CALL|'));
@@ -18077,8 +18132,8 @@ function _cpRenderHistory() {
       _cpShowNotif(callData);
     });
 
-    // Pass live-only rows vào hàm gốc
-    _origBuild(liveRows);
+    // Pass live-only rows vào hàm gốc (với source nếu có)
+    _origBuild(liveRows, source);
   }
 
   // Cần override sau khi DOM loaded và hàm gốc đã được define
