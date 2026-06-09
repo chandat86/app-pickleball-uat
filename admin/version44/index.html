@@ -10074,8 +10074,10 @@ function _bkCrossSeededSlots(globalSeeds, bangs, seeds) {
   const shuffled  = [...groupPri, ...groupLow]; // bảng nhiều đội trước, ít đội sau
 
   // ── Bước 2: Tính BYE ──
+  // v3 FIX: byeForWinners chỉ tính bảng groupPri (nhiều đội nhất) — bảng ít đội KHÔNG được winner BYE
+  // Trước đây dùng min(nb, numByes) → bảng 3 đội cũng được BYE → sai!
   const numByes       = cap - nb * 2;
-  const byeForWinners = Math.min(nb, numByes);
+  const byeForWinners = Math.min(groupPri.length, numByes); // ← FIX: chỉ bảng ưu tiên
   const byeForRunners = numByes - byeForWinners;
   const winnerByeSet  = new Set(shuffled.slice(0, byeForWinners));
 
@@ -10098,28 +10100,41 @@ function _bkCrossSeededSlots(globalSeeds, bangs, seeds) {
     }
   });
 
-  // ── Bước 4: Runner BYE — cân bằng số TL pairs ──
-  // Mỗi nhánh cần số non-BYE teams CHẴN để ghép cặp TL đủ (không ai lẻ)
-  let rByeLeft = byeForRunners;
-  const giveRunnerBye = (branch) => {
-    if (rByeLeft <= 0) return;
-    const nonBye = branch.filter(x => !x.hasBye);
-    if (nonBye.length % 2 === 1) {
-      // Ưu tiên trao BYE cho runner (Nhì), nếu không có mới dùng Nhất cuối
-      const target = nonBye.find(x => !x.isWinner)
-                  || nonBye.slice().reverse().find(x => x.isWinner);
-      if (target) { target.hasBye = true; rByeLeft--; }
-    }
-  };
-  giveRunnerBye(b1);
-  giveRunnerBye(b2);
-  // Nếu còn dư BYE runner → trao tiếp cho runner đầu tiên chưa có BYE
-  for (const branch of [b1, b2]) {
+  // ── Bước 4: Runner BYE — phân bổ CHÍNH XÁC để tránh ô {null,null} ──
+  // Công thức: mỗi nhánh có n đội và half match slots.
+  //   TL matches = n - half  (số cặp phải đấu)
+  //   BYE items  = half - TL = 2*half - n  (số đội được BYE)
+  //   runnerByeNeeded = byeItemsNeeded - currentWinnerByes
+  // Phân đúng số runner BYE cho mỗi nhánh → không bao giờ thừa ô {null,null}
+  const distributeRunnerByes = (branch) => {
+    const byeNeeded     = 2 * half - branch.length;      // số BYE items cần
+    const currentByes   = branch.filter(x => x.hasBye).length;
+    let   needed        = Math.max(0, byeNeeded - currentByes);
+    let   given         = 0;
+    // Ưu tiên runners (Nhì) trước để không trao BYE cho Nhất không BYE
     for (const item of branch) {
-      if (rByeLeft <= 0) break;
-      if (!item.hasBye && !item.isWinner) { item.hasBye = true; rByeLeft--; }
+      if (given >= needed) break;
+      if (!item.hasBye && !item.isWinner) { item.hasBye = true; given++; }
     }
-    if (rByeLeft <= 0) break;
+    // Nếu cần thêm (không còn runner) → trao cho Nhất không BYE (last resort)
+    for (const item of branch) {
+      if (given >= needed) break;
+      if (!item.hasBye && item.isWinner) { item.hasBye = true; given++; }
+    }
+    return given;
+  };
+  let rByeLeft = byeForRunners;
+  rByeLeft -= distributeRunnerByes(b1);
+  rByeLeft -= distributeRunnerByes(b2);
+  // Safety: nếu có byeForRunners dư do mất cân bằng → trao tiếp
+  if (rByeLeft > 0) {
+    for (const branch of [b1, b2]) {
+      for (const item of branch) {
+        if (rByeLeft <= 0) break;
+        if (!item.hasBye) { item.hasBye = true; rByeLeft--; }
+      }
+      if (rByeLeft <= 0) break;
+    }
   }
 
   // ── Bước 5: Build slots mỗi nhánh ──
