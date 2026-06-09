@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Admin v43 — Referee Pickleball / DA NANG ®</title>
+<title>Admin v43.2 — Referee Pickleball / DA NANG ®</title>
 <style>
 /* ═══════════════════════════════════════════════════════
    Pickleball Admin — Mobile-First Professional UI
@@ -7752,11 +7752,19 @@ function renderBangList(giaiId, nd) {
       }
     }
 
-    // 5. Left col (bảng trận) — chỉ update khi live/done thay đổi
+    // 5. Left col (bảng trận)
+    // v56 FIX RENDER: sig cũ chỉ theo doneM|liveM|totalM → khi điểm live thay đổi sig vẫn
+    // bằng nhau → không rebuild → điểm bị freeze. Thêm live score sig vào để trigger rebuild.
     const leftEl = wrap.querySelector('[data-bl-left]');
     if (leftEl) {
       const prevSig = leftEl.getAttribute('data-sig') || '';
-      const newSig  = `${doneM}|${liveM}|${totalM}`;
+      // Tính score sig: nối scoreA-scoreB của tất cả trận đang live
+      const liveScoreSig = liveMAll.map(m => {
+        const lk = `${m[1]}|${m[2]}|${m[3]}`;
+        const ls = _liveScores[lk] || {};
+        return `${m[3]}:${ls.scoreA??'?'}-${ls.scoreB??'?'}`;
+      }).join(',');
+      const newSig = `${doneM}|${liveM}|${totalM}|${liveScoreSig}`;
       if (prevSig !== newSig) {
         leftEl.setAttribute('data-sig', newSig);
         leftEl.innerHTML = leftHtml;
