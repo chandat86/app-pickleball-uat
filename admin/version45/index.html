@@ -1365,6 +1365,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
             <button class="rfbtn" onclick="ndRefresh()" id="nd-refresh-btn" title="Làm mới dữ liệu">↻ Làm mới</button>
             <button class="btn bp bsm" onclick="openAddBangMo()" title="Thêm bảng đấu mới">＋ Thêm bảng</button>
             <button id="btn-cleanup-dup" class="btn bsm" style="background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25);font-size:12px" onclick="cleanupDuplicateMatches()" title="Xóa trận bị trùng">🧹 Dọn trùng</button>
+            <button id="btn-clear-fb-live" class="btn bsm" style="background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25);font-size:12px" onclick="clearAllFirebaseLive()" title="Xóa toàn bộ live score đang kẹt trên Firebase RTDB">🔥 Xóa Firebase Live</button>
             <button class="btn bsm" style="background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25);font-size:12px" onclick="confirmDeleteAllBangs()" title="Xóa toàn bộ bảng đấu của nội dung này">🗑 Xóa tất cả bảng</button>
           </div>
         </div>
@@ -8809,6 +8810,12 @@ async function confirmDeleteAllBangs() {
   const allDelMatches = _M.filter(m => matchGiai(m) && String(m[1]||'')===nd);
   _M = _M.filter(m => !(matchGiai(m) && String(m[1]||'')===nd));
 
+  // v57: Xóa Firebase RTDB /liveScores cho các trận vừa bị xóa — tránh "Đang thi đấu" ảo
+  allDelMatches.forEach(m => {
+    const fk = (String(m[0]||'')+'|'+String(m[1]||'')+'|'+String(m[2]||'')+'|'+String(m[3]||'')).replace(/[^a-zA-Z0-9_\-]/g,'_');
+    fetch(_FB_REST_URL + '/liveScores/' + fk + '.json', { method:'DELETE', keepalive:true }).catch(()=>{});
+  });
+
   // FIX v3: Xóa _dK/_dkBangCode/_dkScores — tránh tỉ số cũ hiện lại khi tạo mới bảng
   allDelMatches.forEach(m => {
     const bg = String(m[2]||''), cd = String(m[3]||''), ndM = String(m[1]||''), g = String(m[0]||'');
@@ -9660,6 +9667,47 @@ function renderBracket() {
 }
 
 
+
+// ── Xóa toàn bộ Firebase RTDB /liveScores — dùng khi admin xóa data thủ công từ sheet ──
+// Nguyên nhân: Firebase RTDB là storage riêng biệt với GAS sheets.
+// Khi xóa tay từ sheet, Firebase RTDB /liveScores vẫn còn → admin hiển thị "Đang thi đấu" ảo.
+async function clearAllFirebaseLive() {
+  const btn = document.getElementById('btn-clear-fb-live');
+  if (!btn) return;
+  // Double-tap confirm
+  const _key = 'pb_clear_fb_live';
+  if (sessionStorage.getItem(_key) !== '1') {
+    sessionStorage.setItem(_key, '1');
+    setTimeout(() => { try { sessionStorage.removeItem(_key); } catch(e){} }, 5000);
+    toast('⚠️ Nhấn lại lần nữa để xóa toàn bộ Firebase live scores (không hoàn tác)', 'er', 4000);
+    return;
+  }
+  sessionStorage.removeItem(_key);
+
+  btn.disabled = true; btn.textContent = '⏳ Đang xóa...';
+  try {
+    // DELETE toàn bộ node /liveScores trên Firebase RTDB
+    const res = await fetch(_FB_REST_URL + '/liveScores.json', {
+      method: 'DELETE',
+      keepalive: true,
+    });
+    if (res.ok) {
+      // Xóa local _liveScores + _lK ngay
+      _liveScores = {};
+      _lK = new Set();
+      // Re-render trang hiện tại
+      if (_curPage === 'tournaments' && _curNd && _curGiaiId) {
+        renderBangList(_curGiaiId, _curNd);
+      }
+      toast('✅ Đã xóa toàn bộ Firebase live scores. Admin sẽ không còn hiện "Đang thi đấu" ảo.', 'ok', 4000);
+    } else {
+      toast('❌ Lỗi xóa Firebase: HTTP ' + res.status + '. Kiểm tra RTDB Rules ".write":true', 'er', 5000);
+    }
+  } catch(e) {
+    toast('❌ Lỗi kết nối Firebase: ' + e.message, 'er', 4000);
+  }
+  btn.disabled = false; btn.textContent = '🔥 Xóa Firebase Live';
+}
 
 // ── Dọn dẹp duplicate trận trong Sheets (gọi Máy chủ cleanupDuplicates) ──
 async function cleanupDuplicateMatches() {
