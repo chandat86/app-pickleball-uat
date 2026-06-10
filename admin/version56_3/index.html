@@ -16909,8 +16909,10 @@ async function saveUser() {
   // origPhone: SĐT gốc của user đang sửa — để Máy chủ tìm đúng row theo SĐT
   const origPhone = _editU ? String(_editU.phone||'').trim().replace(/\D/g,'') : '';
   const nd = document.getElementById('u-nd')?.value?.trim() || '';
+  // FIX: originalCode phải là string (không dùng undefined — bị JSON.stringify bỏ qua → GAS không nhận được)
+  const origCodeVal = _editU ? (originalCode || effectiveCode) : '';
   const user={code: effectiveCode, name, expire:document.getElementById('u-exp').value,
-    originalCode: undefined,
+    originalCode: origCodeVal,
     origPhone: origPhone, // SĐT cũ để Máy chủ tìm row chính xác
     courts:document.getElementById('u-courts').value.trim(),
     rounds:document.getElementById('u-rounds').value.trim(),
