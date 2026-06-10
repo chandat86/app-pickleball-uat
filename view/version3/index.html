@@ -68,8 +68,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .panel-tab{padding:10px 18px;font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s}
 .panel-tab.active{color:var(--green);border-bottom-color:var(--green);background:var(--green-dim)}
 #panel-bodies{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.panel-body{flex:1;min-height:0;overflow-y:auto;padding:12px 14px;display:none;scroll-behavior:smooth}
-.panel-body.active{display:block}
+.panel-body{flex:1;min-height:0;display:none;flex-direction:column}
+.panel-body.active{display:flex}
 
 /* ── NOIDUNG SECTION ── */
 .nd-section{margin-bottom:16px}
@@ -207,20 +207,31 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 /* ── LAYOUT WRAPPER ── */
 .screen{display:flex;flex-direction:column;height:100vh;overflow:hidden}
 
-/* ── BRACKET (CÂY THI ĐẤU) ── */
-.bracket-section{margin-top:14px;border-top:1px solid var(--bdr2);padding-top:12px}
-.bracket-title{font-family:var(--font-display);font-size:14px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.bracket-title::after{content:'';flex:1;height:1px;background:rgba(251,191,36,.25)}
-.bracket-wrap{display:flex;gap:18px;overflow-x:auto;padding:4px 2px 10px}
-.bracket-round{display:flex;flex-direction:column;justify-content:space-around;gap:14px;min-width:170px;flex-shrink:0}
-.bracket-round-title{font-size:10px;font-weight:800;text-align:center;color:var(--tx2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:2px}
-.bracket-match{background:var(--bg3);border:1px solid var(--bdr2);border-radius:8px;padding:6px 10px;font-size:12px}
-.bracket-team{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:3px 0;color:var(--tx2);font-weight:600}
+/* ── SUB-TAB (Vòng bảng / Cây thi đấu) ── */
+.sub-tabs{display:flex;gap:4px;padding:8px 12px 0;background:var(--bg3);border-bottom:1px solid var(--bdr);flex-shrink:0}
+.sub-tab{padding:6px 16px;font-family:var(--font-display);font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--tx3);cursor:pointer;border-radius:6px 6px 0 0;border:1px solid transparent;border-bottom:none;position:relative;display:flex;align-items:center;gap:6px;transition:all .15s}
+.sub-tab:hover{color:var(--tx);background:var(--bg4)}
+.sub-tab.active{color:var(--tx);background:var(--bg2);border-color:var(--bdr);border-bottom-color:var(--bg2)}
+.sub-tab.bracket-tab.active{color:var(--amber);border-top-color:var(--amber)}
+.sub-tab .new-badge{background:var(--amber);color:#000;font-size:8px;font-weight:900;padding:1px 5px;border-radius:4px;letter-spacing:.5px}
+.sub-body{flex:1;min-height:0;overflow-y:auto;scroll-behavior:smooth;display:none;padding:12px 14px}
+.sub-body.active{display:block}
+/* ── BRACKET full-view ── */
+.bracket-wrap{display:flex;gap:0;overflow-x:auto;padding:8px 0 12px;scroll-behavior:smooth}
+.bracket-round{display:flex;flex-direction:column;justify-content:space-around;gap:0;min-width:200px;flex-shrink:0;padding:0 8px;position:relative}
+.bracket-round::after{content:'';position:absolute;right:0;top:10%;bottom:10%;width:1px;background:var(--bdr)}
+.bracket-round:last-child::after{display:none}
+.bracket-round-title{font-size:10px;font-weight:800;text-align:center;color:var(--amber);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;padding:4px 0;border-bottom:1px solid rgba(251,191,36,.2)}
+.bracket-match{background:var(--bg3);border:1px solid var(--bdr2);border-radius:8px;padding:7px 10px;font-size:12px;margin:6px 0}
+.bracket-match.live{border-color:rgba(248,113,113,.4);box-shadow:0 0 0 1px rgba(248,113,113,.1)}
+.bracket-team{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:4px 0;color:var(--tx2);font-weight:600}
 .bracket-team:first-child{border-bottom:1px solid var(--bdr)}
 .bracket-team.winner{color:var(--green)}
-.bracket-team .bn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
-.bracket-team .bs{font-family:var(--font-display);font-weight:900;font-size:14px;flex-shrink:0}
-.bracket-empty{padding:16px;text-align:center;color:var(--tx3);font-size:11px}
+.bracket-team.loser{color:var(--tx3)}
+.bracket-team .bn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;font-size:12px}
+.bracket-team .bs{font-family:var(--font-display);font-weight:900;font-size:15px;flex-shrink:0;min-width:18px;text-align:right}
+.bracket-empty{padding:24px;text-align:center;color:var(--tx3);font-size:12px}
+.bracket-tbd{color:var(--tx4);font-style:italic}
 
 /* ── DONE STAGE: no more groups ── */
 .done-section{padding:16px;text-align:center}
@@ -637,23 +648,52 @@ function renderTabs(){
   }).join('');
 }
 
+// _ndSubTab[nd] = 'group' | 'bracket'  — nhớ sub-tab của từng nội dung
+const _ndSubTab={};
+
 function renderNdBody(nd,ndGroups){
   if(!ndGroups.length)return'<div class="empty-state">Chưa có dữ liệu</div>';
   const n=ndGroups.length;
-  // Chọn số cột + mode thu nhỏ theo số bảng
+  const safeId=nd.replace(/[^a-zA-Z0-9]/g,'_');
+  // Sub-tab bar — bracket-tab chỉ hiện khi đã load xong và có cây (update động qua JS)
+  const subTabHtml=`<div class="sub-tabs" id="subtabs-${safeId}">
+    <div class="sub-tab active" id="st-group-${safeId}" onclick="switchSubTab('${safeId}','group')">📋 Vòng bảng</div>
+    <div class="sub-tab bracket-tab" id="st-bracket-${safeId}" style="display:none" onclick="switchSubTab('${safeId}','bracket')">🏆 Cây thi đấu <span class="new-badge" id="st-badge-${safeId}" style="display:none">MỚI</span></div>
+  </div>`;
+  // Sub-body vòng bảng
   let colClass='', sizeClass='';
   if(n>=10){colClass='cols-4';sizeClass='mini';}
   else if(n>=7){colClass='cols-3';sizeClass='compact';}
   else if(n>=4){colClass='cols-3';}
-  let html=`<div class="bxh-grid ${colClass} ${sizeClass}">${ndGroups.map(g=>renderBXHCard(g,n)).join('')}</div>`;
-  // v9: luôn thử tải cây thi đấu — hiện ngay khi Admin đã tạo, không chờ vòng bảng xong
-  const safeId=nd.replace(/[^a-zA-Z0-9]/g,'_');
-  html+=`<div class="bracket-section" id="bracket-section-${safeId}" style="display:none">
-    <div class="bracket-title">🏆 Cây thi đấu — Vòng loại trực tiếp</div>
-    <div id="bracket-${safeId}" class="bracket-wrap"><div class="bracket-empty">Đang tải...</div></div>
+  const groupHtml=`<div class="sub-body active" id="sb-group-${safeId}">
+    <div class="bxh-grid ${colClass} ${sizeClass}">${ndGroups.map(g=>renderBXHCard(g,n)).join('')}</div>
+  </div>`;
+  // Sub-body cây thi đấu
+  const bracketHtml=`<div class="sub-body" id="sb-bracket-${safeId}">
+    <div id="bracket-${safeId}" class="bracket-wrap"><div class="bracket-empty">Đang tải cây thi đấu...</div></div>
   </div>`;
   loadBracket(nd, safeId);
-  return html;
+  return subTabHtml+groupHtml+bracketHtml;
+}
+
+function switchSubTab(safeId, which){
+  const stG=document.getElementById('st-group-'+safeId);
+  const stB=document.getElementById('st-bracket-'+safeId);
+  const sbG=document.getElementById('sb-group-'+safeId);
+  const sbB=document.getElementById('sb-bracket-'+safeId);
+  if(!stG||!stB||!sbG||!sbB)return;
+  const goGroup=which==='group';
+  stG.classList.toggle('active',goGroup);
+  stB.classList.toggle('active',!goGroup);
+  sbG.classList.toggle('active',goGroup);
+  sbB.classList.toggle('active',!goGroup);
+  // Nhớ lựa chọn
+  const ndMap=Object.fromEntries([...(document.querySelectorAll('[id^="subtabs-"]'))].map(el=>[el.id.replace('subtabs-',''),el]));
+  _ndSubTab[safeId]=which;
+  // Reset scroll về đầu khi đổi sub-tab
+  if(goGroup&&sbG)sbG.scrollTop=0;
+  if(!goGroup&&sbB)sbB.scrollTop=0;
+  startAutoScroll();
 }
 
 // ── BRACKET: lấy giải đấu (tên) tương ứng với 1 nội dung từ _matches ──
@@ -671,15 +711,32 @@ async function loadBracket(nd, safeId){
     const r=await fetch(url,{cache:'no-store'});
     const d=await r.json();
     const el=document.getElementById('bracket-'+safeId);
-    if(!el)return; // tab đã đổi
-    const section=document.getElementById('bracket-section-'+safeId);
+    if(!el)return;
+    const stB=document.getElementById('st-bracket-'+safeId);
+    const badge=document.getElementById('st-badge-'+safeId);
     if(!d.ok||!d.tree?.rounds?.length){
-      if(section)section.style.display='none';
+      // Chưa có cây → ẩn sub-tab bracket
+      if(stB)stB.style.display='none';
       return;
     }
-    if(section)section.style.display='';
+    // Có cây → hiện sub-tab bracket
+    if(stB)stB.style.display='';
     _bracketCache[nd]={tree:d.tree,version:d.version};
     renderBracket(nd, d.tree, el);
+    // Kiểm tra vòng bảng đã 100% chưa
+    const ndGroups=_groups.filter(g=>g.nd===nd);
+    const allDone=ndGroups.length>0&&ndGroups.every(g=>g.matches.length>0&&g.results.length>=g.matches.length);
+    if(allDone){
+      // Vòng bảng xong 100% → tự chuyển sang cây thi đấu (nếu user chưa tự chọn)
+      if(!_ndSubTab[safeId]||_ndSubTab[safeId]==='auto'){
+        switchSubTab(safeId,'bracket');
+        _ndSubTab[safeId]='auto'; // đánh dấu do auto, user vẫn có thể tự chọn lại
+      }
+      if(badge)badge.style.display='none'; // đã xong thì không cần badge MỚI
+    } else {
+      // Vòng bảng chưa xong, cây vừa xuất hiện → hiện badge MỚI để thu hút chú ý
+      if(badge&&_ndSubTab[safeId]!=='bracket')badge.style.display='';
+    }
   }catch(e){
     console.error('loadBracket:',e);
     const el=document.getElementById('bracket-'+safeId);
@@ -692,9 +749,9 @@ function renderBracket(nd, tree, el){
   if(!rounds.length){el.innerHTML='<div class="bracket-empty">Chưa có cây thi đấu</div>';return;}
   el.innerHTML=rounds.map(round=>{
     const matches=(round.matches||[]).map(m=>{
-      const nameA=m.teamA||m.seedA||(m.isByeA?'BYE':'TBD');
-      const nameB=m.teamB||m.seedB||(m.isByeB?'BYE':'TBD');
-      // Tìm điểm số từ _results (bang = round.name, code = m.code)
+      const nameA=m.teamA||m.seedA||(m.isByeA?'— BYE —':'TBD');
+      const nameB=m.teamB||m.seedB||(m.isByeB?'— BYE —':'TBD');
+      const isTbd=t=>!t||t==='TBD';
       const res=_results.find(r=>String(r[2]||'')===nd&&String(r[3]||'')===round.name&&String(r[4]||'')===m.code);
       let sA='',sB='',winA=false,winB=false;
       if(res){
@@ -702,9 +759,17 @@ function renderBracket(nd, tree, el){
         const win=String(res[9]||'');
         winA=win&&win===String(res[5]||''); winB=win&&win===String(res[6]||'');
       }
-      return`<div class="bracket-match">
-        <div class="bracket-team${winA?' winner':''}"><span class="bn" title="${esc(nameA)}">${esc(shortName(nameA,120))}</span><span class="bs">${esc(String(sA))}</span></div>
-        <div class="bracket-team${winB?' winner':''}"><span class="bn" title="${esc(nameB)}">${esc(shortName(nameB,120))}</span><span class="bs">${esc(String(sB))}</span></div>
+      const isLive=_live.some(r=>{const{code}=_liveKeyParts(r);return code===m.code;});
+      const nameHtml=n=>n.split(/\s*-\s*/).map(p=>`<span style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p)}</span>`).join('');
+      return`<div class="bracket-match${isLive?' live':''}">
+        <div class="bracket-team${winA?' winner':winB?' loser':''}${isTbd(m.teamA)?' bracket-tbd':''}">
+          <span class="bn" title="${esc(nameA)}" style="max-width:155px">${nameHtml(nameA)}</span>
+          <span class="bs">${sA!==''?esc(String(sA)):''}</span>
+        </div>
+        <div class="bracket-team${winB?' winner':winA?' loser':''}${isTbd(m.teamB)?' bracket-tbd':''}">
+          <span class="bn" title="${esc(nameB)}" style="max-width:155px">${nameHtml(nameB)}</span>
+          <span class="bs">${sB!==''?esc(String(sB)):''}</span>
+        </div>
       </div>`;
     }).join('');
     return`<div class="bracket-round">
@@ -877,12 +942,15 @@ function renderTicker(){
 let _scrollTimer=null;
 function startAutoScroll(){
   clearInterval(_scrollTimer);
-  let dir=1, pauseUntil=Date.now()+2000; // chờ 2s trước khi bắt đầu cuộn
+  let dir=1, pauseUntil=Date.now()+2000;
   _scrollTimer=setInterval(()=>{
-    const el=document.querySelector('.panel-body.active');
+    // Tìm sub-body đang active trong panel-body đang active
+    const activePanel=document.querySelector('.panel-body.active');
+    if(!activePanel)return;
+    const el=activePanel.querySelector('.sub-body.active');
     if(!el)return;
     const max=el.scrollHeight-el.clientHeight;
-    if(max<=2){el.scrollTop=0;return;} // không tràn → không cuộn
+    if(max<=4){el.scrollTop=0;return;} // vừa khung → không cuộn
     if(Date.now()<pauseUntil)return;
     el.scrollTop+=dir*1.2;
     if(el.scrollTop>=max-1){el.scrollTop=max;dir=-1;pauseUntil=Date.now()+3500;}
