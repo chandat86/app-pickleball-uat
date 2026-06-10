@@ -16865,12 +16865,19 @@ async function saveUser() {
   const name=document.getElementById('u-name').value.trim();
   const phone=document.getElementById('u-phone').value.trim();
   // Mã không bắt buộc — nếu trống thì dùng SĐT làm mã
-  const codeRaw=document.getElementById('u-code').value.trim();
-  const code = codeRaw || phone; // fallback: SĐT làm mã
+  const status = document.getElementById('u-status').value;
+  const isActiveRole = status === 'active';
+  const codeRaw = document.getElementById('u-code').value.trim().toUpperCase(); // luôn uppercase
+  const code = codeRaw || phone;
   if(!name){toast('Vui lòng nhập họ tên','er');return;}
-  if(!phone){
+  // Validate theo role: active → bắt buộc SĐT; còn lại → bắt buộc mã
+  if(isActiveRole && !phone){
     document.getElementById('u-phone').focus();
-    toast('⚠️ Số điện thoại là bắt buộc!','er');return;
+    toast('⚠️ Số điện thoại là bắt buộc cho Trọng tài!','er');return;
+  }
+  if(!isActiveRole && !codeRaw){
+    document.getElementById('u-code').focus();
+    toast('⚠️ Mã đăng nhập là bắt buộc!','er');return;
   }
   // Đảm bảo _U đã load — nếu rỗng fetch từ Máy chủ trước khi check unique
   if (!_U.length) {
@@ -16879,24 +16886,26 @@ async function saveUser() {
       if (du?.ok && du.rows?.length > 1) _U = du.rows.slice(1);
     } catch(e) {}
   }
-  // Kiểm tra SĐT unique phía client (bỏ qua chính user đang sửa)
+  // Kiểm tra SĐT unique phía client — chỉ khi có nhập SĐT (không cần cho manager/player)
   const cleanPhone = phone.replace(/\D/g,'');
   const selfCode = _editU ? String(_editU.code||'').trim().toUpperCase() : null;
-  const dupUser = (_U||[]).find(u => {
-    const uPhone = String(u[10]||'').trim().replace(/\D/g,'');
-    const uCode  = String(u[0]||'').trim().toUpperCase();
-    const isSelf = selfCode && uCode === selfCode;
-    return !isSelf && uPhone && uPhone === cleanPhone;
-  });
-  if (dupUser) {
-    document.getElementById('u-phone').focus();
-    toast(`⚠️ SĐT ${phone} đã thuộc TT: ${String(dupUser[1]||'(không tên)')}`, 'er');
-    return;
+  if (cleanPhone) {
+    const dupUser = (_U||[]).find(u => {
+      const uPhone = String(u[10]||'').trim().replace(/\D/g,'');
+      const uCode  = String(u[0]||'').trim().toUpperCase();
+      const isSelf = selfCode && uCode === selfCode;
+      return !isSelf && uPhone && uPhone === cleanPhone;
+    });
+    if (dupUser) {
+      document.getElementById('u-phone').focus();
+      toast(`⚠️ SĐT ${phone} đã thuộc TK: ${String(dupUser[1]||'(không tên)')}`, 'er');
+      return;
+    }
   }
   btn.disabled=true;
   const originalCode = (document.getElementById('u-code').dataset.originalCode||'').trim();
   // Khi sửa: giữ nguyên mã cũ (originalCode). Khi thêm mới: dùng SĐT làm mã nếu không có mã
-  const effectiveCode = _editU ? (originalCode || code) : (code || phone);
+  const effectiveCode = (_editU ? (originalCode || code) : (code || phone)).toUpperCase();
   // origPhone: SĐT gốc của user đang sửa — để Máy chủ tìm đúng row theo SĐT
   const origPhone = _editU ? String(_editU.phone||'').trim().replace(/\D/g,'') : '';
   const nd = document.getElementById('u-nd')?.value?.trim() || '';
