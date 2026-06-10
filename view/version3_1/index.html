@@ -825,7 +825,6 @@ function renderBXHCard(g,n){
         <div class="rank-badge ${rankClass}" style="margin-top:1px">${s.rank}</div>
         <span class="team-name" title="${esc(s.team)}">${s.team.split(/\s*-\s*/).map(p=>`<span class="pn">${esc(p)}</span>`).join('')}</span>
       </div></td>
-      <td style="text-align:center;font-size:11px;color:var(--tx3);vertical-align:top;padding-top:9px">${s.played}</td>
       <td style="text-align:center;font-size:11px;color:var(--green);vertical-align:top;padding-top:9px">${s.won}</td>
       <td style="text-align:center;font-size:11px;color:var(--red);vertical-align:top;padding-top:9px">${s.lost}</td>
       <td class="hs-val ${hsClass}" style="vertical-align:top;padding-top:7px">${hsStr}</td>
@@ -841,12 +840,12 @@ function renderBXHCard(g,n){
     </div>
     <table class="bxh-table">
       <colgroup>
-        <col style="width:69%"><col style="width:4%"><col style="width:4%"><col style="width:4%"><col style="width:9%"><col style="width:10%">
+        <col style="width:66%"><col style="width:8%"><col style="width:8%"><col style="width:10%"><col style="width:8%">
       </colgroup>
       <thead><tr>
-        <th>Đội</th><th style="text-align:center">T</th><th style="text-align:center">W</th><th style="text-align:center">L</th><th style="text-align:right">HS</th><th style="text-align:center">ĐS</th>
+        <th>Đội</th><th style="text-align:center">W</th><th style="text-align:center">L</th><th style="text-align:right">HS</th><th style="text-align:center">ĐS</th>
       </tr></thead>
-      <tbody>${rows||'<tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:12px;font-size:11px">Chưa có kết quả</td></tr>'}</tbody>
+      <tbody>${rows||'<tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:12px;font-size:11px">Chưa có kết quả</td></tr>'}</tbody>
     </table>
   </div>`;
 }
