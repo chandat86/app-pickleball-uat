@@ -728,16 +728,12 @@ async function loadBracket(nd, safeId){
     // Kiểm tra vòng bảng đã 100% chưa
     const ndGroups=_groups.filter(g=>g.nd===nd);
     const allDone=ndGroups.length>0&&ndGroups.every(g=>g.matches.length>0&&g.results.length>=g.matches.length);
+    // v10: KHÔNG tự động chuyển sub-tab — user tự chọn khi muốn xem cây
+    // Chỉ hiện badge MỚI để thông báo cây đã sẵn sàng
     if(allDone){
-      // Vòng bảng xong 100% → tự chuyển sang cây thi đấu (nếu user chưa tự chọn)
-      if(!_ndSubTab[safeId]||_ndSubTab[safeId]==='auto'){
-        switchSubTab(safeId,'bracket');
-        _ndSubTab[safeId]='auto'; // đánh dấu do auto, user vẫn có thể tự chọn lại
-      }
-      if(badge)badge.style.display='none'; // đã xong thì không cần badge MỚI
+      if(badge)badge.style.display='none'; // vòng bảng xong → không cần badge
     } else {
-      // Vòng bảng chưa xong, cây vừa xuất hiện → hiện badge MỚI để thu hút chú ý
-      if(badge&&_ndSubTab[safeId]!=='bracket')badge.style.display='';
+      if(badge&&_ndSubTab[safeId]!=='bracket')badge.style.display=''; // cây mới có → badge
     }
   }catch(e){
     console.error('loadBracket:',e);
@@ -1000,14 +996,8 @@ function switchNd(idx){
 }
 
 // ── AUTO ROTATE NOIDUNG ──
-function startRotate(){
-  _rotateTimer=setInterval(()=>{
-    if(!_nds.length)return;
-    _activeNdIdx=(_activeNdIdx+1)%_nds.length;
-    switchNd(_activeNdIdx);
-  }, ROTATE_SEC*1000);
-}
-function resetRotate(){clearInterval(_rotateTimer);startRotate();}
+function startRotate(){ /* v10: TẮT auto-rotate — giữ nguyên nội dung đang xem */ }
+function resetRotate(){ /* no-op */ }
 
 // ── POLLING ──
 function startPolling(){
