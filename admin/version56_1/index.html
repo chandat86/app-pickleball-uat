@@ -4014,6 +4014,7 @@ function _invalidateMatchCache(giaiId) {
 function _showGasError(msg) {
   _gasConnected = false;
   _failCount++;
+  _reconnectToastShown = false; // reset để lần reconnect tiếp theo hiện toast 1 lần
   const bar = document.getElementById('gas-status-bar');
   const msgEl = document.getElementById('gas-status-msg');
   if (bar)   bar.style.display = 'flex';
@@ -4022,11 +4023,16 @@ function _showGasError(msg) {
   console.warn('[Máy chủ]', _failCount, 'lần thất bại:', msg);
 }
 
+let _reconnectToastShown = false; // chống spam toast reconnect
 function _showGasOk() {
   if (!_gasConnected || _failCount > 0) {
     const bar = document.getElementById('gas-status-bar');
     if (bar) bar.style.display = 'none';
-    if (_failCount > 0) toast('✅ Đã kết nối lại Máy chủ', 'in');
+    // Chỉ hiện toast 1 lần khi thực sự reconnect sau khi mất kết nối hẳn
+    if (_failCount >= 2 && !_reconnectToastShown) {
+      toast('✅ Đã kết nối lại Máy chủ', 'in');
+      _reconnectToastShown = true;
+    }
   }
   _gasConnected = true;
   _failCount    = 0;
