@@ -5881,7 +5881,8 @@ function _bkStartSyncPoll() {
       // Có phiên bản mới → load cây từ SRV
       const loaded = await _bkLoadTreeFromSheet();
       if (loaded) {
-        _bkCurrentTree = null; // force bkRender dùng tree mới từ SRV
+        // FIX v59: KHÔNG null _bkCurrentTree — _bkLoadTreeFromSheet đã set tree mới rồi
+        // null ở đây khiến bkRender() thấy null → hiện "Tạo cây" thay vì render cây SRV
         await _swapBkWrap('nd-bk-wrap', () => Promise.resolve(bkRender()));
         toast('🔄 Cây thi đấu đã được cập nhật từ SRV', 'in', 2500);
       }
@@ -7183,7 +7184,13 @@ async function _ndBkRender() {
     if (_isBkStale()) return;
     const loaded = await _bkLoadTreeFromSheet();
     if (_isBkStale()) return;
-    if (loaded || _bkCurrentTree) {
+    // FIX v59: Chỉ _swapBkWrap khi có CÂY MỚI từ SRV (loaded=true)
+    // Nếu loaded=false (version không đổi) → _bkCurrentTree đã được render bởi _renderNow() rồi
+    // Tránh loop: _swapBkWrap → _ndBkRender → setTimeout → _swapBkWrap → ...
+    if (loaded) {
+      await _swapBkWrap('nd-bk-wrap', () => Promise.resolve(bkRender()));
+    } else if (_bkCurrentTree && !document.querySelector('#nd-bk-content .bk-round, #nd-bk-content .bk-col')) {
+      // Fallback: có cây trong memory nhưng DOM trống (reload trang, chưa render lần nào)
       await _swapBkWrap('nd-bk-wrap', () => Promise.resolve(bkRender()));
     }
   }, 300);
@@ -7217,12 +7224,14 @@ async function _ndBkRender() {
   }
 
   if (hasCacheData && ndChanged) {
-    // Đổi nội dung nhưng data đã có → render ngay rồi smart-merge từ Máy chủ nền
+    // Đổi nội dung nhưng data đã có → render ngay (cache), rồi fetch SRV ngầm
     _renderNow();
-    // Fetch ngầm: smart merge Máy chủ + local, re-render nếu có thay đổi thực
-    loadMatchesCache(_snapBkGiai, true).then(() => {
+    // Fetch ngầm từ SRV: load Matches + BracketTree rồi re-render nếu có cây
+    loadMatchesCache(_snapBkGiai, true).then(async () => {
       if (_isBkStale()) return;
-      _bkCurrentTree = null;
+      // FIX v59: Load BracketTree từ SRV thay vì null tree → bkRender thấy null hiện "Tạo cây"
+      await _bkLoadTreeFromSheet();
+      if (_isBkStale()) return;
       _renderNow();
     }).catch(() => {});
     return;
