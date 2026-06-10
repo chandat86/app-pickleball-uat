@@ -144,7 +144,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .live-teams{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center}
 .live-team{display:flex;flex-direction:column;gap:2px}
 .live-team.right{text-align:right;align-items:flex-end}
-.live-team-name{font-size:11px;font-weight:700;color:var(--tx);line-height:1.2;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-team-name{font-size:11px;font-weight:700;color:var(--tx);line-height:1.25;max-width:100px}
+.live-team-name .ln{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-team-name.winning{color:var(--green)}
+.live-team-name.losing{color:var(--tx2)}
 .live-score-wrap{display:flex;align-items:center;justify-content:center;gap:4px}
 .live-score{font-family:var(--font-display);font-size:26px;font-weight:900;line-height:1}
 .live-score.winning{color:var(--green)}
@@ -340,7 +343,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
       <div class="upcoming-section">
         <div class="section-hdr">
           <span style="font-size:14px">📅</span>
-          <div class="section-hdr-title">Trận sắp tới</div>
+          <div class="section-hdr-title">Trận kế tiếp</div>
         </div>
         <div class="upcoming-list" id="upcoming-list">
           <div class="empty-state">Không có dữ liệu</div>
@@ -782,7 +785,7 @@ function renderLive(){
       </div>
       <div class="live-teams">
         <div class="live-team">
-          <div class="live-team-name" title="${esc(tA)}">${esc(shortName(tA))}</div>
+          <div class="live-team-name ${winA?'winning':winB?'losing':''}" title="${esc(tA)}">${tA.split(/\s*-\s*/).map(p=>`<span class="ln">${esc(p)}</span>`).join('')}</div>
         </div>
         <div class="live-score-wrap">
           <span class="live-score ${winA?'winning':winB?'losing':''}">${sA}</span>
@@ -790,7 +793,7 @@ function renderLive(){
           <span class="live-score ${winB?'winning':winA?'losing':''}">${sB}</span>
         </div>
         <div class="live-team right">
-          <div class="live-team-name" title="${esc(tB)}">${esc(shortName(tB))}</div>
+          <div class="live-team-name ${winB?'winning':winA?'losing':''}" title="${esc(tB)}">${tB.split(/\s*-\s*/).map(p=>`<span class="ln">${esc(p)}</span>`).join('')}</div>
         </div>
       </div>
       <div class="live-nd">${nd?nd+' · ':''}${bang} · ${code}</div>
@@ -799,26 +802,35 @@ function renderLive(){
 }
 
 function renderUpcoming(){
-  // Pending matches with time or sorted by bang/code
+  // v7 FIX: "Trận kế tiếp" — mỗi BẢNG (của nội dung đang xem) lấy 2 trận chưa đấu
+  // gần nhất theo MÃ TRẬN (vd: A1 đang đấu/đã xong → hiện A2, A3)
+  const ndList=[...new Set(_groups.map(g=>g.nd))];
+  const activeNd=ndList[_activeNdIdx]||'';
+  const ndGroups=activeNd?_groups.filter(g=>g.nd===activeNd):_groups;
+
   const liveCodes=new Set(_live.filter(r=>!String(r[0]).startsWith('CALL')).map(r=>{
-    const k=String(r[0]||'');const p=k.split('|');return p.length>=4?p[3]:p[p.length-1];
+    const {code}=_liveKeyParts(r); return code;
   }));
-  const done=new Set(_results.map(r=>String(r[4]||'')));
-  const pending=_matches.filter(r=>{
-    const code=String(r[3]||'');
-    return !liveCodes.has(code) && !done.has(code) && String(r[4]||'')&&String(r[7]||'');
-  }).slice(0,20);
+  const done=new Set(_results.map(r=>String(r[2]||'')+'|'+String(r[3]||'')+'|'+String(r[4]||'')));
+
+  let pending=[];
+  ndGroups.forEach(g=>{
+    const ms=g.matches.slice().sort((a,b)=>
+      String(a[3]||'').localeCompare(String(b[3]||''),undefined,{numeric:true,sensitivity:'base'}));
+    const next2=ms.filter(r=>{
+      const code=String(r[3]||'');
+      const key=String(r[1]||'')+'|'+String(r[2]||'')+'|'+code;
+      return !liveCodes.has(code) && !done.has(key);
+    }).slice(0,2);
+    pending.push(...next2);
+  });
+
   const list=document.getElementById('upcoming-list');
   if(!pending.length){list.innerHTML='<div class="empty-state">Không có trận nào sắp thi đấu</div>';return;}
-  // Sort by time then by nd/bang/code
-  pending.sort((a,b)=>{
-    const ta=String(a[11]||''),tb=String(b[11]||'');
-    if(ta&&tb)return ta.localeCompare(tb);
-    if(ta)return-1;if(tb)return 1;
-    return String(a[2]+a[3]).localeCompare(String(b[2]+b[3]));
-  });
+  // Sắp xếp theo bảng rồi mã trận để hiển thị gọn theo nhóm
+  pending.sort((a,b)=>String(a[2]+a[3]).localeCompare(String(b[2]+b[3]),undefined,{numeric:true,sensitivity:'base'}));
   list.innerHTML=pending.map(r=>`<div class="upcoming-card">
-    <div class="upcoming-time">${r[11]||'—'}</div>
+    <div class="upcoming-time">${r[11]||r[3]||'—'}</div>
     <div class="upcoming-teams">
       <div class="upcoming-a" title="${esc(r[4])}">${esc(shortName(String(r[4]||'')))}</div>
       <div class="upcoming-vs">vs</div>
@@ -867,7 +879,7 @@ function switchNd(idx){
   document.querySelectorAll('.panel-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
   document.querySelectorAll('.panel-body').forEach((b,i)=>b.classList.toggle('active',i===idx));
   // v5 FIX: panel phải (đang đấu/ticker) phụ thuộc tab → cập nhật lại khi đổi tab
-  renderLive(); renderTicker(); renderStats();
+  renderLive(); renderTicker(); renderStats(); renderUpcoming();
   // v5 FIX: lưu lại nội dung đang xem để giữ nguyên sau khi reload
   const ndList=[...new Set(_groups.map(g=>g.nd))];
   if(ndList[idx]){try{localStorage.setItem(ACTIVE_ND_KEY,ndList[idx]);}catch(e){}}
