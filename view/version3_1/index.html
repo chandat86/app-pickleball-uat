@@ -217,7 +217,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .sub-body{flex:1;min-height:0;overflow-y:auto;scroll-behavior:smooth;display:none;padding:12px 14px}
 .sub-body.active{display:block}
 /* ── BRACKET full-view ── */
-.bracket-wrap{display:flex;gap:0;overflow-x:auto;padding:8px 0 12px;scroll-behavior:smooth}
+.bracket-wrap{display:flex;gap:0;padding:8px 0 12px;transform-origin:top left;will-change:transform}
+.bracket-scaler{overflow:hidden;width:100%;flex:1;min-height:0}
 .bracket-round{display:flex;flex-direction:column;justify-content:space-around;gap:0;min-width:200px;flex-shrink:0;padding:0 8px;position:relative}
 .bracket-round::after{content:'';position:absolute;right:0;top:10%;bottom:10%;width:1px;background:var(--bdr)}
 .bracket-round:last-child::after{display:none}
@@ -675,7 +676,7 @@ function renderTabs(){
       // Re-render bracket scores in-place (KHÔNG fetch lại API, chỉ cập nhật điểm từ _results)
       if(_bracketCache[nd]){
         const bEl=document.getElementById('bracket-'+safeId);
-        if(bEl)renderBracket(nd,_bracketCache[nd].tree,bEl);
+        if(bEl){renderBracket(nd,_bracketCache[nd].tree,bEl);scaleBracket(safeId);}
       }
     });
   }
@@ -703,7 +704,9 @@ function renderNdBody(nd,ndGroups){
   </div>`;
   // Sub-body cây thi đấu
   const bracketHtml=`<div class="sub-body" id="sb-bracket-${safeId}">
-    <div id="bracket-${safeId}" class="bracket-wrap"><div class="bracket-empty">Đang tải cây thi đấu...</div></div>
+    <div class="bracket-scaler" id="bracket-scaler-${safeId}">
+      <div id="bracket-${safeId}" class="bracket-wrap"><div class="bracket-empty">Đang tải cây thi đấu...</div></div>
+    </div>
   </div>`;
   loadBracket(nd, safeId);
   return subTabHtml+groupHtml+bracketHtml;
@@ -723,6 +726,11 @@ function switchSubTab(safeId, which){
   sbB.classList.toggle('active',!goGroup);
   // Nhớ lựa chọn + báo scroll reset
   notifyScrollReset();
+  // Scale bracket khi switch sang tab cây (lúc này container mới có kích thước thực)
+  if(which==='bracket'){
+    // Lấy safeId từ tham số và scale sau khi DOM paint
+    setTimeout(()=>scaleBracket(safeId),50);
+  }
   const ndMap=Object.fromEntries([...(document.querySelectorAll('[id^="subtabs-"]'))].map(el=>[el.id.replace('subtabs-',''),el]));
   _ndSubTab[safeId]=which;
   // Reset scroll về đầu khi đổi sub-tab
@@ -758,6 +766,7 @@ async function loadBracket(nd, safeId){
     if(stB)stB.style.display='';
     _bracketCache[nd]={tree:d.tree,version:d.version};
     renderBracket(nd, d.tree, el);
+    scaleBracket(safeId);
     // Kiểm tra vòng bảng đã 100% chưa
     const ndGroups=_groups.filter(g=>g.nd===nd);
     const allDone=ndGroups.length>0&&ndGroups.every(g=>g.matches.length>0&&g.results.length>=g.matches.length);
@@ -773,6 +782,24 @@ async function loadBracket(nd, safeId){
     const el=document.getElementById('bracket-'+safeId);
     if(el)el.innerHTML='<div class="bracket-empty">Không tải được cây thi đấu</div>';
   }
+}
+
+function scaleBracket(safeId){
+  // Auto-scale toàn bộ bracket vừa khung container — không cần scroll
+  requestAnimationFrame(()=>{
+    const scaler=document.getElementById('bracket-scaler-'+safeId);
+    const wrap=document.getElementById('bracket-'+safeId);
+    if(!scaler||!wrap)return;
+    const cW=scaler.clientWidth, cH=scaler.clientHeight||600;
+    const wW=wrap.scrollWidth, wH=wrap.scrollHeight;
+    if(wW<=0||wH<=0)return;
+    const scaleX=cW/wW, scaleY=cH/wH;
+    const scale=Math.min(scaleX,scaleY,1); // không zoom in, chỉ zoom out
+    wrap.style.transform=`scale(${scale})`;
+    wrap.style.transformOrigin='top left';
+    // Đặt height container = height sau scale để không có khoảng trắng
+    scaler.style.height=Math.ceil(wH*scale)+'px';
+  });
 }
 
 function renderBracket(nd, tree, el){
