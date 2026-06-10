@@ -622,30 +622,63 @@ function renderStats(){
 }
 
 let _tabRestored=false;
+let _tabsBuilt=false; // bodies chỉ build 1 lần duy nhất
+
 function renderTabs(){
   const tabs=document.getElementById('panel-tabs');
   const bodies=document.getElementById('panel-bodies');
-  // Build nd tabs
   const ndList=[...new Set(_groups.map(g=>g.nd))];
   if(!ndList.length)return;
-  // v5 FIX: khôi phục tab đã chọn trước khi reload (chỉ 1 lần, lần đầu có data)
+
+  // Khôi phục tab đã chọn (chỉ 1 lần)
   if(!_tabRestored){
     _tabRestored=true;
     try{
       const saved=localStorage.getItem(ACTIVE_ND_KEY);
-      if(saved){
-        const idx=ndList.indexOf(saved);
-        if(idx>=0)_activeNdIdx=idx;
-      }
+      if(saved){const idx=ndList.indexOf(saved);if(idx>=0)_activeNdIdx=idx;}
     }catch(e){}
   }
   if(_activeNdIdx>=ndList.length)_activeNdIdx=0;
+
+  // Tabs header: rebuild mỗi lần (nhẹ, không ảnh hưởng DOM bên dưới)
   tabs.innerHTML=ndList.map((nd,i)=>`<div class="panel-tab${i===_activeNdIdx?' active':''}" onclick="switchNd(${i})">${nd}</div>`).join('');
-  // Build bodies
-  bodies.innerHTML=ndList.map((nd,i)=>{
-    const ndGroups=_groups.filter(g=>g.nd===nd);
-    return `<div class="panel-body${i===_activeNdIdx?' active':''}" data-nd-idx="${i}">${renderNdBody(nd,ndGroups)}</div>`;
-  }).join('');
+
+  if(!_tabsBuilt){
+    // Lần đầu: tạo toàn bộ panel-body + sub-tab + bracket placeholder
+    _tabsBuilt=true;
+    bodies.innerHTML=ndList.map((nd,i)=>{
+      const ndGroups=_groups.filter(g=>g.nd===nd);
+      return `<div class="panel-body${i===_activeNdIdx?' active':''}" data-nd-idx="${i}">${renderNdBody(nd,ndGroups)}</div>`;
+    }).join('');
+  } else {
+    // Các lần sau: chỉ update BXH in-place, KHÔNG đụng đến sub-tab/bracket HTML
+    ndList.forEach((nd,i)=>{
+      const ndGroups=_groups.filter(g=>g.nd===nd);
+      const n=ndGroups.length;
+      const safeId=nd.replace(/[^a-zA-Z0-9]/g,'_');
+
+      // Cập nhật active trên panel-body
+      const pb=document.querySelector(`.panel-body[data-nd-idx="${i}"]`);
+      if(pb)pb.classList.toggle('active',i===_activeNdIdx);
+
+      // Update BXH grid in-place
+      const gridEl=document.getElementById('bxh-grid-'+safeId);
+      if(gridEl){
+        let colClass='',sizeClass='';
+        if(n>=10){colClass='cols-4';sizeClass='mini';}
+        else if(n>=7){colClass='cols-3';sizeClass='compact';}
+        else if(n>=4){colClass='cols-3';}
+        gridEl.className=`bxh-grid ${colClass} ${sizeClass}`;
+        gridEl.innerHTML=ndGroups.map(g=>renderBXHCard(g,n)).join('');
+      }
+
+      // Re-render bracket scores in-place (KHÔNG fetch lại API, chỉ cập nhật điểm từ _results)
+      if(_bracketCache[nd]){
+        const bEl=document.getElementById('bracket-'+safeId);
+        if(bEl)renderBracket(nd,_bracketCache[nd].tree,bEl);
+      }
+    });
+  }
 }
 
 // _ndSubTab[nd] = 'group' | 'bracket'  — nhớ sub-tab của từng nội dung
@@ -666,7 +699,7 @@ function renderNdBody(nd,ndGroups){
   else if(n>=7){colClass='cols-3';sizeClass='compact';}
   else if(n>=4){colClass='cols-3';}
   const groupHtml=`<div class="sub-body active" id="sb-group-${safeId}">
-    <div class="bxh-grid ${colClass} ${sizeClass}">${ndGroups.map(g=>renderBXHCard(g,n)).join('')}</div>
+    <div class="bxh-grid ${colClass} ${sizeClass}" id="bxh-grid-${safeId}">${ndGroups.map(g=>renderBXHCard(g,n)).join('')}</div>
   </div>`;
   // Sub-body cây thi đấu
   const bracketHtml=`<div class="sub-body" id="sb-bracket-${safeId}">
