@@ -3025,15 +3025,18 @@ window.onload = () => {
   if (s) {
     try {
       const j = JSON.parse(s);
-      // Nếu session lưu URL khác với URL của trang này → clear toàn bộ, về màn đăng nhập
+      // v57 FIX: so sánh URL session với DEFAULT_GAS_URL (hardcode trong file)
+      // Khi deploy file mới với URL mới → session cũ bị clear tự động, không cần f12
       const sessionUrl = (j.u||'').replace(/\/+$/,'').toLowerCase();
       const pageUrl    = DEFAULT_GAS_URL.replace(/\/+$/,'').toLowerCase();
-      if (sessionUrl && pageUrl && sessionUrl !== pageUrl) {
-        localStorage.removeItem('pb_adm3');
-        localStorage.removeItem('pb_gs_url');
-        localStorage.removeItem('pb_adm_code');
+      const urlMismatch = sessionUrl && pageUrl && sessionUrl !== pageUrl;
+      if (urlMismatch) {
+        // URL đã đổi → clear session cũ hoàn toàn
+        ['pb_adm3','pb_gs_url','pb_adm_code'].forEach(k=>localStorage.removeItem(k));
+        // Xóa luôn toàn bộ cache data cũ (trận, kết quả...) để tránh hiện nhầm data
+        Object.keys(localStorage).filter(k=>k.startsWith('pb_')).forEach(k=>localStorage.removeItem(k));
         if (urlEl) urlEl.value = DEFAULT_GAS_URL;
-        return; // về màn đăng nhập với URL mới
+        return; // về màn đăng nhập sạch
       }
       GS=j.u; CODE=j.c; NAME=j.n; ROLE=j.r||'admin'; MY_GIAI=j.g||'';
       MY_GIAI_LIST = MY_GIAI ? MY_GIAI.split(',').map(g=>g.trim()).filter(Boolean) : [];
