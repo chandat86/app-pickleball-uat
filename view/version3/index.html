@@ -592,7 +592,7 @@ function render(){
   renderLive();
   renderUpcoming();
   renderTicker();
-  startAutoScroll();
+  initAutoScroll(); // chỉ khởi động lần đầu, không reset nếu đã chạy
 }
 
 function renderStats(){
@@ -676,6 +676,7 @@ function renderNdBody(nd,ndGroups){
   return subTabHtml+groupHtml+bracketHtml;
 }
 
+
 function switchSubTab(safeId, which){
   const stG=document.getElementById('st-group-'+safeId);
   const stB=document.getElementById('st-bracket-'+safeId);
@@ -687,7 +688,8 @@ function switchSubTab(safeId, which){
   stB.classList.toggle('active',!goGroup);
   sbG.classList.toggle('active',goGroup);
   sbB.classList.toggle('active',!goGroup);
-  // Nhớ lựa chọn
+  // Nhớ lựa chọn + báo scroll reset
+  notifyScrollReset();
   const ndMap=Object.fromEntries([...(document.querySelectorAll('[id^="subtabs-"]'))].map(el=>[el.id.replace('subtabs-',''),el]));
   _ndSubTab[safeId]=which;
   // Reset scroll về đầu khi đổi sub-tab
@@ -940,22 +942,46 @@ function renderTicker(){
 
 // ── AUTO SCROLL: tự cuộn panel BXH khi nội dung dài hơn khung (TV không có remote) ──
 let _scrollTimer=null;
-function startAutoScroll(){
-  clearInterval(_scrollTimer);
-  let dir=1, pauseUntil=Date.now()+2000;
-  _scrollTimer=setInterval(()=>{
-    // Tìm sub-body đang active trong panel-body đang active
-    const activePanel=document.querySelector('.panel-body.active');
-    if(!activePanel)return;
-    const el=activePanel.querySelector('.sub-body.active');
-    if(!el)return;
-    const max=el.scrollHeight-el.clientHeight;
-    if(max<=4){el.scrollTop=0;return;} // vừa khung → không cuộn
-    if(Date.now()<pauseUntil)return;
-    el.scrollTop+=dir*1.2;
-    if(el.scrollTop>=max-1){el.scrollTop=max;dir=-1;pauseUntil=Date.now()+3500;}
-    else if(el.scrollTop<=1&&dir===-1){el.scrollTop=0;dir=1;pauseUntil=Date.now()+3500;}
-  },40);
+let _scrollEl=null;   // element đang cuộn — chỉ reset khi đổi element thực sự
+let _scrollDir=1;
+let _scrollPause=Date.now()+3000; // chờ 3s khi bắt đầu
+
+// Gọi 1 lần duy nhất khi khởi động — KHÔNG gọi lại sau mỗi fetchAll/renderTabs
+function initAutoScroll(){
+  if(_scrollTimer)return; // đã chạy rồi thì không khởi động lại
+  _scrollTimer=setInterval(_scrollTick,40);
+}
+
+function _scrollTick(){
+  const activePanel=document.querySelector('.panel-body.active');
+  if(!activePanel)return;
+  const el=activePanel.querySelector('.sub-body.active');
+  if(!el)return;
+  // Nếu đổi sang element khác (đổi tab/sub-tab) → reset trạng thái scroll nhưng KHÔNG ngắt interval
+  if(el!==_scrollEl){
+    _scrollEl=el;
+    _scrollDir=1;
+    _scrollPause=Date.now()+4000; // dừng 4s khi vào tab mới
+    return;
+  }
+  const max=el.scrollHeight-el.clientHeight;
+  if(max<=8){el.scrollTop=0;return;} // vừa khung → không cuộn gì
+  if(Date.now()<_scrollPause)return;
+  el.scrollTop+=_scrollDir*0.8; // chậm hơn: 0.8px/tick = 20px/s
+  if(el.scrollTop>=max-2){
+    el.scrollTop=max;
+    _scrollDir=-1;
+    _scrollPause=Date.now()+6000; // dừng 6s ở cuối để đọc nốt
+  } else if(el.scrollTop<=2&&_scrollDir===-1){
+    el.scrollTop=0;
+    _scrollDir=1;
+    _scrollPause=Date.now()+5000; // dừng 5s ở đầu
+  }
+}
+
+// Chỉ dùng khi user tự chuyển tab/sub-tab → báo cho scroll biết đổi element
+function notifyScrollReset(){
+  _scrollEl=null; // sẽ detect element mới ở tick tiếp theo
 }
 
 // ── TAB SWITCH ──
@@ -966,7 +992,7 @@ function switchNd(idx){
   document.querySelectorAll('.panel-body').forEach((b,i)=>b.classList.toggle('active',i===idx));
   // v5 FIX: panel phải (đang đấu/ticker) phụ thuộc tab → cập nhật lại khi đổi tab
   renderLive(); renderTicker(); renderStats(); renderUpcoming();
-  startAutoScroll(); // v8: panel mới (tab khác) có thể có chiều cao khác → reset auto-scroll
+  notifyScrollReset(); // tab mới → báo scroll detect element mới
   // v5 FIX: lưu lại nội dung đang xem để giữ nguyên sau khi reload
   const ndList=[...new Set(_groups.map(g=>g.nd))];
   if(ndList[idx]){try{localStorage.setItem(ACTIVE_ND_KEY,ndList[idx]);}catch(e){}}
@@ -987,6 +1013,8 @@ function resetRotate(){clearInterval(_rotateTimer);startRotate();}
 function startPolling(){
   startRotate();
   _pollTimer=setInterval(fetchAll, POLL_SEC*1000);
+  // Auto-scroll khởi động 1 lần duy nhất tại đây sau khi data sẵn sàng
+  // (initAutoScroll trong render() sẽ xử lý, không cần gọi thêm)
 }
 
 // ── UTILS ──
