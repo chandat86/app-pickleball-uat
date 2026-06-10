@@ -104,7 +104,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .bxh-card-hdr{background:var(--bg4);padding:7px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bdr)}
 .bxh-card-title{font-family:var(--font-display);font-size:14px;font-weight:800;letter-spacing:.5px;color:var(--tx)}
 .bxh-card-badge{font-size:10px;font-weight:700;color:var(--tx3);background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;padding:2px 7px}
-.bxh-table{width:100%;border-collapse:collapse;font-size:12px}
+.bxh-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
 .bxh-table th{padding:5px 8px;text-align:left;font-size:9px;font-weight:700;color:var(--tx3);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--bdr)}
 .bxh-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.04)}
 .bxh-table tr:last-child td{border-bottom:none}
@@ -114,8 +114,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .rank-2{background:#94a3b8;color:#000}
 .rank-3{background:#cd7f32;color:#fff}
 .rank-x{background:var(--bg4);color:var(--tx3)}
-.team-name{font-weight:600;font-size:12px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
-.pts-badge{font-family:var(--font-display);font-size:16px;font-weight:900;color:var(--green);min-width:22px;text-align:center}
+.team-name{font-weight:600;font-size:12px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;width:100%}
+.pts-badge{font-family:var(--font-display);font-size:16px;font-weight:900;color:var(--green);text-align:center}
+.bxh-table td,.bxh-table th{overflow:hidden}
 .hs-val{font-family:var(--font-display);font-size:13px;font-weight:700;text-align:right}
 .hs-pos{color:var(--green)}
 .hs-neg{color:var(--red)}
@@ -198,6 +199,21 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 
 /* ── LAYOUT WRAPPER ── */
 .screen{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* ── BRACKET (CÂY THI ĐẤU) ── */
+.bracket-section{margin-top:14px;border-top:1px solid var(--bdr2);padding-top:12px}
+.bracket-title{font-family:var(--font-display);font-size:14px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.bracket-title::after{content:'';flex:1;height:1px;background:rgba(251,191,36,.25)}
+.bracket-wrap{display:flex;gap:18px;overflow-x:auto;padding:4px 2px 10px}
+.bracket-round{display:flex;flex-direction:column;justify-content:space-around;gap:14px;min-width:170px;flex-shrink:0}
+.bracket-round-title{font-size:10px;font-weight:800;text-align:center;color:var(--tx2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:2px}
+.bracket-match{background:var(--bg3);border:1px solid var(--bdr2);border-radius:8px;padding:6px 10px;font-size:12px}
+.bracket-team{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:3px 0;color:var(--tx2);font-weight:600}
+.bracket-team:first-child{border-bottom:1px solid var(--bdr)}
+.bracket-team.winner{color:var(--green)}
+.bracket-team .bn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+.bracket-team .bs{font-family:var(--font-display);font-weight:900;font-size:14px;flex-shrink:0}
+.bracket-empty{padding:16px;text-align:center;color:var(--tx3);font-size:11px}
 
 /* ── DONE STAGE: no more groups ── */
 .done-section{padding:16px;text-align:center}
@@ -336,7 +352,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 // ════════════════════════════════════════════════════════
 // CẤU HÌNH CỐ ĐỊNH — Admin chỉnh URL này 1 lần khi triển khai
 // ════════════════════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWasb4KravYHNR6Q9d55qevrut8O9Kep80nZKBq4Rj05TA3XhNF-fymIRtr75HRJv6/exec';
+const GAS_URL = 'https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXX/exec';
 
 const POLL_SEC=10, ROTATE_SEC=20;
 let _pollTimer=null, _rotateTimer=null, _activeNdIdx=0;
@@ -567,7 +583,74 @@ function renderNdBody(nd,ndGroups){
   if(n>=10){colClass='cols-4';sizeClass='mini';}
   else if(n>=7){colClass='cols-3';sizeClass='compact';}
   else if(n>=4){colClass='cols-3';}
-  return`<div class="bxh-grid ${colClass} ${sizeClass}">${ndGroups.map(g=>renderBXHCard(g,n)).join('')}</div>`;
+  let html=`<div class="bxh-grid ${colClass} ${sizeClass}">${ndGroups.map(g=>renderBXHCard(g,n)).join('')}</div>`;
+  // v4: vòng bảng đã xong 100% → tự động nạp & hiện Cây thi đấu (vòng loại trực tiếp)
+  const allDone=ndGroups.every(g=>g.matches.length>0 && g.results.length>=g.matches.length);
+  if(allDone){
+    const safeId=nd.replace(/[^a-zA-Z0-9]/g,'_');
+    html+=`<div class="bracket-section">
+      <div class="bracket-title">🏆 Cây thi đấu — Vòng loại trực tiếp</div>
+      <div id="bracket-${safeId}" class="bracket-wrap"><div class="bracket-empty">Đang tải cây thi đấu...</div></div>
+    </div>`;
+    loadBracket(nd, safeId);
+  }
+  return html;
+}
+
+// ── BRACKET: lấy giải đấu (tên) tương ứng với 1 nội dung từ _matches ──
+function getGiaiForNd(nd){
+  const m=_matches.find(r=>String(r[1]||'')===nd);
+  return m?String(m[0]||''):'';
+}
+
+let _bracketCache={}; // nd -> {tree, version}
+async function loadBracket(nd, safeId){
+  const giai=getGiaiForNd(nd);
+  if(!giai)return;
+  try{
+    const url=`${GAS_URL}?action=bracketTree&giai=${encodeURIComponent(giai)}&nd=${encodeURIComponent(nd)}&_t=${Date.now()}`;
+    const r=await fetch(url,{cache:'no-store'});
+    const d=await r.json();
+    const el=document.getElementById('bracket-'+safeId);
+    if(!el)return; // tab đã đổi
+    if(!d.ok||!d.tree?.rounds?.length){
+      el.innerHTML='<div class="bracket-empty">Chưa có cây thi đấu cho nội dung này — Admin chưa tạo Vòng loại trực tiếp.</div>';
+      return;
+    }
+    _bracketCache[nd]={tree:d.tree,version:d.version};
+    renderBracket(nd, d.tree, el);
+  }catch(e){
+    console.error('loadBracket:',e);
+    const el=document.getElementById('bracket-'+safeId);
+    if(el)el.innerHTML='<div class="bracket-empty">Không tải được cây thi đấu</div>';
+  }
+}
+
+function renderBracket(nd, tree, el){
+  const rounds=tree.rounds||[];
+  if(!rounds.length){el.innerHTML='<div class="bracket-empty">Chưa có cây thi đấu</div>';return;}
+  el.innerHTML=rounds.map(round=>{
+    const matches=(round.matches||[]).map(m=>{
+      const nameA=m.teamA||m.seedA||(m.isByeA?'BYE':'TBD');
+      const nameB=m.teamB||m.seedB||(m.isByeB?'BYE':'TBD');
+      // Tìm điểm số từ _results (bang = round.name, code = m.code)
+      const res=_results.find(r=>String(r[2]||'')===nd&&String(r[3]||'')===round.name&&String(r[4]||'')===m.code);
+      let sA='',sB='',winA=false,winB=false;
+      if(res){
+        sA=res[7]??''; sB=res[8]??'';
+        const win=String(res[9]||'');
+        winA=win&&win===String(res[5]||''); winB=win&&win===String(res[6]||'');
+      }
+      return`<div class="bracket-match">
+        <div class="bracket-team${winA?' winner':''}"><span class="bn" title="${esc(nameA)}">${esc(shortName(nameA,120))}</span><span class="bs">${esc(String(sA))}</span></div>
+        <div class="bracket-team${winB?' winner':''}"><span class="bn" title="${esc(nameB)}">${esc(shortName(nameB,120))}</span><span class="bs">${esc(String(sB))}</span></div>
+      </div>`;
+    }).join('');
+    return`<div class="bracket-round">
+      <div class="bracket-round-title">${esc(round.name)}</div>
+      ${matches||'<div class="bracket-empty">—</div>'}
+    </div>`;
+  }).join('');
 }
 
 function renderBXHCard(g,n){
@@ -581,26 +664,30 @@ function renderBXHCard(g,n){
     const hsClass=hs>0?'hs-pos':hs<0?'hs-neg':'hs-zer';
     const hsStr=hs>0?`+${hs}`:String(hs);
     return`<tr>
-      <td><div style="display:flex;align-items:center;gap:6px">
+      <td style="overflow:hidden"><div style="display:flex;align-items:center;gap:6px;min-width:0">
         <div class="rank-badge ${rankClass}">${s.rank}</div>
-        <span class="team-name" style="max-width:${maxW}px" title="${esc(s.team)}">${esc(shortName(s.team,maxW))}</span>
+        <span class="team-name" title="${esc(s.team)}">${esc(shortName(s.team,maxW))}</span>
       </div></td>
       <td style="text-align:center;font-size:11px;color:var(--tx3)">${s.played}</td>
       <td style="text-align:center;font-size:11px;color:var(--green)">${s.won}</td>
       <td style="text-align:center;font-size:11px;color:var(--red)">${s.lost}</td>
       <td class="hs-val ${hsClass}">${hsStr}</td>
-      <td><div class="pts-badge">${s.pts}</div></td>
+      <td style="text-align:center"><div class="pts-badge">${s.pts}</div></td>
     </tr>`;
   }).join('');
   const statusColor=pct===100?'var(--green)':pct>0?'var(--amber)':'var(--tx3)';
+  // v4 FIX: colgroup % cố định — Đội rộng nhất, các cột số nhỏ gọn, ĐS không bị tràn
   return`<div class="bxh-card">
     <div class="bxh-card-hdr">
       <span class="bxh-card-title">${esc(g.bang)}</span>
       <span class="bxh-card-badge" style="color:${statusColor}">${pct===100?'✅ Xong':pct>0?pct+'%':'Chưa đấu'}</span>
     </div>
     <table class="bxh-table">
+      <colgroup>
+        <col style="width:46%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:13%"><col style="width:14%">
+      </colgroup>
       <thead><tr>
-        <th>Đội</th><th style="text-align:center">T</th><th style="text-align:center">W</th><th style="text-align:center">L</th><th style="text-align:right">HS</th><th>ĐS</th>
+        <th>Đội</th><th style="text-align:center">T</th><th style="text-align:center">W</th><th style="text-align:center">L</th><th style="text-align:right">HS</th><th style="text-align:center">ĐS</th>
       </tr></thead>
       <tbody>${rows||'<tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:12px;font-size:11px">Chưa có kết quả</td></tr>'}</tbody>
     </table>
@@ -737,14 +824,14 @@ function shortName(s,maxW){
   if(s.length<=limit)return s;
   const parts=s.split(/\s*-\s*/);
   if(parts.length>=2){
-    // Tách họ tên → lấy tên cuối
+    // v4 FIX: giữ dấu " - " giống tên gốc (không đổi thành "/")
     const abbr=parts.map(p=>{
       const ws=p.trim().split(' ');
       if(maxW&&maxW<=80)return ws[ws.length-1]; // chỉ tên cuối khi rất nhỏ
       return ws.slice(-2).join(' '); // 2 từ cuối bình thường
-    }).join(' / ');
+    }).join(' - ');
     if(abbr.length<=limit+4)return abbr;
-    return parts.map(p=>p.trim().split(' ').pop()).join(' / ');
+    return parts.map(p=>p.trim().split(' ').pop()).join(' - ');
   }
   return s.slice(0,limit)+'…';
 }
