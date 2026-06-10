@@ -114,8 +114,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .rank-2{background:#94a3b8;color:#000}
 .rank-3{background:#cd7f32;color:#fff}
 .rank-x{background:var(--bg4);color:var(--tx3)}
-.team-name{font-weight:600;font-size:12px;color:var(--tx);line-height:1.3;width:100%;word-break:break-word}
-.team-name .pn{display:block;white-space:normal}
+.team-name{font-weight:600;font-size:12px;color:var(--tx);line-height:1.3;width:100%;min-width:0}
+.team-name .pn{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .team-name .pn:not(:first-child){color:var(--tx2);font-weight:500}
 .pts-badge{font-family:var(--font-display);font-size:16px;font-weight:900;color:var(--green);text-align:center}
 .bxh-table td,.bxh-table th{overflow:hidden}
@@ -570,26 +570,38 @@ function calcStandings(rList,allTeams){
 
 // ── RENDER ──
 function render(){
-  renderStats();
+  // v6 FIX: renderTabs trước (khôi phục _activeNdIdx) → renderStats sau mới đúng nội dung
   renderTabs();
+  renderStats();
   renderLive();
   renderUpcoming();
   renderTicker();
 }
 
 function renderStats(){
-  const total=_matches.length;
-  const done=_matches.filter(r=>r[5]!==''&&r[5]!==null&&r[6]!==''&&r[6]!==null).length;
-  const live=_live.filter(r=>!String(r[0]||'').startsWith('CALL')).length;
+  // v6 FIX: thống kê theo NỘI DUNG đang xem (tab active), không phải tổng cả giải
+  const ndList=[...new Set(_groups.map(g=>g.nd))];
+  const activeNd=ndList[_activeNdIdx]||'';
+  const mList=activeNd?_matches.filter(r=>String(r[1]||'')===activeNd):_matches;
+  const lList=_live.filter(r=>{
+    if(String(r[0]||'').startsWith('CALL'))return false;
+    if(!activeNd)return true;
+    const {nd}=_liveKeyParts(r);
+    return nd===activeNd;
+  });
+  const total=mList.length;
+  const done=mList.filter(r=>r[5]!==''&&r[5]!==null&&r[6]!==''&&r[6]!==null).length;
+  const live=lList.length;
   const remain=total-done-live;
   document.getElementById('st-total').textContent=total||'—';
   document.getElementById('st-done').textContent=done||'0';
   document.getElementById('st-live').textContent=live||'0';
   document.getElementById('st-remain').textContent=Math.max(0,remain)||'0';
-  const bangs=[...new Set(_matches.map(r=>String(r[2]||'')).filter(Boolean))];
-  document.getElementById('st-nd').textContent=`${_nds.length} · ${bangs.length}`;
-  // Live pill
-  document.getElementById('live-pill').style.display=live>0?'flex':'none';
+  const bangs=[...new Set(mList.map(r=>String(r[2]||'')).filter(Boolean))];
+  document.getElementById('st-nd').textContent=activeNd?`${esc(activeNd)} · ${bangs.length} bảng`:`${_nds.length} · ${bangs.length}`;
+  // Live pill — vẫn hiện nếu BẤT KỲ nội dung nào đang có trận live (không chỉ tab hiện tại)
+  const anyLive=_live.filter(r=>!String(r[0]||'').startsWith('CALL')).length;
+  document.getElementById('live-pill').style.display=anyLive>0?'flex':'none';
 }
 
 let _tabRestored=false;
@@ -854,7 +866,7 @@ function switchNd(idx){
   document.querySelectorAll('.panel-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
   document.querySelectorAll('.panel-body').forEach((b,i)=>b.classList.toggle('active',i===idx));
   // v5 FIX: panel phải (đang đấu/ticker) phụ thuộc tab → cập nhật lại khi đổi tab
-  renderLive(); renderTicker();
+  renderLive(); renderTicker(); renderStats();
   // v5 FIX: lưu lại nội dung đang xem để giữ nguyên sau khi reload
   const ndList=[...new Set(_groups.map(g=>g.nd))];
   if(ndList[idx]){try{localStorage.setItem(ACTIVE_ND_KEY,ndList[idx]);}catch(e){}}
