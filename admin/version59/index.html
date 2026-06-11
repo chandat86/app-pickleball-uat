@@ -5844,9 +5844,8 @@ async function ndRefresh() {
     _invalidateMatchCache(_curGiaiId||''); // force fetch từ Máy chủ, không dùng cache cũ
     await loadMatchesCache(_curGiaiId||'', true);
     if (bracketActive) {
-      // FIX v58: Luôn dùng _curGiaiId/_curNd khi đã được set
-      if (_curGiaiId) _bkGiai = _curGiaiId;
-      if (_curNd)     _bkNd   = _curNd;
+      _bkGiai = _curGiaiId || _bkGiai;
+      _bkNd   = _curNd     || _bkNd;
       _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
       _ndBkRender();
     } else {
@@ -5881,8 +5880,7 @@ function _bkStartSyncPoll() {
       // Có phiên bản mới → load cây từ SRV
       const loaded = await _bkLoadTreeFromSheet();
       if (loaded) {
-        // FIX v59: KHÔNG null _bkCurrentTree — _bkLoadTreeFromSheet đã set tree mới rồi
-        // null ở đây khiến bkRender() thấy null → hiện "Tạo cây" thay vì render cây SRV
+        _bkCurrentTree = null; // force bkRender dùng tree mới từ SRV
         await _swapBkWrap('nd-bk-wrap', () => Promise.resolve(bkRender()));
         toast('🔄 Cây thi đấu đã được cập nhật từ SRV', 'in', 2500);
       }
@@ -7139,20 +7137,19 @@ async function confirmGenerateSchedule() {
 
 
 // ── Render cây thi đấu vào nd-bk-wrap (dùng ID swap) ──
-// v59: Logic v56 (render cache ngay → fast) + fix ndChanged reset + race condition guard
+// v2: render ngay từ cache → nhanh, rồi fetch ngầm nếu data cũ/đổi nội dung
 async function _ndBkRender() {
-  // Block 5s sau xóa cây — tránh race condition với Máy chủ
+  // v7: Block mọi auto-render trong 5s sau khi xóa cây — tránh Máy chủ race condition
   if (_bkDeletedAt && Date.now() - _bkDeletedAt < 5000) {
     console.log('[BK] _ndBkRender blocked (just deleted, ' + Math.round((Date.now()-_bkDeletedAt)/1000) + 's ago)');
     return;
   }
   const prevGiai = _bkGiai, prevNd = _bkNd;
-  // FIX: Luôn sync từ _curGiaiId/_curNd khi đã set
-  if (_curGiaiId) _bkGiai = _curGiaiId;
-  if (_curNd)     _bkNd   = _curNd;
+  _bkGiai = _curGiaiId || _bkGiai;
+  _bkNd   = _curNd     || _bkNd;
   _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
 
-  // Snapshot để guard mọi callback async
+  // FIX: Snapshot nd tại thời điểm gọi — dùng để guard mọi callback async
   const _snapBkGiai = _bkGiai, _snapBkNd = _bkNd;
   const _isBkStale = () => _bkGiai !== _snapBkGiai || _bkNd !== _snapBkNd;
 
@@ -7164,43 +7161,35 @@ async function _ndBkRender() {
   }
 
   const ndChanged = (prevGiai !== _bkGiai || prevNd !== _bkNd);
+  // v37: Không reset khi _bkApplied=true — cây đã khóa, chỉ resolve winners
+  if (ndChanged && !_bkApplied) _bkCurrentTree = null;
 
-  // FIX: Khi chuyển nội dung → reset TOÀN BỘ bracket state
-  // v56 chỉ reset _bkCurrentTree khi !_bkApplied → cây Applied của nd cũ vẫn hiện
+  // FIX: Khi switch nội dung → clear cây ngay, không để cây cũ hiện trong khi load
   if (ndChanged) {
-    _bkCurrentTree = null;
-    _bkApplied     = false;
-    _bkIsEmpty     = false;
-    _bkLastVersion = 0; // tránh bỏ qua cây nd mới vì version thấp hơn nd cũ
     const ndContent = document.getElementById('nd-bk-content');
     if (ndContent) ndContent.innerHTML = '';
   }
 
   _bkOverrides = _bkLoadOverrides();
   _bkSaveState();
-
-  // ── GIỐNG v56: Load cây từ SRV ngầm (setTimeout 300ms), render cache NGAY ──
+  // v37: Load cây từ SRV BracketTree — single source of truth
+  // Render local trước (nhanh), sau đó sync từ SRV
   setTimeout(async () => {
-    if (_isBkStale()) return;
+    if (_isBkStale()) return; // FIX: user đã chuyển nd khác trong 300ms
     const loaded = await _bkLoadTreeFromSheet();
-    if (_isBkStale()) return;
-    // FIX v59: Chỉ _swapBkWrap khi có CÂY MỚI từ SRV (loaded=true)
-    // Nếu loaded=false (version không đổi) → _bkCurrentTree đã được render bởi _renderNow() rồi
-    // Tránh loop: _swapBkWrap → _ndBkRender → setTimeout → _swapBkWrap → ...
-    if (loaded) {
-      await _swapBkWrap('nd-bk-wrap', () => Promise.resolve(bkRender()));
-    } else if (_bkCurrentTree && !document.querySelector('#nd-bk-content .bk-round, #nd-bk-content .bk-col')) {
-      // Fallback: có cây trong memory nhưng DOM trống (reload trang, chưa render lần nào)
+    if (_isBkStale()) return; // FIX: guard sau await
+    if (loaded || _bkCurrentTree) {
       await _swapBkWrap('nd-bk-wrap', () => Promise.resolve(bkRender()));
     }
   }, 300);
 
-  // Helper: vẽ cây vào DOM ngay — swap nd-bk-content (KHÔNG swap nd-bk-wrap để giữ scroll)
+  // Helper: vẽ cây vào ndWrap ngay lập tức
+  // FIX v21: swap nd-bk-CONTENT (con), không swap nd-bk-wrap (cha scroll container)
   const _renderNow = () => {
-    if (_isBkStale()) return;
+    if (_isBkStale()) return; // FIX: không render nếu đã switch sang nd khác
     const ndContent = document.getElementById('nd-bk-content');
     const realWrap  = document.getElementById('bk-wrap');
-    const target    = ndContent || ndWrap;
+    const target    = ndContent || ndWrap; // fallback nếu chưa có content div
     if (realWrap) realWrap.id = '_bk_swap_hidden';
     target.id = 'bk-wrap';
     try { bkRender(); }
@@ -7211,11 +7200,24 @@ async function _ndBkRender() {
     setTimeout(_syncBkScrollbar, 80);
   };
 
-  const giaiName     = _bkGiaiName || _resolveGiaiName(_bkGiai) || _bkGiai;
+  const giaiName = _bkGiaiName || _resolveGiaiName(_bkGiai) || _bkGiai;
   const hasCacheData = _M.some(m => String(m[0]||'') === giaiName && String(m[1]||'') === _bkNd);
 
-  // Đọc trạng thái empty từ sessionStorage (survive reload)
+  // v7: Đọc trạng thái empty từ sessionStorage (survive reload)
+  // Nếu session nói "empty" thì giữ, TRỪ KHI có KO matches thật trên Máy chủ
   _bkIsEmpty = _bkReadEmpty();
+  const hasKO = _M.some(m => {
+    if (String(m[0]||'') !== giaiName || String(m[1]||'') !== _bkNd) return false;
+    const v = String(m[9]||'');
+    return v && v !== 'Vòng bảng' && !/^bảng\s+[a-z0-9]/i.test(v);
+  });
+  // Nếu sessionStorage nói empty=true → giữ trống dù _M có KO
+  // (Máy chủ có thể chưa flush xong, hoặc user chưa tạo lại cây)
+  // Chỉ tự reset empty nếu KHÔNG có flag xóa và có KO thật
+  if (hasKO && !_bkIsEmpty) {
+    // Bình thường: có cây thật → hiển thị
+  }
+  // Nếu _bkIsEmpty=true (vừa xóa) thì giữ nguyên dù hasKO
 
   if (hasCacheData && !ndChanged) {
     // DATA ĐÃ CÓ TRONG MEMORY → render ngay, không cần network
@@ -7224,14 +7226,12 @@ async function _ndBkRender() {
   }
 
   if (hasCacheData && ndChanged) {
-    // Đổi nội dung nhưng data đã có → render ngay (cache), rồi fetch SRV ngầm
+    // Đổi nội dung nhưng data đã có → render ngay rồi smart-merge từ Máy chủ nền
     _renderNow();
-    // Fetch ngầm từ SRV: load Matches + BracketTree rồi re-render nếu có cây
-    loadMatchesCache(_snapBkGiai, true).then(async () => {
-      if (_isBkStale()) return;
-      // FIX v59: Load BracketTree từ SRV thay vì null tree → bkRender thấy null hiện "Tạo cây"
-      await _bkLoadTreeFromSheet();
-      if (_isBkStale()) return;
+    // Fetch ngầm: smart merge Máy chủ + local, re-render nếu có thay đổi thực
+    loadMatchesCache(_snapBkGiai, true).then(() => {
+      if (_isBkStale()) return; // FIX: guard stale
+      _bkCurrentTree = null;
       _renderNow();
     }).catch(() => {});
     return;
@@ -7242,15 +7242,14 @@ async function _ndBkRender() {
   try {
     await loadMatchesCache(_snapBkGiai, true);
   } catch(e) { /* tiếp tục với data hiện có */ }
-  if (_isBkStale()) return;
+  if (_isBkStale()) return; // FIX: guard sau await dài
   _renderNow();
 }
 
 // ── ndBk action wrappers ──
 async function ndBkRefresh() {
-  // FIX v58: Luôn dùng _curGiaiId/_curNd khi đã được set
-  if (_curGiaiId) _bkGiai = _curGiaiId;
-  if (_curNd)     _bkNd   = _curNd;
+  _bkGiai = _curGiaiId || _bkGiai;
+  _bkNd   = _curNd     || _bkNd;
   _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
   const btn = document.getElementById('nd-bk-refresh-btn');
   if (btn) { btn.textContent='⏳...'; btn.disabled=true; }
@@ -7271,34 +7270,30 @@ async function ndBkRefresh() {
 }
 
 async function ndBkAutoFill() {
-  // FIX v58: Luôn dùng _curGiaiId/_curNd khi đã được set
-  if (_curGiaiId) _bkGiai = _curGiaiId;
-  if (_curNd)     _bkNd   = _curNd;
+  _bkGiai = _curGiaiId || _bkGiai;
+  _bkNd   = _curNd     || _bkNd;
   _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
   await _swapBkWrap('nd-bk-wrap', () => bkAutoFill());
 }
 
 async function ndBkSave() {
-  // FIX v58: Luôn dùng _curGiaiId/_curNd khi đã được set
-  if (_curGiaiId) _bkGiai = _curGiaiId;
-  if (_curNd)     _bkNd   = _curNd;
+  _bkGiai = _curGiaiId || _bkGiai;
+  _bkNd   = _curNd     || _bkNd;
   _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
   await _swapBkWrap('nd-bk-wrap', () => bkSave());
 }
 
 async function ndBkApply() {
-  // FIX v58: Luôn dùng _curGiaiId/_curNd khi đã được set
-  if (_curGiaiId) _bkGiai = _curGiaiId;
-  if (_curNd)     _bkNd   = _curNd;
+  _bkGiai = _curGiaiId || _bkGiai;
+  _bkNd   = _curNd     || _bkNd;
   _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
   await _swapBkWrap('nd-bk-wrap', () => bkApplyAndSave());
   if (_bkAutoMode) setTimeout(() => _bkAutoAdvanceIfNeeded(), 1000);
 }
 
 async function ndBkDelete() {
-  // FIX v58: Luôn dùng _curGiaiId/_curNd khi đã được set
-  if (_curGiaiId) _bkGiai = _curGiaiId;
-  if (_curNd)     _bkNd   = _curNd;
+  _bkGiai = _curGiaiId || _bkGiai;
+  _bkNd   = _curNd     || _bkNd;
   _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
   // v7 FIX: KHÔNG gọi _ndBkRender() sau xóa vì nó fetch lại Máy chủ và rebuild cây
   // bkDeleteTree() đã tự gọi bkRender() + dừng auto-poll bên trong
@@ -7365,17 +7360,8 @@ function openNdDetail(giaiId, nd) {
   const ndViewVisible = document.getElementById('tv-nd')?.style.display !== 'none';
   const activeTab = ndViewVisible ? _getActiveNdTab() : 'bangs'; // lần đầu vào → bangs
 
-  // FIX v58: Khi chuyển sang nội dung khác → reset TOÀN BỘ bracket state ngay lập tức
-  // Phải reset trước khi gán _curNd/_curGiaiId để _ndBkRender thấy ndChanged=true
-  if (_curNd !== nd || _curGiaiId !== giaiId) {
-    _bkCurrentTree  = null;
-    _bkApplied      = false;
-    _bkIsEmpty      = false;
-    _bkLastVersion  = 0; // FIX v58: Reset version khi đổi nội dung
-    // Clear DOM ngay — không để cây nội dung cũ flash trong khi load
-    const _ndContent = document.getElementById('nd-bk-content');
-    if (_ndContent) _ndContent.innerHTML = '';
-  }
+  // Xóa cache cây cũ khi chuyển sang nội dung khác
+  if (_curNd !== nd || _curGiaiId !== giaiId) _bkCurrentTree = null;
   _curNd = nd; _curGiaiId = giaiId;
   _switchPlayersCtx(giaiId, nd);
   const r = _T.find(t=>String(t[0]||'')===giaiId);
@@ -8788,6 +8774,8 @@ function openEditBangMo(giaiId, nd, bang) {
   const courtInput = buildCourtPills(courts, currentCourt, 'eb-court');
   // Lấy trọng tài hiện tại của bảng (từ m[10] của trận đầu tiên)
   const currentRef = String(matches[0][10]||'');
+  // Lấy giờ thi đấu hiện tại của bảng (từ m[11] của trận đầu tiên) — v59
+  const currentTime = String(matches[0][11]||'').trim();
 
   // Load _U ngầm nếu chưa có (không block modal)
   if (!_U.length) {
@@ -8834,6 +8822,9 @@ function openEditBangMo(giaiId, nd, bang) {
     +'<div><label style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Tên bảng</label>'
     +'<input id="eb-name" type="text" value="'+bang+'" style="width:100%;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--tx)"></div>'
     +'<div><label style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Sân thi đấu</label>'+courtInput+'</div>'
+    +'<div><label style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">🕐 Giờ thi đấu</label>'
+    +'<input id="eb-time" type="time" value="'+currentTime+'" style="background:var(--bg3);border:1.5px solid var(--bdr2);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;color:var(--or);font-family:var(--mo);width:140px;outline:none">'
+    +'<span style="font-size:10px;color:var(--tx3);margin-left:8px">Để trống = giữ nguyên giờ từng trận</span></div>'
     +'<div><label style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">🎯 Trọng tài phụ trách bảng</label>'+refInput+'</div>'
     +'<div><label style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">🏆 Quy tắc điểm</label>'+ruleSelect+'</div>'
     +'</div>'
@@ -8849,6 +8840,7 @@ async function applyEditBang(giaiId, nd, oldBang) {
   const newCourt = (document.getElementById('eb-court').value||'').trim();
   const newRef   = (document.getElementById('eb-ref')?.value||'').trim(); // comma-separated multi-ref
   const newRule  = (document.getElementById('eb-rule')?.value||'11').trim(); // v49: quy tắc điểm
+  const newTime  = (document.getElementById('eb-time')?.value||'').trim(); // v59: giờ thi đấu áp dụng cả bảng
   if (!newBang) { toast('Nhập tên bảng','er'); return; }
   document.getElementById('edit-bang-overlay').remove();
   const giaiNameEB = String((_T.find(t=>String(t[0]||'')===giaiId)||[])[1]||giaiId);
@@ -8865,7 +8857,8 @@ async function applyEditBang(giaiId, nd, oldBang) {
     const d = await gPost({
       action: 'assignCourtToBang', adminCode: CODE,
       giai: giaiNameEB, nd, bang: oldBang,
-      court: newCourt, ref: newRef, rule: newRule // v49: cập nhật rule qua API
+      court: newCourt, ref: newRef, rule: newRule, // v49: cập nhật rule qua API
+      time: newTime // v59: cập nhật giờ thi đấu cho cả bảng
     });
     if (!d?.ok) throw new Error(d?.reason||'Lỗi API');
   } catch(e) {
@@ -8881,6 +8874,7 @@ async function applyEditBang(giaiId, nd, oldBang) {
       newRow[2] = newBang;
       if (newCourt) newRow[8]  = newCourt;
       if (newRef)   newRow[10] = newRef;
+      if (newTime)  newRow[11] = newTime; // v59
       if (newRule)  newRow[12] = newRule; // v49
       if (newRow[0] === giaiId) newRow[0] = giaiNameEB;
       try {
@@ -8906,12 +8900,14 @@ async function applyEditBang(giaiId, nd, oldBang) {
     if (newBang  !== oldBang) _M[idx][2]  = newBang;
     if (newCourt) _M[idx][8]  = newCourt;
     if (newRef !== undefined) _M[idx][10] = newRef; // cập nhật kể cả khi xóa TT (newRef='')
+    if (newTime)  _M[idx][11] = newTime;  // v59: cập nhật giờ thi đấu col[11]
     if (newRule)  _M[idx][12] = newRule;  // v49: cập nhật quy tắc điểm col[12]
   });
 
   const refMsg = newRef ? ` · TT: ${newRef}` : '';
   const courtMsg = newCourt ? ` · Sân: ${newCourt}` : '';
-  toast(`✅ Bảng ${newBang}${courtMsg}${refMsg} — đã cập nhật`, 'ok');
+  const timeMsg = newTime ? ` · Giờ: ${newTime}` : '';
+  toast(`✅ Bảng ${newBang}${courtMsg}${timeMsg}${refMsg} — đã cập nhật`, 'ok');
   renderBangList(giaiId, nd);
 }
 
@@ -10858,8 +10854,6 @@ async function _bkLoadTreeFromSheet() {
   if (!_bkGiai || !_bkNd || !GS) return false;
   try {
     const giaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
-    // FIX v58: Snapshot giai+nd trước khi fetch async — guard chống race condition
-    const _snapGiai = _bkGiai, _snapNd = _bkNd;
     const url = new URL(GS);
     url.searchParams.set('action', 'bracketTree');
     url.searchParams.set('giai', giaiName);
@@ -10867,8 +10861,6 @@ async function _bkLoadTreeFromSheet() {
     url.searchParams.set('_t', Date.now());
     const r = await fetch(url.toString(), { cache: 'no-store' });
     const d = await r.json();
-    // FIX v58: Nếu user đã chuyển nội dung khác trong lúc fetch → bỏ qua kết quả
-    if (_bkGiai !== _snapGiai || _bkNd !== _snapNd) return false;
     if (d.ok && d.tree && d.version) {
       if (d.version <= _bkLastVersion) return false; // không có gì mới
       _bkCurrentTree = d.tree;
@@ -11072,9 +11064,9 @@ function bkRender() {
     const ndWrap = document.getElementById('nd-bk-wrap') || wrap;
     ndWrap.innerHTML = `<div class="empty"><div class="ei">🏆</div>
       <p>Nhấn <b>🏗 Tạo cây</b> để tạo cây thi đấu từ kết quả vòng bảng</p>
-      <p style="font-size:11px;color:var(--tx3);margin-top:4px">${bangs.length} bảng · ${Object.values(seeds).reduce((s,a)=>s+a.length,0)} đội được xếp hạng</p>
+      <p style="font-size:11px;color:var(--tx3);margin-top:4px">${bangs.length} bảng · ${seeds.length} đội được xếp hạng</p>
     </div>`;
-    if (status) status.innerHTML = `<span>${bangs.length} bảng · ${Object.values(seeds).reduce((s,a)=>s+a.length,0)} đội</span>`;
+    if (status) status.innerHTML = `<span>${bangs.length} bảng · ${seeds.length} đội</span>`;
     return;
   }
 
@@ -11567,9 +11559,8 @@ function ndBkToggleByeRule() {
 // Chỉ render cây từ BXH hiện tại để admin xem vị trí các đội.
 // Không tạo trận trong Matches sheet. Dùng "Áp dụng & Tạo lịch" để lưu thật.
 async function ndBkGenChart() {
-  // FIX v58: Luôn dùng _curGiaiId/_curNd khi đã được set
-  if (_curGiaiId) _bkGiai = _curGiaiId;
-  if (_curNd)     _bkNd   = _curNd;
+  _bkGiai = _curGiaiId || _bkGiai;
+  _bkNd   = _curNd     || _bkNd;
   _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
   if (!_bkGiai || !_bkNd) { toast('Chọn giải và nội dung trước', 'er'); return; }
 
@@ -11596,7 +11587,7 @@ async function ndBkGenChart() {
     // Tránh bkRender() thấy _bkCurrentTree=null → hiện màn chờ thay vì cây
     const koMatchesNew = _M.filter(m=>String(m[0]||'')=== (_resolveGiaiName(_bkGiai)||_bkGiai) && String(m[1]||'')===_bkNd)
       .filter(m=>{const v=String(m[9]||'');return v&&v!=='Vòng bảng'&&!v.includes('bảng');});
-    let newTree = _bkBuildTree(seeds, bangs, koMatchesNew, bangDone);
+    let newTree = _bkBuildTree(seeds, bangs, koMatchesNew, bangDone); // FIX v58: thiếu koMatches → tree._meta=undefined, koMatches.forEach lỗi
     newTree = _bkResolveAdvancers(newTree, koMatchesNew);
     _bkCurrentTree = newTree;
 
@@ -11619,9 +11610,8 @@ async function ndBkGenChart() {
 
 // ── Toolbar mới: Áp dụng & Tạo lịch + tự động lưu + bật auto-poll ──
 async function ndBkApplyFull() {
-  // FIX v58: Luôn dùng _curGiaiId/_curNd khi đã được set
-  if (_curGiaiId) _bkGiai = _curGiaiId;
-  if (_curNd)     _bkNd   = _curNd;
+  _bkGiai = _curGiaiId || _bkGiai;
+  _bkNd   = _curNd     || _bkNd;
   _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
   // v8: Chặn nếu cây đang trống (đã xóa, chưa tạo mới)
   if (_bkIsEmpty || !_bkCurrentTree) {
@@ -11672,9 +11662,8 @@ function ndBkToggleEdit() {
 
 // Lưu + tiếp tục auto
 async function ndBkSaveEdit() {
-  // FIX v58: Luôn dùng _curGiaiId/_curNd khi đã được set
-  if (_curGiaiId) _bkGiai = _curGiaiId;
-  if (_curNd)     _bkNd   = _curNd;
+  _bkGiai = _curGiaiId || _bkGiai;
+  _bkNd   = _curNd     || _bkNd;
   _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
   const btn = document.querySelector('#nd-bk-edit-banner button');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang lưu...'; }
