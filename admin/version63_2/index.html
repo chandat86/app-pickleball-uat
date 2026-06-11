@@ -7238,6 +7238,8 @@ async function _ndBkRender() {
       if (_isBkStale()) return;
       if (loaded) _swapBkWrap('nd-bk-wrap', () => Promise.resolve(bkRender()));
     }).catch(() => {});
+    // Prefetch các nd khác (background)
+    _bkPrefetchOtherNds(_bkGiai, _bkNd);
     return;
   }
 
@@ -7249,6 +7251,7 @@ async function _ndBkRender() {
     _bkLoadTreeFromSheet().then(loaded => {
       if (_isBkStale()) return;
       if (loaded || _bkCurrentTree) _swapBkWrap('nd-bk-wrap', () => Promise.resolve(bkRender()));
+      _bkPrefetchOtherNds(_bkGiai, _bkNd); // prefetch sau khi tree load xong
     }).catch(() => {});
     return;
   }
@@ -7263,6 +7266,8 @@ async function _ndBkRender() {
   const loaded = await _bkLoadTreeFromSheet();
   if (_isBkStale()) return;
   _renderNow();
+  // Prefetch các nd khác sau khi render xong
+  _bkPrefetchOtherNds(_bkGiai, _bkNd);
 }
 
 // ── ndBk action wrappers ──
@@ -7419,21 +7424,24 @@ function openNdDetail(giaiId, nd) {
 
   // ── v48: Switch đúng tab, load data tương ứng ──
   if (activeTab === 'bracket') {
-    // Tab Cây thi đấu — cần load matches + overrides trước khi render
     _bkGiai = giaiId;
     _bkNd   = nd;
     _bkGiaiName = _resolveGiaiName(giaiId) || giaiId;
-    switchNdTab('bracket', true); // show panel ngay (loading state)
-    loadMatchesCache(giaiId, true)
-      .then(async () => {
-        if (_isStale()) return;
-        await _bkLoadOverridesFromGAS();
-        if (_isStale()) return;
-        switchNdTab('bracket', true); // re-render sau khi data sẵn sàng
-        await new Promise(r => setTimeout(r, 300));
-        _syncBkScrollbar();
-      })
-      .catch(() => { if (!_isStale()) switchNdTab('bracket', true); });
+    // v63 FIX: Restore từ cache ngay — không await fetch
+    const cacheKey = giaiId + '|' + nd;
+    const cached = _bkTreeCache[cacheKey];
+    if (cached && cached.tree) {
+      _bkCurrentTree = cached.tree;
+      _bkLastVersion = cached.version || 0;
+      _bkApplied     = cached.applied !== false;
+      _bkOverrides   = cached.overrides || {};
+    }
+    switchNdTab('bracket', true); // render ngay từ cache (hoặc skeleton nếu chưa có)
+    // Fetch ngầm để sync version mới (không block UI)
+    loadMatchesCache(giaiId, true).catch(() => {});
+    // v63: Prefetch cây của tất cả nd khác trong cùng giải (background)
+    // → lần sau switch nd sẽ có cache sẵn, hiển thị tức thì
+    _bkPrefetchOtherNds(giaiId, nd);
   } else {
     // Tab Bảng đấu hoặc Danh sách — switch ngay
     switchNdTab(activeTab, true);
@@ -10983,6 +10991,50 @@ async function _bkLoadTreeFromSheet() {
 }
 
 // Lưu cây lên SRV BracketTree (POST)
+
+// v63: Prefetch cây của tất cả nd khác trong cùng giải — chạy ngầm, không block UI
+// Mục đích: lần sau user switch nd, cache đã có sẵn → hiển thị tức thì
+let _bkPrefetchBusy = false;
+async function _bkPrefetchOtherNds(giaiId, currentNd) {
+  if (_bkPrefetchBusy || !giaiId || !GS) return;
+  const r = _T.find(t => String(t[0]||'') === giaiId);
+  if (!r) return;
+  const allNds = (r[7]||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const otherNds = allNds.filter(n => n !== currentNd);
+  if (!otherNds.length) return;
+  _bkPrefetchBusy = true;
+  try {
+    const giaiName = _resolveGiaiName(giaiId) || giaiId;
+    for (const otherNd of otherNds) {
+      const key = giaiId + '|' + otherNd;
+      // Bỏ qua nếu cache còn mới (< 5 phút)
+      if (_bkTreeCache[key] && Date.now() - (_bkTreeCache[key].ts||0) < 300000) continue;
+      try {
+        const url = new URL(GS);
+        url.searchParams.set('action', 'bracketTree');
+        url.searchParams.set('giai', giaiName);
+        url.searchParams.set('nd', otherNd);
+        url.searchParams.set('_t', Date.now());
+        const resp = await fetch(url.toString(), { cache: 'no-store' });
+        const d = await resp.json();
+        if (d.ok && d.tree && d.version) {
+          _bkTreeCache[key] = {
+            tree: d.tree, version: d.version,
+            applied: true,
+            overrides: d.tree._overrides || {},
+            ts: Date.now()
+          };
+          console.log('[BK PREFETCH] Cached nd=' + otherNd + ' v' + d.version);
+        }
+      } catch(e) { /* ignore prefetch errors */ }
+      // Chờ 200ms giữa các request để không spam GAS
+      await new Promise(res => setTimeout(res, 200));
+    }
+  } finally {
+    _bkPrefetchBusy = false;
+  }
+}
+
 async function _bkSaveTreeToSheet() {
   if (!_bkGiai || !_bkNd || !GS || !CODE) {
     console.warn('[BK TREE] Skip save — missing giai/nd/GS/CODE:', {_bkGiai, _bkNd, hasGS:!!GS, hasCode:!!CODE});
