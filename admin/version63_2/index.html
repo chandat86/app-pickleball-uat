@@ -3621,6 +3621,7 @@ function _onResultData(resultsObj) {
 // ── v50: Nhận sân/TT từ Firebase /matches — cập nhật _M ngay < 1s ──
 function _onMatchData(matchesObj) {
   if (!matchesObj) return;
+  let needRenderBang = false;
   Object.values(matchesObj).forEach(d => {
     if (!d || !d.giai || !d.nd || !d.bang || !d.code) return;
     const mIdx = _M.findIndex(r =>
@@ -3635,12 +3636,18 @@ function _onMatchData(matchesObj) {
       const ld = _dashData.liveDetail.find(l => l.nd===d.nd && l.code===d.code && l.bang===d.bang);
       if (ld) { if (d.court !== undefined) ld.court = d.court; if (d.ref !== undefined) ld.referee = d.ref; }
     }
+    // Nếu Firebase mang giờ/sân/TT cho nội dung đang xem → cần re-render bang-list
+    if (d.nd === _curNd) needRenderBang = true;
   });
   // Re-render nhẹ nếu dashboard đang mở
   if (_curPage === 'dashboard') {
     const giaiId = document.getElementById('dash-giai').value;
     const gn = giaiId ? ((_T.find(t=>String(t[0]||'')===giaiId)||[])[1]||giaiId) : '';
     _renderDashFromLocal(gn, document.getElementById('dash-nd')?.value||'', document.getElementById('dash-bang')?.value||'');
+  }
+  // v63 FIX: Re-render bang-list khi Firebase cập nhật giờ/sân/TT cho nội dung đang xem
+  if (needRenderBang && _curGiaiId && _curNd) {
+    renderBangList(_curGiaiId, _curNd);
   }
 }
 
@@ -7530,6 +7537,8 @@ function renderBangList(giaiId, nd) {
         <td style="padding:6px 8px;white-space:nowrap;vertical-align:middle;text-align:center">${codeBadge}</td>
         <td style="padding:6px 4px;vertical-align:middle;text-align:center">
           ${(()=>{const v=String(m[11]||'').trim();if(!v)return'<span style="color:var(--bdr3);font-size:10px">—</span>';
+            // GSheet date serial (số thập phân, vd 0.3125 = 7:30)
+            if(!isNaN(Number(v))&&!v.includes(':')){const frac=Number(v)%1;if(frac>0){const tm=Math.round(frac*1440);const hh=Math.floor(tm/60)%24,mm=tm%60;const fmt=hh+':'+String(mm).padStart(2,'0');return`<span style="font-family:var(--mo);font-size:11px;font-weight:700;color:var(--or);background:rgba(245,158,11,.1);padding:2px 5px;border-radius:5px;white-space:nowrap">${esc(fmt)}</span>`;}}
             const iso=v.match(/T(\d{2}):(\d{2})/);let fmt;
             if(iso){const tm=parseInt(iso[1])*60+parseInt(iso[2])+420;fmt=Math.floor(tm/60)%24+':'+String(tm%60).padStart(2,'0');}
             else{const hm=v.match(/^(\d{1,2}):(\d{2})/);fmt=hm?parseInt(hm[1])+':'+hm[2]:v;}
