@@ -7168,20 +7168,37 @@ async function _ndBkRender() {
   }
 
   const ndChanged = (prevGiai !== _bkGiai || prevNd !== _bkNd);
-  // v63 FIX: Khi switch nội dung → reset TOÀN BỘ trạng thái bracket
-  // _bkApplied và _bkLastVersion là global → nếu không reset, cây STUDENS bị hiện khi xem PARENT
+  // v63 FIX: Khi switch nội dung → lưu trạng thái nd cũ vào cache, restore nd mới từ cache
   if (ndChanged) {
-    _bkCurrentTree  = null;  // xóa cây cũ
-    _bkApplied      = false; // reset lock — nội dung mới chưa Apply
-    _bkLastVersion  = 0;     // reset version check — force load từ SRV
-    _bkIsEmpty      = false; // reset empty flag
-    _bkDeletedAt    = 0;     // reset delete guard
-    _bkOverrides    = {};    // overrides thuộc nội dung cũ
+    // Lưu trạng thái nd cũ (nếu có tree)
+    if (prevGiai && prevNd && _bkCurrentTree) {
+      _bkTreeCache[prevGiai + '|' + prevNd] = {
+        tree: _bkCurrentTree, version: _bkLastVersion,
+        applied: _bkApplied, overrides: _bkOverrides,
+        ts: Date.now()
+      };
+    }
+    // Restore trạng thái nd mới từ cache nếu có
+    const cacheKey = _bkGiai + '|' + _bkNd;
+    const cached = _bkTreeCache[cacheKey];
+    if (cached && cached.tree) {
+      _bkCurrentTree = cached.tree;
+      _bkLastVersion = cached.version || 0;
+      _bkApplied     = cached.applied !== false;
+      _bkOverrides   = cached.overrides || {};
+    } else {
+      _bkCurrentTree  = null;
+      _bkApplied      = false;
+      _bkLastVersion  = 0;
+      _bkOverrides    = {};
+    }
+    _bkIsEmpty      = false;
+    _bkDeletedAt    = 0;
     _bkByeMapGlobal = {};
   }
 
   // FIX: Khi switch nội dung → clear cây ngay, không để cây cũ hiện trong khi load
-  if (ndChanged) {
+  if (ndChanged && !_bkCurrentTree) {
     const ndContent = document.getElementById('nd-bk-content');
     if (ndContent) ndContent.innerHTML = '';
   }
@@ -7211,47 +7228,40 @@ async function _ndBkRender() {
 
   // v7: Đọc trạng thái empty từ sessionStorage (survive reload)
   _bkIsEmpty = ndChanged ? false : _bkReadEmpty(); // v63: reset empty khi đổi nội dung
-  const hasKO = _M.some(m => {
-    if (String(m[0]||'') !== giaiName || String(m[1]||'') !== _bkNd) return false;
-    const v = String(m[9]||'');
-    return v && v !== 'Vòng bảng' && !/^bảng\s+[a-z0-9]/i.test(v);
-  });
 
-  // v63 FIX: Khi ndChanged → LUÔN load tree từ SRV trước (đã reset _bkLastVersion=0 → force fetch)
-  // Không dùng setTimeout — hiện loading state ngay, load xong mới render
-  if (ndChanged || !_bkCurrentTree) {
-    if (!hasCacheData) {
-      // Chưa có match data → fetch cả matches lẫn tree
-      ndWrap.innerHTML = '<div class="empty"><div class="ei">⏳</div><p>Đang tải cây thi đấu…</p></div>';
-      try { await loadMatchesCache(_snapBkGiai, true); } catch(e) {}
-      if (_isBkStale()) return;
-    }
-    // Load tree từ SRV (ngay, không delay)
-    const loaded = await _bkLoadTreeFromSheet();
-    if (_isBkStale()) return;
-    if (loaded || _bkCurrentTree) {
-      await _swapBkWrap('nd-bk-wrap', () => Promise.resolve(bkRender()));
-    } else if (hasCacheData) {
-      // Không có tree trên SRV → render từ cache local (bkRender tự build từ seedings)
-      _renderNow();
-    } else {
-      ndWrap.innerHTML = '<div class="empty"><div class="ei">🏆</div><p>Chưa có cây thi đấu. Bấm <b>Tạo cây</b> để bắt đầu.</p></div>';
-    }
-    return;
-  }
-
-  if (hasCacheData) {
-    // DATA ĐÃ CÓ TRONG MEMORY + tree đã load → render ngay
+  // ── v63: RENDER TỨC THÌ từ cache nếu có, fetch ngầm để update ──
+  if (_bkCurrentTree && hasCacheData) {
+    // Có cả tree cache lẫn match data → render ngay 0ms
     _renderNow();
+    // Fetch ngầm để cập nhật version mới (không block UI)
+    _bkLoadTreeFromSheet().then(loaded => {
+      if (_isBkStale()) return;
+      if (loaded) _swapBkWrap('nd-bk-wrap', () => Promise.resolve(bkRender()));
+    }).catch(() => {});
     return;
   }
 
-  // Chưa có data → phải fetch trước, hiện loading state
+  // Có match data nhưng chưa có tree cache → fetch tree (nhanh, ~500ms chỉ GAS bracketTree)
+  if (hasCacheData) {
+    // Render trước từ seedings (không có tree nhưng có matches → bkRender tự build skeleton)
+    _renderNow();
+    // Fetch tree từ SRV (ngầm)
+    _bkLoadTreeFromSheet().then(loaded => {
+      if (_isBkStale()) return;
+      if (loaded || _bkCurrentTree) _swapBkWrap('nd-bk-wrap', () => Promise.resolve(bkRender()));
+    }).catch(() => {});
+    return;
+  }
+
+  // Chưa có match data → phải fetch trước, hiện loading state
   ndWrap.innerHTML = '<div class="empty"><div class="ei">⏳</div><p>Đang tải cây thi đấu…</p></div>';
   try {
     await loadMatchesCache(_snapBkGiai, true);
   } catch(e) { /* tiếp tục với data hiện có */ }
-  if (_isBkStale()) return; // FIX: guard sau await dài
+  if (_isBkStale()) return;
+  // Load tree sau khi có match data
+  const loaded = await _bkLoadTreeFromSheet();
+  if (_isBkStale()) return;
   _renderNow();
 }
 
@@ -7371,6 +7381,14 @@ function openNdDetail(giaiId, nd) {
 
   // Xóa toàn bộ trạng thái bracket khi chuyển sang nội dung khác
   if (_curNd !== nd || _curGiaiId !== giaiId) {
+    // Lưu trạng thái nd hiện tại vào cache trước khi chuyển
+    if (_curGiaiId && _curNd && _bkCurrentTree) {
+      _bkTreeCache[_curGiaiId + '|' + _curNd] = {
+        tree: _bkCurrentTree, version: _bkLastVersion,
+        applied: _bkApplied, overrides: _bkOverrides,
+        ts: Date.now()
+      };
+    }
     _bkCurrentTree  = null;
     _bkApplied      = false;
     _bkLastVersion  = 0;
@@ -10891,6 +10909,8 @@ let _bkLastVersion   = 0;    // version từ Máy chủ BracketTree — chỉ fe
 let _bkTreeSaveTimer = null; // debounce save tree lên SRV
 let _bkDeletedAt    = 0;    // v7: timestamp khi vừa xóa cây — block mọi auto-render trong 5s
 let _bkIsEmpty      = false; // v7: true = cây đã bị xóa, bkRender hiện trống thay vì rebuild từ seeding
+// v63: Cache tree + trạng thái theo từng nd — key: "giaiId|nd"
+const _bkTreeCache = {}; // { key: { tree, version, applied, overrides, ts } }
 
 // v7: Persist _bkIsEmpty vào sessionStorage theo key giai+nd
 // → survive reload/làm mới, không tạo lại cây khi chưa nhấn "Tạo cây"
@@ -10922,6 +10942,11 @@ function _bkLoadOverrides() {
 
 // ── SRV BracketTree sync — v37: single source of truth ──
 
+// Helper: cache key cho tree theo nội dung
+function _bkTreeCacheKey() {
+  return (_bkGiai || '') + '|' + (_bkNd || '');
+}
+
 // Load cây từ SRV BracketTree (GET, không cần auth POST)
 async function _bkLoadTreeFromSheet() {
   if (!_bkGiai || !_bkNd || !GS) return false;
@@ -10944,6 +10969,12 @@ async function _bkLoadTreeFromSheet() {
       }
       if (d.tree._byeRule) _bkByeRule = d.tree._byeRule;
       _bkLastVersion = d.version;
+      // v63: Lưu vào cache theo nd để restore tức thì lần sau
+      _bkTreeCache[_bkTreeCacheKey()] = {
+        tree: d.tree, version: d.version,
+        applied: true, overrides: _bkOverrides,
+        ts: Date.now()
+      };
       console.log('[BK TREE] Loaded from SRV v', d.version, '— rounds:', _bkCurrentTree?.rounds?.length, '(LOCKED)');
       return true;
     }
@@ -10979,6 +11010,12 @@ async function _bkSaveTreeToSheet() {
     const d = await gPost({ action:'saveBracketTree', adminCode:CODE, giai:giaiName, nd:_bkNd, tree:treeToSave });
     if (d.ok) {
       _bkLastVersion = d.version || Date.now();
+      // v63: Cập nhật cache sau khi save thành công
+      _bkTreeCache[_bkTreeCacheKey()] = {
+        tree: _bkCurrentTree, version: _bkLastVersion,
+        applied: _bkApplied, overrides: _bkOverrides,
+        ts: Date.now()
+      };
       console.log('[BK TREE] ✓ Saved to SRV v', _bkLastVersion, '— saved matches:', d.saved);
       toast('☁️ Cây thi đấu đã đồng bộ SRV (' + totalMatches + ' trận)', 'ok', 2500);
     } else {
