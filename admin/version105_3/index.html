@@ -4778,9 +4778,9 @@ function _abbrInitials(s) {
 // Render 1 dòng tên: bản đầy đủ (.tc-full, desktop/tablet) + viết tắt (.tc-abbr, mobile)
 function _nameLine(txt, color, align) {
   const ta = align || 'center';
-  return `<div style="line-height:1.25;text-align:${ta};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">
-    <span class="tc-full" style="font-size:12px;font-weight:700;color:${color}">${esc(txt)}</span>
-    <span class="tc-abbr" style="font-size:11px;font-weight:700;color:${color}">${esc(_abbrInitials(txt))}</span>
+  return `<div style="line-height:1.3;text-align:${ta};min-width:0">
+    <span class="tc-full" style="font-size:12px;font-weight:700;color:${color};display:block">${esc(txt)}</span>
+    <span class="tc-abbr" style="font-size:11px;font-weight:700;color:${color};display:block">${esc(_abbrInitials(txt))}</span>
   </div>`;
 }
 // v101: lấy từ CUỐI CÙNG của tên (cho Trọng tài trên mobile) — "Vương Minh Nguyệt" → "Nguyệt"
@@ -7854,7 +7854,9 @@ function renderBangList(giaiId, nd) {
       // Team name helper — split "Nguyễn Văn An - Trần Thị Bình" → 2 lines, winner in green
       // v98: mỗi dòng render cả tên đầy đủ (.tc-full, desktop/tablet) và tên viết tắt (.tc-abbr, mobile)
       const teamCell=(name,win)=>{
+        const p=name?name.split(' - '):[];
         const clr=win?GN:'var(--tx)';
+        if(p.length>1) return _nameLine(p[0],clr) + _nameLine(p.slice(1).join(' - '), win?GN:'var(--tx2)');
         return _nameLine(name||'TBD', clr);
       };
       return `<tr style="${live?'border-left:2px solid #ea580c;background:rgba(234,88,12,.04)':done?'background:rgba(34,197,94,.025)':''}">
@@ -8129,7 +8131,10 @@ function renderBangList(giaiId, nd) {
               const hs=hasResult?(t.pf-t.pa>=0?`+${t.pf-t.pa}`:String(t.pf-t.pa)):'—';
               const medal=i===0&&hasResult?'🥇':i===1&&hasResult?'🥈':i===2&&hasResult?'🥉':'';
               const top=i<3&&hasResult;
-              const teamHtml = _nameLine(t.team||'?', top?'var(--tx)':'var(--tx2)','left');
+              const teamParts=t.team?t.team.split(' - '):[t.team||'?'];
+              const teamHtml = teamParts.length>1
+                ? _nameLine(teamParts[0], top?'var(--tx)':'var(--tx2)','left') + _nameLine(teamParts.slice(1).join(' - '), top?'var(--tx2)':'var(--tx3)','left')
+                : _nameLine(t.team||'?', top?'var(--tx)':'var(--tx2)','left');
               return `<div class="bxh2-row" style="align-items:center;
                         padding:5px 10px;
                         ${i===0&&hasResult?'background:rgba(245,158,11,.06);':i%2===0?'background:var(--bg2)':''}
@@ -15398,7 +15403,10 @@ function _renderBxhGroup(g, giaiName, filterNd) {
           const pDiffColor = r.pDiff>0?'var(--gn)':r.pDiff<0?'var(--rd)':'var(--tx3)';
           const rowClass   = r.rank===1?'rank1':r.rank===2?'rank2':r.rank===3?'rank3':'';
           // v100: tên đội — 2 dòng (1 VĐV/dòng), viết tắt trên mobile (.tc-abbr)
-          const teamHtml = _nameLine(String(r.team||''),'var(--tx)','left');
+          const tparts = String(r.team||'').split(' - ');
+          const teamHtml = tparts.length>1
+            ? _nameLine(tparts[0],'var(--tx)') + _nameLine(tparts.slice(1).join(' - '),'var(--tx2)')
+            : _nameLine(r.team||'','var(--tx)');
           return `<tr class="${rowClass}">
             <td class="bxc-rank" style="text-align:center;font-weight:900;color:${rankColor};font-size:15px">${medal||r.rank}</td>
             <td class="bxc-team" style="font-weight:700;font-size:13px">${teamHtml}</td>
