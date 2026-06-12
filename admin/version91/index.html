@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<!-- Pickleball Admin v95 2026-06-12: FIX bảng trận + BXH bị CẮT trên Mobile — (1) matchTable wrapper đổi overflow:hidden→overflow-x:auto (trước đây overflow:hidden CẮT MẤT cột Trọng tài/Sửa khi bảng rộng 558px > màn hình, dù #bang-list đã overflow-x:auto vẫn vô tác dụng vì div con clip trước); (2) _renderBxhGroup tương tự — bỏ overflow:hidden khỏi .tw (đang đè overflow-x:auto của class .tw) → BXH cuộn ngang được, không mất cột Hiệu số/Điểm; (3) thêm class cho từng <col> (c-ma/c-gio/c-team/c-score/c-status/c-court/c-ref/c-edit) + mobile override thu nhỏ còn ~420px (gần khớp màn hình 390-430px, ít phải cuộn) |
-     Pickleball Admin v94 2026-06-12: FIX tràn ngang trên Mobile (Dashboard/Giải) — (1) _renderLiveSection: pill tên Giải + Nội dung bỏ white-space:nowrap → wrap khi tên dài (VD "Đà Nẵng Summer Architects Pickleball Cup 2026"); (2) .ptag (badge nội dung/bảng) thêm overflow-wrap:break-word + white-space:normal, không còn bị cắt chữ; (3) renderTournCards/renderNdCards: title card thêm min-width:0 + overflow-wrap:break-word trong flex header, tránh đẩy card rộng hơn màn hình; (4) #tourn-cards/#nd-cards ép grid-template-columns:1fr trên mobile — minmax(280-300px) có thể rộng hơn màn hình hẹp ≤360px gây tràn ngang toàn trang |
-     Pickleball Admin v93 2026-06-12: FIX RESPONSIVE Tablet (641-1024px) + Mobile (≤640px) cho trang Chi tiết nội dung — (1) [data-bl-grid] (Bảng đấu: bảng trận + tình trạng sân/BXH 420px) → xếp dọc 1 cột, bỏ sticky; (2) [data-players-grid] (Danh sách VĐV + Bốc thăm chia bảng) → xếp dọc 1 cột; (3) #bang-list overflow-x:auto → bảng trận cuộn ngang thay vì bị cắt; (4) .stats (4-5 thẻ/dòng) → ép 2 cột trên tablet/mobile (!important đè inline repeat(4,1fr)/(5,1fr)); (5) form "Cấu hình bảng đấu" (2 bảng × 4 đội/bảng, Tên bảng/Phương thức) → xếp dọc trên mobile; (6) tab Danh sách/Bảng đấu/Cây thi đấu giảm padding trên tablet; (7) toolbar nút (Làm mới/Thêm bảng/Dọn trùng/Xóa Firebase Live/Xóa tất cả bảng) → 2 nút/dòng đều nhau trên mobile |
+<!-- Pickleball Admin v93 2026-06-12: FIX RESPONSIVE Tablet (641-1024px) + Mobile (≤640px) cho trang Chi tiết nội dung — (1) [data-bl-grid] (Bảng đấu: bảng trận + tình trạng sân/BXH 420px) → xếp dọc 1 cột, bỏ sticky; (2) [data-players-grid] (Danh sách VĐV + Bốc thăm chia bảng) → xếp dọc 1 cột; (3) #bang-list overflow-x:auto → bảng trận cuộn ngang thay vì bị cắt; (4) .stats (4-5 thẻ/dòng) → ép 2 cột trên tablet/mobile (!important đè inline repeat(4,1fr)/(5,1fr)); (5) form "Cấu hình bảng đấu" (2 bảng × 4 đội/bảng, Tên bảng/Phương thức) → xếp dọc trên mobile; (6) tab Danh sách/Bảng đấu/Cây thi đấu giảm padding trên tablet; (7) toolbar nút (Làm mới/Thêm bảng/Dọn trùng/Xóa Firebase Live/Xóa tất cả bảng) → 2 nút/dòng đều nhau trên mobile |
      Pickleball Admin v92 2026-06-12: ADD đồng bộ 2 chiều — saveEditMatch (Sửa trận ở Bảng đấu) khi đổi tên VĐV/đội: thêm _syncRenameToPlayersList() cập nhật ngay _players (Danh sách VĐV) + _bocThamGroups (Bốc thăm chia bảng), lưu localStorage + render lại tab Danh sách nếu đang mở; nếu danh sách đã "Đã lưu" lên Sheets thì đồng bộ ngầm lên Sheets luôn (saveDanhSachVDV+saveDanhSachBang) — trước đây chỉ có chiều Danh sách→Bảng đấu (renamePlayer), giờ thêm chiều Bảng đấu→Danh sách |
      Pickleball Admin v90 2026-06-12: FIX TRIỆT ĐỂ saveEditMatch + applyEditBang hiển thị NGAY (y chang v20) — (1) saveEditMatch khi đổi tên VĐV/đội: đăng ký _renameOverrides[oldName]=newName NGAY (bảo vệ tên mới khỏi bị loadMatchesCache nền ghi đè bằng tên cũ từ Sheet chưa kịp lưu — trước đây chỉ renamePlayer có cơ chế này, saveEditMatch (Sửa trận trong Bảng đấu) thì KHÔNG → các trận liên quan A2/A3/A6 không cập nhật ngay, phải F5 mới thấy); (2) saveEditMatch + applyEditBang lưu localStorage pb_adm_M_ ngay sau khi sửa _M; (3) saveEditMatch + applyEditBang dùng _renderBangListDirect (force render, bỏ qua mọi guard) thay vì renderBangList; (4) cleanup _renameOverrides sau 60s đủ thời gian Máy chủ commit + prefetch tới |
      Pickleball Admin v78 2026-06-11: FIX TRIỆT ĐỂ hiển thị tức thì — (1) xóa stale-guard khỏi renderBangList (y chang v20, không block render); (2) openNdDetail render NGAY từ _M local trước khi fetch GAS (y chang v20); (3) renamePlayer dùng _renderBangListDirect force-render + lưu localStorage ngay; (4) _renameOverrides bảo vệ tên mới khi GAS prefetch về | Pickleball Admin v57 2026-06-09: Redesign form Thêm TT — vai trò lên đầu, active=SĐT, manager/player=mã, nội dung hiện dạng chip sau khi chọn giải | v56 2026-06-09: FIX CRITICAL _syncResultCache nhận newRow[5/6] stale từ _M khi chỉ đổi rule → trận pending bị gán điểm cũ thành Hoàn thành — giờ truyền score tường minh từ saRaw/sbRaw | v55 2026-06-09: FIX saveEditMatch — hasAnyInput thêm rule, dùng ruleVal tránh đọc DOM 2 lần — cho phép lưu khi chỉ đổi quy tắc điểm trận | v54 2026-06-09: (1) FIX rule không đẩy xuống TT — normalizeMatchRow giờ đủ 13 cột, openEditMatchMo chỉ hiện điểm khi done; (2) FIX A3/A4 tự điền điểm — openEditMatchMo+renderBangList không đọc _dkScores khi pending | v51 2026-06-09: FIX TRIỆT ĐỂ popup Sửa bảng+trận — bỏ async/await getUsers khỏi openEditMatchMo+openEditBangMo (block 8s → modal không xuất hiện); load _U ngầm sau khi modal đã mở | v50 2026-06-09: FIX (1) popup Sửa bảng+trận không mở — xóa code lỗi matches[0] bị chèn nhầm vào openEditMatchMo; (2) FIX tỉ số hiển thị sai khi reload — chỉ tra _dkScores khi isMatchDone=true, pending→null | v49 2026-06-09: ADD Quy tắc điểm vào modal Sửa bảng (vòng bảng + KO) — openEditBangMo hiện select Chạm 11/15/21/24/25; applyEditBang lưu rule→col[12]→GAS+local _M | v48 2026-06-09: FIX tab nội dung — openNdDetail giữ tab đang active khi chuyển nội dung (Danh sách/Bảng đấu/Cây thi đấu); _getActiveNdTab() helper | v47 2026-06-09: FIX "Đang đấu" stale TRIỆT ĐỂ — REST poll /liveScores 2s song song SDK: detect node bị DELETE mà SDK WebSocket miss; rest-cleanup source tránh ghi đè điểm SDK fresh <3s; guard keep-fresh-key cho rest-cleanup | v46 2026-06-09: FIX Firebase liveScores listener lọc status≠playing; _onLiveData trigger loadDash khi rows=0 | v108 — v57 2026-06-09: Quy tắc điểm từ Admin — (1) Admin chọn rule khi tạo bảng (bang-rule); (2) Rule lưu vào Matches col[12]; (3) Modal Sửa trận có select rule; (4) Referee tự động load rule từ match → TT không cần chọn | v107 — v56 2026-06-09: (1) _bkCrossSeededSlots v2 — random shuffle fair-play, phân nhánh chẵn/lẻ, BYE ưu tiên Nhất>Nhì, TL ưu tiên Nhất vs Nhì, xen kẽ BYE-TL; (2) bỏ REST liveScores poll + gas-safety poll (race condition); (3) fix render sig bao gồm live score | v105 — FIX RACE CONDITION 2026-06-08: v53 — (1) _buildLiveFromRows MERGE THEO TIMESTAMP — không cho GAS stale overwrite Firebase fresh; (2) Source tracking: firebase/rest > gas; (3) GAS safety poll chỉ chạy khi REST/SDK đã silent > 8s; (4) Force re-render every 2s while Firebase active để đảm bảo DOM sync với _liveScores | v104 v52 REST POLL: ADD Firebase REST poll 2s SONG SONG với SDK listener — bypass SDK disconnect silent;  v103 FIX renderBangList giaiId 2026-06-08: v50 REALTIME ALL FLOWS — (1) Firebase /results onValue → _dkScores cập nhật &lt;1s khi TT Lưu; (2) Firebase /matches onValue → sân/TT cập nhật &lt;1s; (3) _onLiveData patch DOM trực tiếp không gọi loadDash(); (4) _syncFinishedMatches dùng Firebase data thay vì poll GAS |  FIX pill — đã có đội thật → tra BXH lấy rank+bảng (1E,2G); chưa có → mã trận (V162,TK1) | v90 2026-06-07: FIX pill label KO — "Thắng V162"→"V162", "Thắng TK1"→"TK1" thay vì W chung chung | v89 2026-06-07: FIX cây thi đấu gọn — card width 200px cố định; tên đôi tách 2 dòng (VĐV1/VĐV2); tên dài viết tắt họ; row/pill/sbox nhỏ hơn | v88 2026-06-07: FIX bkEditMatch — TK1 đã có tên VĐV hiển thị tên thật (card A/B); chờ vòng trước hiện "Thắng VXX"; phân biệt 3 case rõ ràng | v87 2026-06-07: Ẩn hoàn toàn scrollbar native của nd-bk-wrap — chỉ dùng nd-bk-scrollbar-wrap fixed | v86 2026-06-07: FIX TRIỆT ĐỂ scroll — nd-bk-wrap (scroll container) không bao giờ bị swap innerHTML; chỉ swap nd-bk-content (con bên trong) → scrollLeft tự nhiên giữ nguyên vĩnh viễn; drag chuột+touch đơn giản sạch | v85 2026-06-07: FIX TRIỆT ĐỂ scroll cây thi đấu — flag _bkRestoring block scroll event khi restore (không bị reset về 0); drag chuột+touch dùng clientX thay pageX; MutationObserver chỉ update width, không restore; restore 3 lần delay tăng dần | v84 2026-06-07: FIX đăng nhập lỗi 10M ô — hiển thị hướng dẫn xóa EventLog/LoginLog/LiveScore thay vì "Mã không hợp lệ"; Máy chủ không tạo sheet mới khi login | v83 2026-06-07: FIX scroll cây thi đấu — dùng biến global _bkScrollX/Y thay DOM (DOM reset về 0 sau render); MutationObserver restore scroll sau mỗi DOM change; drag chuột+touch đa chiều ngang+dọc; guard flag tránh sync loop | v82 2026-06-07: FIX (1) card cây thi đấu hiện "Thắng VXX" khi chưa có tên đội; (2) scroll ngang giữ nguyên vị trí sau render, bỏ loop sync; (3) drag-to-scroll chuột trên nd-bk-wrap | v81 2026-06-07: FIX cây thi đấu — bkEditMatch ẩn dropdown BYE khi trận đang chờ winner ("Thắng VXX"); bkSaveEditNew không ghi đè TBD khi chỉ lưu sân/giờ/TT; tạo mới Matches nếu chưa tồn tại | v80 2026-06-07: FIX saveEditMatch cho phép lưu khi chưa có tên đội — phân sân/giờ/TT trước, tên đội cập nhật sau; giữ nguyên tên đội cũ nếu field để trống | v79 2026-06-07: FIX bkApplyAndSave bỏ upsert:true (nguy hiểm — xóa toàn bộ trận KO kể cả đã có điểm); thêm scoreCleared:false khi update tên đội KO | v78 2026-06-07: FIX mất kết quả khi sửa tên VĐV — (1) openEditMatchMo đọc curSA/curSB từ getFinalScore(KetQua) thay vì Matches col[5/6]; (2) flag scoreCleared phân biệt "trống chưa có điểm" vs "chủ động xóa"; (3) chỉ gửi empty score lên Máy chủ khi scoreCleared=true | v77 2026-06-07: FIX data integrity — bkApplyAndSave+saveRR thêm upsert:true; importCSV toast cảnh báo skip; v76 2026-06-07: FIX nút Sửa tràn khỏi bảng — dùng table-layout:auto, bỏ min-width cứng, giảm padding td, bỏ white-space:nowrap cột Sân → nút Sửa luôn nằm trong khung | v75 2026-06-07: FIX _buildLiveFromRows — index cả key 4 phần (giai|nd|bang|code) lẫn key 3 phần (nd|bang|code) vào _lK và _liveScores; admin render dùng key 3 phần nên bị miss khi Máy chủ ghi key 4 phần | v73 2026-06-07: FIX — _lK hỗ trợ key mới 4 phần "giai|nd|bang|code" từ Máy chủ v40; _buildLiveMatchData dùng key mới; cold-start _lK thêm cả key 3 phần để backward-compat | v72 2026-06-04: FIX Xóa tất cả bảng dùng 1 request deleteAllBangs thay vì N requests tuần tự — nhanh gấp 15x; bỏ confirm() dùng double-tap | v71 2026-06-04: FIX saveBang+importMultiBang gửi upsert=true → Máy chủ xóa bảng cũ trước khi tạo lại, tránh dedup skip trận | v70 2026-06-04: FIX bkDeleteTree dùng double-tap thay confirm() bị browser block; Máy chủ v37 fix giaiName undefined trong deleteBracketTree | v69 2026-06-04: FIX confirm() trong bkApplyAndSave bị browser block → return sớm không save BracketTree; thay bằng toast cảnh báo tiếp tục luôn | v68 2026-06-04: FIX saveBracketTree bị bỏ qua khi Apply lần 2 (toCreate=0, toUpdate=0 → return sớm trước khi save SRV) | v67 2026-06-03: v6 FIX NGUỒN DUY NHẤT — buildDkFromResults/isMatchDone/getFinalScore/_syncResultCache/_buildLiveFromRows đều dùng key 4 trường "TênGiải|NộiDung|Bảng|MãTrận"; bỏ fallback Matches col[5/6] trong getFinalScore; bỏ giaiId duplicate trong _dK; bỏ fallback giaiId trong isMatchDone — badge Hoàn thành/Chưa đấu/Đang đấu giờ chính xác 100% từ KetQua | v66 2026-06-03: FIX v32 referee bugs — assignCourtToRef/assignRef/atrAssignDirect không xóa noidung cũ; _matchAllowed normalize dấu; renderMatchGrid hiển thị khi có trận phân tên | v65 2026-06-01: FIX bracket overflow + nút tràn màn hình PC | v25 | FIX: Login detailed errors, Test Máy chủ button, Seeding cross-group verified | 2026-05-23 | Fix: s-done không nhảy loạn, _gasLastDone source-of-truth, stale localStorage invalidated | 2026-05-22 | v44 FIX: Cross-seeding cùng bảng + BYE trao đúng thành tích tốt nhất (nb=3,5,6,7) 2026-05-25 | v47 FIX: Phân công TT lỗi "Không xác định giải đấu"; Bracket full height; Toolbar nút đồng màu xanh dương, Thủ công/Tự động sáng xanh lá khi active | v49 FIX 2026-05-28: (1) Players persist localStorage — không mất khi navigate; (2) Máy chủ dedup tính noidung | v54 2026-05-28: (3) Mỗi nội dung có danh sách VĐV độc lập (localStorage namespace by GS URL); (4) Nút Lưu danh sách / Sửa danh sách; (5) Chế độ read-only khi đã lưu | v51: Popup bốc thăm 5s + quản lý bảng | v52: Quy tắc cố định 4 đội/bảng | v53: Lưu DanhSachVDV+DanhSachBang lên SRV | v54: skeleton loading cards, nút xóa nội dung, pre-cache, TTL 5 phút | v61 2026-06-01: (A) Nút ✏️ Sửa từng đội trong danh sách VĐV — đổi tên đồng bộ sang _bocThamGroups + Matches (SRV renameTeamInMatches); (B) Badge bảng A/B/... hiển thị ngay trong danh sách VĐV; (C) Máy chủ v28: action renameTeamInMatches cập nhật Matches+DanhSachVDV+DanhSachBang -->
@@ -321,7 +319,6 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
   background:rgba(14,165,233,.08);color:var(--ac2);
   border:1px solid rgba(14,165,233,.15);
   padding:2px 7px;border-radius:5px;font-size:11px;font-weight:600;margin:1px;
-  max-width:100%;overflow-wrap:break-word;word-break:break-word;white-space:normal;
 }
 .ptago{background:rgba(245,158,11,.08);color:var(--or);border-color:rgba(245,158,11,.15)}
 
@@ -1024,15 +1021,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 
 @media(max-width:640px){
   /* ── Bảng đấu: bảng trận thu nhỏ font/padding để bớt phải scroll ngang ── */
-  #bang-list table{font-size:11px;min-width:0!important}
-  #bang-list .c-ma,#bang-list .c-gio{width:32px!important}
-  #bang-list .c-team{min-width:62px!important}
-  #bang-list .c-score{width:20px!important}
-  #bang-list .c-status{width:64px!important}
-  #bang-list .c-court{width:38px!important}
-  #bang-list .c-ref{width:42px!important}
-  #bang-list .c-edit{width:38px!important}
-  #bang-list table td,#bang-list table th{overflow:hidden;text-overflow:ellipsis}
+  #bang-list table{font-size:11px}
   #bang-list td,#bang-list th{padding:5px 3px!important}
 
   /* ── Header trang Chi tiết nội dung: nút bấm xuống dòng đều, full width ── */
@@ -1045,10 +1034,6 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 
   /* Stat cards: 2 cột vẫn vừa trên mobile nhỏ — nhưng cho nhỏ chữ thêm */
   .stats{gap:6px}
-
-  /* ── v94 FIX: card Giải đấu / Nội dung / Sân — minmax(280-300px) có thể
-     RỘNG HƠN màn hình hẹp (≤360px) → ép về 1 cột full-width, tránh tràn ngang ── */
-  #tourn-cards,#nd-cards{grid-template-columns:1fr!important}
   .sv{font-size:20px}
   .ss{font-size:10px}
 }
@@ -4844,10 +4829,10 @@ function _renderLiveSection(giai, nd, matches, containerId) {
       onclick="_toggleLiveSection('${secKey.replace(/'/g,"\'")}','${sectionId}')"
       style="background:linear-gradient(135deg,rgba(234,88,12,.1),rgba(245,158,11,.07));padding:9px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:${isCollapsed?'none':'1px solid rgba(234,88,12,.15)'}">
       <!-- Giải pill -->
-      <span style="font-size:11px;font-weight:700;color:#ea580c;background:rgba(234,88,12,.12);border-radius:16px;padding:2px 9px;max-width:100%;overflow-wrap:break-word">${giai}</span>
+      <span style="font-size:11px;font-weight:700;color:#ea580c;background:rgba(234,88,12,.12);border-radius:16px;padding:2px 9px;white-space:nowrap">${giai}</span>
       <span style="color:var(--tx3);font-size:10px">›</span>
       <!-- Nội dung -->
-      <span style="font-size:12px;font-weight:700;color:var(--ac2);max-width:100%;overflow-wrap:break-word">${nd}</span>
+      <span style="font-size:12px;font-weight:700;color:var(--ac2);white-space:nowrap">${nd}</span>
       <!-- Live badge -->
       <span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#ea580c;background:rgba(234,88,12,.1);border-radius:12px;padding:2px 7px;margin-left:2px">
         <span style="width:5px;height:5px;border-radius:50%;background:#ea580c;animation:pulse .8s infinite"></span>
@@ -5741,13 +5726,13 @@ function renderTournCards(rows) {
     return `<div style="background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:16px;cursor:pointer;transition:all .15s"
               onmouseover="this.style.borderColor='var(--ac)'" onmouseout="this.style.borderColor='var(--bdr)'"
               onclick="openTournDetail('${id}')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px">
-        <div style="min-width:0;flex:1;overflow-wrap:break-word">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div>
           <div style="font-family:var(--mo);font-size:11px;color:var(--ac);font-weight:600;margin-bottom:3px">${r[0]}</div>
-          <div style="font-size:15px;font-weight:800;color:var(--tx);overflow-wrap:break-word">${r[1]||'—'}</div>
-          <div style="font-size:12px;color:var(--tx3);margin-top:2px;overflow-wrap:break-word">${r[2]||''}</div>
+          <div style="font-size:15px;font-weight:800;color:var(--tx)">${r[1]||'—'}</div>
+          <div style="font-size:12px;color:var(--tx3);margin-top:2px">${r[2]||''}</div>
         </div>
-        <span style="font-size:11px;font-weight:700;color:${stc};white-space:nowrap;flex-shrink:0">${stl}</span>
+        <span style="font-size:11px;font-weight:700;color:${stc};white-space:nowrap">${stl}</span>
       </div>
       <div style="border-top:1px solid var(--bdr);padding-top:10px;margin-top:4px">
         <div style="font-size:10px;color:var(--tx3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.8px">Nội dung thi đấu</div>
@@ -5837,7 +5822,7 @@ function renderNdCards(r, isLoading) {
               onmouseover="this.style.boxShadow='0 0 0 1px ${c}44'" onmouseout="this.style.boxShadow='none'"
               onclick="openNdDetail('${esc(rId)}','${ndId}')">
       <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">
-        <div style="flex:1;min-width:0;font-size:15px;font-weight:800;color:var(--tx);line-height:1.3;overflow-wrap:break-word">${nd}</div>
+        <div style="flex:1;font-size:15px;font-weight:800;color:var(--tx);line-height:1.3">${nd}</div>
         <button onclick="event.stopPropagation();confirmDeleteNd('${esc(rId)}','${ndId}')"
           title="Xóa nội dung"
           style="flex-shrink:0;width:24px;height:24px;border-radius:6px;background:rgba(239,68,68,.1);
@@ -7716,20 +7701,20 @@ function renderBangList(giaiId, nd) {
       </tr>`;
     }).join('');
 
-    return `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-      <table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:auto;min-width:560px">
+    return `<div style="overflow:hidden">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:auto">
         <colgroup>
-          <col class="c-ma" style="width:46px">  <!-- mã -->
-          <col class="c-gio" style="width:46px">  <!-- giờ -->
-          <col class="c-team" style="min-width:80px">  <!-- đội A -->
-          <col class="c-score" style="width:26px">   <!-- A -->
-          <col class="c-dash" style="width:10px">   <!-- – -->
-          <col class="c-score" style="width:26px">   <!-- B -->
-          <col class="c-team" style="min-width:80px">  <!-- đội B -->
-          <col class="c-status" style="width:82px">   <!-- trạng thái -->
-          <col class="c-court" style="width:50px">   <!-- sân -->
-          <col class="c-ref" style="width:58px">   <!-- trọng tài -->
-          <col class="c-edit" style="width:54px">   <!-- sửa -->
+          <col style="width:46px">  <!-- mã -->
+          <col style="width:46px">  <!-- giờ -->
+          <col style="min-width:80px">  <!-- đội A -->
+          <col style="width:26px">   <!-- A -->
+          <col style="width:10px">   <!-- – -->
+          <col style="width:26px">   <!-- B -->
+          <col style="min-width:80px">  <!-- đội B -->
+          <col style="width:82px">   <!-- trạng thái -->
+          <col style="width:50px">   <!-- sân -->
+          <col style="width:58px">   <!-- trọng tài -->
+          <col style="width:54px">   <!-- sửa -->
         </colgroup>
         <thead><tr style="background:var(--bg3)">
           <th style="padding:5px 8px;font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.05em;text-align:center">Mã</th>
@@ -15189,7 +15174,7 @@ function _renderBxhGroup(g, giaiName, filterNd) {
       ${bangLabel?`<span style="font-size:11px;color:var(--tx3)">· ${bangLabel}</span>`:''}
       <span style="font-size:11px;color:var(--tx3)">· ${rows.length} đội</span>
     </div>
-    <div class="tw" style="border:1px solid var(--bdr);border-top:none;border-radius:0 0 10px 10px">
+    <div class="tw" style="border:1px solid var(--bdr);border-top:none;border-radius:0 0 10px 10px;overflow:hidden">
       <table class="bxh" style="width:100%;border-radius:0">
         <thead><tr>
           <th style="width:40px;text-align:center">#</th>
