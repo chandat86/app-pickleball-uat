@@ -90,6 +90,10 @@ body{min-height:100vh;display:flex;flex-direction:column}
 .ctrl-btn{flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--tx);border-radius:10px;padding:12px 16px;font-family:var(--font-display);font-size:14px;font-weight:800;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s}
 .ctrl-btn:hover{border-color:var(--green);color:var(--green)}
 .ctrl-btn.on{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.ctrl-btn.muted{border-color:var(--red);color:var(--red);background:var(--red-dim)}
+#volume-slider{-webkit-appearance:none;appearance:none;height:4px;background:var(--bdr2);border-radius:2px;outline:none}
+#volume-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--green);cursor:pointer}
+#volume-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--green);cursor:pointer;border:none}
 .voice-warn{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--amber);line-height:1.6}
 select#voice-select{appearance:none;-webkit-appearance:none;font-family:var(--font-body);font-weight:600;font-size:13px;background-position:right 12px center;background-repeat:no-repeat}
 
@@ -188,14 +192,31 @@ select#voice-select{appearance:none;-webkit-appearance:none;font-family:var(--fo
     <div class="controls">
       <button class="ctrl-btn on" id="auto-speak-btn" onclick="toggleAutoSpeak()">🔊 Tự động đọc: BẬT</button>
       <button class="ctrl-btn" onclick="repeatLast()">🔁 Đọc lại gần nhất</button>
+      <button class="ctrl-btn" id="mute-btn" onclick="toggleMute()">🔇 Tắt tiếng</button>
+    </div>
+
+    <div class="controls" id="volume-row">
+      <span style="display:flex;align-items:center;gap:8px;flex:1;background:var(--bg3);border:1px solid var(--bdr2);border-radius:10px;padding:0 16px;min-width:200px">
+        <span style="font-size:16px">🔉</span>
+        <input type="range" id="volume-slider" min="0" max="100" value="100" step="5" oninput="onVolumeChange()" style="flex:1;accent-color:var(--green)">
+        <span style="font-size:16px">🔊</span>
+        <span id="volume-label" style="font-family:var(--font-display);font-weight:800;min-width:42px;text-align:right">100%</span>
+      </span>
     </div>
 
     <div class="controls" id="voice-row">
       <select class="ctrl-btn" id="voice-select" onchange="onVoiceSelect()" style="text-align:left;justify-content:flex-start"></select>
+      <select class="ctrl-btn" id="rate-select" onchange="onRateSelect()">
+        <option value="0.9">🐢 Chậm</option>
+        <option value="1.0">🚶 Vừa</option>
+        <option value="1.15" selected>🏃 Nhanh</option>
+        <option value="1.3">⚡ Rất nhanh</option>
+      </select>
     </div>
     <div class="voice-warn" id="voice-warn" style="display:none">
       ⚠️ Thiết bị này <b>chưa có giọng đọc Tiếng Việt</b> nên loa đang đọc bằng giọng khác (có thể nghe như tiếng Anh).
-      Hãy cài thêm giọng Tiếng Việt rồi tải lại trang:
+      Cách nhanh nhất: chọn <b>"☁️ Giọng Google"</b> ở ô bên trên (miễn phí, cần Internet).
+      Hoặc cài thêm giọng Tiếng Việt cho máy rồi tải lại trang:
       <br>• <b>Android</b>: Cài đặt → Hệ thống → Ngôn ngữ &amp; văn bản giọng nói → Tổng hợp giọng nói → cài "Tiếng Việt".
       <br>• <b>Windows / Edge / Chrome</b>: Settings → Time &amp; Language → Speech → Add voices → Vietnamese.
       <br>• <b>iPhone/iPad</b>: Settings → Accessibility → Spoken Content → Voices → Vietnamese.
@@ -344,6 +365,10 @@ async function startApp() {
   // auto-speak button state
   updateAutoSpeakBtn();
   populateVoiceList();
+  const rateSel = document.getElementById('rate-select');
+  if (rateSel) rateSel.value = String(_speakRate);
+  updateMuteBtn();
+  updateVolumeUI();
 
   await loadTournaments();
   loadGiaiSelection();
@@ -676,6 +701,11 @@ let _speakQueue = [];
 let _speaking = false;
 let _voices = [];
 let _selectedVoiceName = localStorage.getItem('pb_caller_voice_v1') || '';
+let _speakRate = parseFloat(localStorage.getItem('pb_caller_rate_v1') || '1.15');
+let _volume = parseFloat(localStorage.getItem('pb_caller_volume_v1') || '1');
+let _muted  = localStorage.getItem('pb_caller_muted_v1') === '1';
+// Âm lượng thực tế áp dụng cho mọi nguồn đọc (0 nếu đang tắt tiếng)
+function _effectiveVolume() { return _muted ? 0 : _volume; }
 
 if ('speechSynthesis' in window) {
   speechSynthesis.onvoiceschanged = () => { _voices = speechSynthesis.getVoices(); populateVoiceList(); };
@@ -701,33 +731,50 @@ function populateVoiceList() {
 
   const viVoices = _voices.filter(_isViVoice);
   const hasVi = viVoices.length > 0;
-  warn.style.display = hasVi ? 'none' : (_voices.length ? 'block' : 'none');
+  // Chỉ cảnh báo khi không có giọng Việt local VÀ chưa chọn giọng Google
+  warn.style.display = (hasVi || _selectedVoiceName === 'GOOGLE_TTS') ? 'none' : (_voices.length ? 'block' : 'none');
 
   const list = hasVi ? viVoices : _voices;
-  if (!list.length) {
-    sel.innerHTML = '<option value="">— Không tìm thấy giọng đọc —</option>';
-    return;
-  }
 
-  // Nếu chưa từng chọn (hoặc voice đã chọn không còn) → mặc định chọn giọng VN đầu tiên
-  if (!_selectedVoiceName || !list.some(v => v.name === _selectedVoiceName)) {
-    _selectedVoiceName = list[0].name;
+  // Nếu chưa từng chọn → mặc định:
+  //  - có giọng Việt local thì dùng giọng đó
+  //  - không có thì dùng giọng Google (miễn phí, chất lượng cao, cần Internet)
+  if (!_selectedVoiceName) {
+    _selectedVoiceName = hasVi ? list[0].name : 'GOOGLE_TTS';
+    localStorage.setItem('pb_caller_voice_v1', _selectedVoiceName);
+  } else if (_selectedVoiceName !== 'GOOGLE_TTS' && !list.some(v => v.name === _selectedVoiceName)) {
+    _selectedVoiceName = hasVi ? list[0].name : 'GOOGLE_TTS';
     localStorage.setItem('pb_caller_voice_v1', _selectedVoiceName);
   }
 
-  sel.innerHTML = list.map(v => {
+  let html = `<option value="GOOGLE_TTS" ${_selectedVoiceName==='GOOGLE_TTS'?'selected':''}>☁️ Giọng Google (cần Internet — chất lượng cao, miễn phí)</option>`;
+  html += list.map(v => {
     const tag = _isViVoice(v) ? '🇻🇳' : '🌐';
     return `<option value="${v.name.replace(/"/g,'&quot;')}" ${v.name===_selectedVoiceName?'selected':''}>${tag} ${v.name} (${v.lang})</option>`;
   }).join('');
+  if (!list.length && _selectedVoiceName !== 'GOOGLE_TTS') {
+    // không có giọng local nào — chỉ còn Google
+  }
+  sel.innerHTML = html;
 }
 
 function onVoiceSelect() {
   const sel = document.getElementById('voice-select');
   _selectedVoiceName = sel.value;
   localStorage.setItem('pb_caller_voice_v1', _selectedVoiceName);
+  if (_selectedVoiceName === 'GOOGLE_TTS') _googleTtsFailed = false; // thử lại
   // đọc thử ngay giọng vừa chọn
   if (_soundUnlocked) {
-    _speakTwice('Vận động viên Nguyễn Văn A về sân 1 để chuẩn bị thi đấu.', () => {});
+    _speakTwice('Xin mời các vận động viên Nguyễn Văn A và Trần Thị B. Bảng A, về sân 1 để chuẩn bị thi đấu. Xin cám ơn.', () => {});
+  }
+}
+
+function onRateSelect() {
+  const sel = document.getElementById('rate-select');
+  _speakRate = parseFloat(sel.value) || 1.15;
+  localStorage.setItem('pb_caller_rate_v1', String(_speakRate));
+  if (_soundUnlocked) {
+    _speakTwice('Xin mời các vận động viên Nguyễn Văn A và Trần Thị B. Bảng A, về sân 1 để chuẩn bị thi đấu. Xin cám ơn.', () => {});
   }
 }
 
@@ -740,19 +787,40 @@ function pickViVoice() {
   return _voices.find(_isViVoice) || null;
 }
 
+// Nối tên VĐV theo cách nói tự nhiên: "A và B" / "A, B và C"
+function _joinNamesNatural(players) {
+  if (!players || !players.length) return '';
+  if (players.length === 1) return players[0];
+  if (players.length === 2) return `${players[0]} và ${players[1]}`;
+  return players.slice(0, -1).join(', ') + ' và ' + players[players.length - 1];
+}
+
+// Mẫu câu thông báo — giống cách MC/loa sân thật đọc:
+// "Xin mời các vận động viên A và B. Bảng X về sân Y để chuẩn bị thi đấu. Xin cám ơn."
+// Lấy tên sân để đọc — sân đã được cấu hình tên đầy đủ (VD "Sân 1", "Sân Trung Tâm")
+// nên đọc nguyên tên đó; chỉ thêm tiền tố "sân" nếu admin chỉ điền số/tên ngắn (VD "1", "A1")
+function _courtPhrase(court) {
+  const c = String(court || '').trim();
+  if (!c) return 'sân thi đấu';
+  if (/^sân\b/i.test(c)) return c; // đã có chữ "Sân ..." sẵn → đọc nguyên
+  return `sân ${c}`;
+}
+
+// Lấy tên bảng để đọc — tránh lặp "Bảng Bảng B" nếu giá trị đã có sẵn "Bảng ..."
+function _bangPhrase(bang) {
+  const b = String(bang || '').trim();
+  if (!b) return '';
+  if (/^bảng\b/i.test(b)) return `${b}, `;
+  return `Bảng ${b}, `;
+}
+
 function buildAnnounceText(call) {
   const players = call.players || [];
-  const courtPart = call.court ? `về sân ${call.court}` : 'ra sân thi đấu';
-  let who = '';
-  if (call.callType === 'match') {
-    who = players.length ? `Vận động viên ${players.join(', ')}` : 'Các vận động viên';
-  } else if (call.callType === 'team_a' || call.callType === 'team_b') {
-    const team = call.callType === 'team_a' ? 'A' : 'B';
-    who = players.length ? `Vận động viên đội ${team}: ${players.join(', ')}` : `Vận động viên đội ${team}`;
-  } else {
-    who = players.length ? `Vận động viên ${players[0]}` : 'Vận động viên';
-  }
-  return `${who} ${courtPart} để chuẩn bị thi đấu.`;
+  const namesStr = _joinNamesNatural(players);
+  const bangPart = _bangPhrase(call.matchBang);
+  const courtPart = _courtPhrase(call.court);
+  const who = namesStr ? `các vận động viên ${namesStr}` : 'các vận động viên';
+  return `Xin mời ${who}. ${bangPart}về ${courtPart} để chuẩn bị thi đấu. Xin cám ơn.`;
 }
 
 function queueSpeech(call, force) {
@@ -772,23 +840,63 @@ function _processSpeechQueue() {
   _speakTwice(text, () => { _speaking = false; _processSpeechQueue(); });
 }
 
+// Đọc theo từng câu (ngắt ở dấu . ! ?) với khoảng nghỉ giữa các câu —
+// tạo nhịp điệu tự nhiên giống người dẫn chương trình thật, thay vì
+// đọc một lèo đều đều như máy.
+// Đọc bằng Google Translate TTS — miễn phí, không cần API key, chất lượng cao
+// (cần Internet). Giới hạn ~200 ký tự/lần nên đọc theo từng câu (segments) như local.
+let _googleTtsFailed = false; // nếu lỗi 1 lần (mạng/CORS/bị chặn) → tự fallback về giọng máy cho các lượt sau
+function _speakOneGoogle(text, onDone) {
+  const speed = Math.max(0.24, Math.min(2, _speakRate)).toFixed(2);
+  const url = 'https://translate.google.com/translate_tts?ie=UTF-8&q='
+    + encodeURIComponent(text) + '&tl=vi&client=tw-ob&ttsspeed=' + speed;
+  const audio = new Audio(url);
+  audio.volume = _effectiveVolume();
+  let done = false;
+  const finish = () => { if (!done) { done = true; onDone(); } };
+  audio.onended = () => setTimeout(finish, 0);
+  audio.onerror = () => { _googleTtsFailed = true; finish(); };
+  audio.play().catch(() => { _googleTtsFailed = true; finish(); });
+  // an toàn: nếu audio "treo" quá lâu (mạng chậm) thì vẫn tiếp tục
+  setTimeout(finish, 6000);
+}
+
+function _speakSegments(text, onDone) {
+  const segments = text.split(/(?<=[.!?])\s+/).filter(Boolean);
+  const useGoogle = _selectedVoiceName === 'GOOGLE_TTS' && !_googleTtsFailed;
+  let i = 0;
+  function next() {
+    if (i >= segments.length) { onDone(); return; }
+    const seg = segments[i++];
+
+    if (useGoogle) {
+      _speakOneGoogle(seg, () => setTimeout(next, 200));
+      return;
+    }
+
+    const u = new SpeechSynthesisUtterance(seg);
+    u.lang = 'vi-VN';
+    u.rate = _speakRate;  // tốc độ đọc — tuỳ chọn ở dropdown (mặc định Nhanh 1.15x)
+    u.pitch = 1.03; // nhấn nhẹ cao độ — giống giọng MC, tránh đều đều
+    u.volume = _effectiveVolume();
+    const v = pickViVoice();
+    if (v) u.voice = v;
+    u.onend = () => setTimeout(next, 200); // ngắt nghỉ ngắn giữa các câu
+    u.onerror = () => setTimeout(next, 100);
+    speechSynthesis.speak(u);
+  }
+  next();
+}
+
 function _speakTwice(text, done) {
   let count = 0;
   function once() {
     try { speechSynthesis.cancel(); } catch(e) {}
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'vi-VN';
-    u.rate = 0.95;
-    u.pitch = 1;
-    const v = pickViVoice();
-    if (v) u.voice = v;
-    u.onend = () => {
+    _speakSegments(text, () => {
       count++;
-      if (count < 2) setTimeout(once, 700);
+      if (count < 2) setTimeout(once, 500); // nghỉ giữa 2 lần đọc
       else done();
-    };
-    u.onerror = () => done();
-    speechSynthesis.speak(u);
+    });
   }
   once();
 }
@@ -823,6 +931,47 @@ function updateAutoSpeakBtn() {
     btn.classList.remove('on');
   }
 }
+
+// ── Tắt tiếng / Âm lượng ──
+function toggleMute() {
+  _muted = !_muted;
+  localStorage.setItem('pb_caller_muted_v1', _muted ? '1' : '0');
+  updateMuteBtn();
+  // Nếu đang đọc và vừa bật tắt tiếng → dừng ngay câu đang đọc
+  if (_muted) {
+    try { speechSynthesis.cancel(); } catch(e) {}
+  }
+}
+function updateMuteBtn() {
+  const btn = document.getElementById('mute-btn');
+  if (!btn) return;
+  if (_muted) {
+    btn.textContent = '🔇 Đang TẮT TIẾNG — bấm để bật lại';
+    btn.classList.add('muted');
+  } else {
+    btn.textContent = '🔇 Tắt tiếng';
+    btn.classList.remove('muted');
+  }
+}
+function onVolumeChange() {
+  const slider = document.getElementById('volume-slider');
+  _volume = (parseInt(slider.value, 10) || 0) / 100;
+  localStorage.setItem('pb_caller_volume_v1', String(_volume));
+  updateVolumeUI();
+  // Nếu kéo âm lượng lên từ 0 mà đang tắt tiếng → tự bật tiếng lại
+  if (_volume > 0 && _muted) {
+    _muted = false;
+    localStorage.setItem('pb_caller_muted_v1', '0');
+    updateMuteBtn();
+  }
+}
+function updateVolumeUI() {
+  const slider = document.getElementById('volume-slider');
+  const label  = document.getElementById('volume-label');
+  if (slider) slider.value = Math.round(_volume * 100);
+  if (label)  label.textContent = Math.round(_volume * 100) + '%';
+}
+
 
 function repeatLast() {
   if (!_hist.length) { alert('Chưa có lệnh gọi nào để đọc lại'); return; }
