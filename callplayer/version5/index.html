@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trang Gọi VĐV — Pickleball</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#22d374;--green2:#16a34a;--green-dim:rgba(34,211,116,.12);
+  --amber:#fbbf24;--amber2:#d97706;--amber-dim:rgba(251,191,36,.12);
+  --red:#f87171;--red-dim:rgba(248,113,113,.12);
+  --blue:#38bdf8;--blue-dim:rgba(56,189,248,.12);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,.12);
+  --bg:#060d18;--bg2:#0b1628;--bg3:#101e35;--bg4:#162540;
+  --bdr:rgba(255,255,255,.07);--bdr2:rgba(255,255,255,.12);
+  --tx:#f1f5f9;--tx2:#94a3b8;--tx3:#64748b;
+  --r:8px;--r2:12px;
+  --font-display:'Barlow Condensed',sans-serif;
+  --font-body:'Barlow',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--tx);font-family:var(--font-body)}
+body{min-height:100vh;display:flex;flex-direction:column}
+
+/* ── LOGIN ── */
+.login-overlay{position:fixed;inset:0;background:radial-gradient(ellipse at top,rgba(34,211,116,.06),transparent 60%),var(--bg);z-index:100;display:flex;align-items:center;justify-content:center}
+.login-box{background:var(--bg2);border:1px solid var(--bdr2);border-radius:20px;padding:40px;width:min(440px,92vw);display:flex;flex-direction:column;gap:18px;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.login-box h2{font-family:var(--font-display);font-size:24px;font-weight:900;letter-spacing:1px;color:var(--green)}
+.login-box h3{font-size:13px;font-weight:800;color:var(--tx);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.login-box p.sub{font-size:11px;color:var(--tx3);margin-top:4px}
+.login-label{font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.login-input{width:100%;background:var(--bg3);border:1.5px solid var(--bdr2);border-radius:10px;padding:14px 16px;font-size:18px;color:var(--tx);outline:none;font-family:var(--font-body);text-align:center;letter-spacing:1px}
+.login-input:focus{border-color:var(--green)}
+.login-btn{background:var(--green2);color:#fff;border:none;border-radius:10px;padding:14px 24px;font-family:var(--font-display);font-size:18px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:background .15s}
+.login-btn:hover{background:var(--green)}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-err{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--red);display:none;text-align:center}
+
+/* ── APP ── */
+#app{display:none;flex-direction:column;flex:1;min-height:100vh}
+.hdr{height:60px;background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 18px;gap:14px;flex-shrink:0}
+.hdr-title{font-family:var(--font-display);font-size:20px;font-weight:900;letter-spacing:1.5px;color:var(--green);flex:1}
+.hdr-title small{display:block;font-size:10px;color:var(--tx3);font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.hdr-badge{font-family:var(--font-display);font-size:11px;font-weight:800;letter-spacing:1px;padding:6px 12px;border-radius:8px;background:var(--green-dim);color:var(--green);border:1px solid rgba(34,211,116,.3)}
+.hdr-badge.mgr{background:var(--blue-dim);color:var(--blue);border-color:rgba(56,189,248,.3)}
+.hdr-btn{background:var(--bg3);border:1px solid var(--bdr2);color:var(--tx2);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:.15s}
+.hdr-btn:hover{border-color:var(--green);color:var(--green)}
+.hdr-btn.danger:hover{border-color:var(--red);color:var(--red)}
+
+/* sound unlock overlay */
+.sound-gate{position:fixed;inset:0;background:rgba(6,13,24,.92);z-index:90;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;text-align:center;padding:24px}
+.sound-gate.hidden{display:none}
+.sound-gate-icon{font-size:54px}
+.sound-gate h2{font-family:var(--font-display);font-size:24px;font-weight:900;letter-spacing:1px}
+.sound-gate p{font-size:13px;color:var(--tx2);max-width:420px;line-height:1.5}
+.sound-gate-btn{background:var(--green2);color:#fff;border:none;border-radius:12px;padding:16px 36px;font-family:var(--font-display);font-size:18px;font-weight:800;letter-spacing:1px;cursor:pointer}
+.sound-gate-btn:hover{background:var(--green)}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;padding:18px;gap:16px;max-width:900px;width:100%;margin:0 auto}
+
+/* status strip */
+.status-strip{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.status-pill{display:flex;align-items:center;gap:7px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--tx2);font-weight:600}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--tx3)}
+.status-dot.on{background:var(--green);animation:pulse 1.5s infinite}
+.status-dot.off{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.giai-tag{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(251,191,36,.3);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700}
+
+/* hero card */
+.hero{background:var(--bg2);border:1px solid var(--bdr2);border-radius:var(--r2);padding:28px;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;position:relative;overflow:hidden;transition:border-color .3s}
+.hero.live{border-color:var(--green);box-shadow:0 0 0 1px var(--green-dim),0 0 40px rgba(34,211,116,.15)}
+.hero-empty{color:var(--tx3);font-size:14px}
+.hero-empty .ic{font-size:46px;margin-bottom:10px;opacity:.5}
+.hero-icon{font-size:38px}
+.hero-type{font-family:var(--font-display);font-size:14px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--amber)}
+.hero-names{font-family:var(--font-display);font-size:clamp(28px,7vw,52px);font-weight:900;letter-spacing:.5px;line-height:1.15;color:var(--tx)}
+.hero-names .side-a{color:var(--green)}
+.hero-names .side-b{color:var(--blue)}
+.hero-match{font-size:13px;color:var(--tx2);font-weight:600}
+.hero-court{font-family:var(--font-display);font-size:20px;font-weight:800;letter-spacing:1px;color:var(--amber);margin-top:4px}
+.hero-time{font-size:11px;color:var(--tx3)}
+.hero-progress{position:absolute;bottom:0;left:0;height:3px;background:var(--green);width:100%}
+
+/* repeat/test controls */
+.controls{display:flex;gap:10px;flex-wrap:wrap}
+.ctrl-btn{flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--tx);border-radius:10px;padding:12px 16px;font-family:var(--font-display);font-size:14px;font-weight:800;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s}
+.ctrl-btn:hover{border-color:var(--green);color:var(--green)}
+.ctrl-btn.on{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.voice-warn{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--amber);line-height:1.6}
+select#voice-select{appearance:none;-webkit-appearance:none;font-family:var(--font-body);font-weight:600;font-size:13px;background-position:right 12px center;background-repeat:no-repeat}
+
+/* history */
+.hist-section{flex:1;display:flex;flex-direction:column;min-height:0}
+.hist-hdr{font-family:var(--font-display);font-size:13px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--tx2);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.hist-list{display:flex;flex-direction:column;gap:8px;overflow-y:auto;padding-right:4px}
+.hist-row{background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:5px}
+.hist-row.new{animation:flashIn .6s ease}
+@keyframes flashIn{0%{background:var(--green-dim);border-color:var(--green)}100%{background:var(--bg2);border-color:var(--bdr)}}
+.hist-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hist-badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;letter-spacing:.5px}
+.hist-badge.player{background:var(--green-dim);color:var(--green)}
+.hist-badge.team-a{background:var(--green-dim);color:var(--green)}
+.hist-badge.team-b{background:var(--blue-dim);color:var(--blue)}
+.hist-badge.match{background:var(--amber-dim);color:var(--amber)}
+.hist-match{font-size:11px;color:var(--tx2);flex:1}
+.hist-time{font-size:10px;color:var(--tx3)}
+.hist-players{font-size:13px;font-weight:700}
+.hist-court{font-size:11px;color:var(--tx3)}
+.hist-empty{text-align:center;padding:30px;color:var(--tx3);font-size:13px}
+.hist-replay{background:none;border:1px solid var(--bdr2);color:var(--tx3);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer}
+.hist-replay:hover{color:var(--green);border-color:var(--green)}
+
+/* giai modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:80;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--bg2);border:1px solid var(--bdr2);border-radius:16px;padding:20px;width:min(420px,100%);max-height:80vh;display:flex;flex-direction:column;gap:12px}
+.modal-box h3{font-family:var(--font-display);font-size:16px;font-weight:800;letter-spacing:1px}
+.giai-list{display:flex;flex-direction:column;gap:6px;overflow-y:auto;max-height:300px}
+.giai-item{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;cursor:pointer;font-size:13px;font-weight:600}
+.giai-item input{width:16px;height:16px;accent-color:var(--green)}
+.modal-actions{display:flex;gap:10px;margin-top:6px}
+.modal-actions button{flex:1;padding:10px;border-radius:8px;font-family:var(--font-display);font-weight:800;letter-spacing:.5px;cursor:pointer;border:1px solid var(--bdr2);background:var(--bg3);color:var(--tx)}
+.modal-actions button.primary{background:var(--green2);border-color:var(--green2);color:#fff}
+
+@media(max-width:600px){
+  .hero{padding:18px;min-height:170px}
+  .main{padding:12px;gap:12px}
+  .hdr-title{font-size:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="login-screen">
+  <div class="login-box">
+    <div>
+      <h2>📣 Trang Gọi VĐV</h2>
+      <h3>Pickleball — PA / Caller</h3>
+      <p class="sub">Đăng nhập bằng mã Admin/Manager đã được cấp</p>
+    </div>
+    <div>
+      <div class="login-label">Mã đăng nhập hoặc Số điện thoại</div>
+      <input class="login-input" id="login-code" placeholder="VD: ADM001 hoặc 0901234567" autocomplete="off">
+    </div>
+    <div class="login-err" id="login-err"></div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Đăng nhập</button>
+  </div>
+</div>
+
+<!-- SOUND GATE -->
+<div class="sound-gate hidden" id="sound-gate">
+  <div class="sound-gate-icon">🔊</div>
+  <h2>Bật âm thanh đọc tên</h2>
+  <p>Trình duyệt yêu cầu một lần bấm để cho phép tự động đọc loa.
+  Sau khi bấm, mọi lệnh gọi VĐV mới sẽ được <b>tự động đọc 2 lần</b> bằng giọng nói.</p>
+  <button class="sound-gate-btn" onclick="enableSound()">🔊 Bật âm thanh</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="hdr">
+    <div class="hdr-title">📣 GỌI VĐV<small id="hdr-sub">—</small></div>
+    <span class="hdr-badge" id="role-badge">—</span>
+    <button class="hdr-btn" onclick="openGiaiModal()">🏆 Giải đấu</button>
+    <button class="hdr-btn" onclick="testAnnounce()">🔔 Test</button>
+    <button class="hdr-btn danger" onclick="doLogout()">Đăng xuất</button>
+  </div>
+
+  <div class="main">
+    <div class="status-strip">
+      <div class="status-pill"><span class="status-dot" id="poll-dot"></span><span id="poll-text">Đang kết nối...</span></div>
+      <div class="status-pill"><span class="status-dot on" id="sound-dot"></span><span id="sound-text">Âm thanh: đang chờ</span></div>
+      <span class="giai-tag" id="giai-tag">Tất cả giải</span>
+    </div>
+
+    <div class="hero" id="hero">
+      <div class="hero-empty">
+        <div class="ic">📣</div>
+        Chưa có lệnh gọi VĐV nào.<br>Khi trọng tài bấm gọi, thông báo sẽ hiện ở đây và tự động đọc loa.
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn on" id="auto-speak-btn" onclick="toggleAutoSpeak()">🔊 Tự động đọc: BẬT</button>
+      <button class="ctrl-btn" onclick="repeatLast()">🔁 Đọc lại gần nhất</button>
+    </div>
+
+    <div class="controls" id="voice-row">
+      <select class="ctrl-btn" id="voice-select" onchange="onVoiceSelect()" style="text-align:left;justify-content:flex-start"></select>
+    </div>
+    <div class="voice-warn" id="voice-warn" style="display:none">
+      ⚠️ Thiết bị này <b>chưa có giọng đọc Tiếng Việt</b> nên loa đang đọc bằng giọng khác (có thể nghe như tiếng Anh).
+      Hãy cài thêm giọng Tiếng Việt rồi tải lại trang:
+      <br>• <b>Android</b>: Cài đặt → Hệ thống → Ngôn ngữ &amp; văn bản giọng nói → Tổng hợp giọng nói → cài "Tiếng Việt".
+      <br>• <b>Windows / Edge / Chrome</b>: Settings → Time &amp; Language → Speech → Add voices → Vietnamese.
+      <br>• <b>iPhone/iPad</b>: Settings → Accessibility → Spoken Content → Voices → Vietnamese.
+    </div>
+
+    <div class="hist-section">
+      <div class="hist-hdr"><span>Lịch sử gọi VĐV</span><span id="hist-count" style="color:var(--tx3);font-weight:600;font-size:11px"></span></div>
+      <div class="hist-list" id="hist-list">
+        <div class="hist-empty">Chưa có lệnh gọi nào</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GIAI MODAL -->
+<div class="modal-overlay" id="giai-modal">
+  <div class="modal-box">
+    <h3>Chọn giải để nhận thông báo</h3>
+    <div class="giai-list" id="giai-list"></div>
+    <div class="modal-actions">
+      <button onclick="closeGiaiModal()">Đóng</button>
+      <button class="primary" onclick="saveGiaiSelection()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  📣 TRANG GỌI VĐV — Caller / PA Display v1
+//  Dùng chung backend với Admin: action=validate, action=tournaments,
+//  action=getCallPlayer (đọc EventLog do trọng tài ghi qua callPlayer)
+// ════════════════════════════════════════════════════════════════
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWasb4KravYHNR6Q9d55qevrut8O9Kep80nZKBq4Rj05TA3XhNF-fymIRtr75HRJv6/exec';
+
+let GS=GAS_URL, CODE='', NAME='', ROLE='', MY_GIAI='', MY_GIAI_LIST=[];
+let _T = []; // danh sách giải [id, name, ...]
+let _selectedGiai = []; // mã giải user chọn để nghe ('ALL' = tất cả được phép)
+let _autoSpeak = true;
+let _soundUnlocked = false;
+let _lastTs = Date.now() - 60000;
+let _seenTs = new Set();
+let _hist = [];
+let _lastAnnounceText = '';
+let _pollTimer = null;
+
+const HIST_KEY  = 'pb_caller_hist_v1';
+const GIAI_KEY  = 'pb_caller_giai_v1';
+const SESS_KEY  = 'pb_caller_sess_v1';
+const AUTO_KEY  = 'pb_caller_autospeak_v1';
+
+// ── Khởi động ──
+window.onload = function() {
+  try {
+    const raw = localStorage.getItem(HIST_KEY);
+    if (raw) { _hist = JSON.parse(raw); _hist.forEach(h => _seenTs.add(h.ts)); }
+  } catch(e) {}
+  try {
+    const a = localStorage.getItem(AUTO_KEY);
+    if (a !== null) _autoSpeak = a === '1';
+  } catch(e) {}
+
+  const s = localStorage.getItem(SESS_KEY);
+  if (s) {
+    try {
+      const j = JSON.parse(s);
+      CODE = j.c; NAME = j.n; ROLE = j.r; MY_GIAI = j.g || '';
+      MY_GIAI_LIST = MY_GIAI ? MY_GIAI.split(',').map(x=>x.trim()).filter(Boolean) : [];
+      startApp();
+      return;
+    } catch(e) { localStorage.removeItem(SESS_KEY); }
+  }
+};
+
+// ════════════════════════════════════════════════════════════════
+//  LOGIN
+// ════════════════════════════════════════════════════════════════
+async function doLogin() {
+  const codeInput = document.getElementById('login-code').value.trim();
+  const errEl = document.getElementById('login-err');
+  const btn = document.getElementById('login-btn');
+  errEl.style.display = 'none';
+  if (!codeInput) { errEl.textContent = '⚠️ Nhập mã đăng nhập hoặc số điện thoại'; errEl.style.display='block'; return; }
+
+  btn.disabled = true; btn.textContent = '⏳ Đang kiểm tra...';
+
+  const codeUp = codeInput.toUpperCase();
+  const codeClean = codeInput.replace(/\D/g,'');
+  const isPhone = /^\d{8,12}$/.test(codeClean) && !/[A-Z]/.test(codeInput);
+  const param = isPhone ? `phone=${encodeURIComponent(codeClean)}` : `code=${encodeURIComponent(codeUp)}`;
+  const url = `${GAS_URL}?action=validate&${param}&device=CallerPA&_t=${Date.now()}`;
+
+  try {
+    const r = await fetch(url, { redirect: 'follow' });
+    const text = await r.text();
+    let d;
+    try { d = JSON.parse(text); } catch(e) {
+      errEl.textContent = '❌ Máy chủ trả lời không hợp lệ'; errEl.style.display='block';
+      btn.disabled=false; btn.textContent='Đăng nhập'; return;
+    }
+    if (!d.valid) {
+      errEl.textContent = '❌ ' + (d.reason || 'Mã không hợp lệ'); errEl.style.display='block';
+      btn.disabled=false; btn.textContent='Đăng nhập'; return;
+    }
+    if (!d.isAdmin && !d.isManager) {
+      errEl.textContent = '❌ Tài khoản không có quyền Admin/Manager để xem thông báo gọi VĐV';
+      errEl.style.display='block';
+      btn.disabled=false; btn.textContent='Đăng nhập'; return;
+    }
+    CODE = isPhone ? codeClean : codeUp;
+    NAME = d.name || '';
+    ROLE = d.isAdmin ? 'admin' : 'manager';
+    MY_GIAI = d.giai || '';
+    MY_GIAI_LIST = MY_GIAI ? MY_GIAI.split(',').map(x=>x.trim()).filter(Boolean) : [];
+    localStorage.setItem(SESS_KEY, JSON.stringify({c:CODE,n:NAME,r:ROLE,g:MY_GIAI}));
+    startApp();
+  } catch(e) {
+    errEl.textContent = '❌ Lỗi kết nối: ' + e.message; errEl.style.display='block';
+    btn.disabled=false; btn.textContent='Đăng nhập';
+  }
+}
+
+function doLogout() {
+  if (!confirm('Đăng xuất khỏi trang Gọi VĐV?')) return;
+  localStorage.removeItem(SESS_KEY);
+  if (_pollTimer) clearInterval(_pollTimer);
+  location.reload();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  START APP
+// ════════════════════════════════════════════════════════════════
+async function startApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+
+  document.getElementById('hdr-sub').textContent = NAME ? '— ' + NAME : '';
+  const badge = document.getElementById('role-badge');
+  badge.textContent = ROLE === 'admin' ? 'ADMIN' : 'MANAGER';
+  badge.className = 'hdr-badge' + (ROLE === 'manager' ? ' mgr' : '');
+
+  // sound gate
+  if (!_soundUnlocked) {
+    document.getElementById('sound-gate').classList.remove('hidden');
+  }
+
+  // auto-speak button state
+  updateAutoSpeakBtn();
+  populateVoiceList();
+
+  await loadTournaments();
+  loadGiaiSelection();
+  renderHistFromStorage();
+
+  _cpStartPolling();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  TOURNAMENTS (để lọc giai cho manager + map id↔name)
+// ════════════════════════════════════════════════════════════════
+async function loadTournaments() {
+  try {
+    const param = ROLE === 'manager' ? `&adminCode=${encodeURIComponent(CODE)}` : '';
+    const r = await fetch(`${GAS_URL}?action=tournaments${param}&_t=${Date.now()}`, {cache:'no-store'});
+    const d = await r.json();
+    _T = (d.rows || []).slice(1).filter(row => row && row[0]);
+  } catch(e) { _T = []; }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  GIAI SELECTION (modal)
+// ════════════════════════════════════════════════════════════════
+function loadGiaiSelection() {
+  try {
+    const raw = localStorage.getItem(GIAI_KEY);
+    if (raw) _selectedGiai = JSON.parse(raw);
+    else _selectedGiai = ['ALL'];
+  } catch(e) { _selectedGiai = ['ALL']; }
+  updateGiaiTag();
+}
+
+function openGiaiModal() {
+  const list = document.getElementById('giai-list');
+  list.innerHTML = '';
+
+  // Danh sách giải user được PHÉP xem
+  let allowed = _T;
+  if (ROLE === 'manager' && MY_GIAI_LIST.length) {
+    allowed = _T.filter(t => {
+      const id = String(t[0]||'').trim().toLowerCase();
+      const nm = String(t[1]||'').trim().toLowerCase();
+      return MY_GIAI_LIST.some(g => g.trim().toLowerCase() === id || g.trim().toLowerCase() === nm);
+    });
+  }
+
+  if (!allowed.length) {
+    list.innerHTML = '<div style="color:var(--tx3);font-size:13px;text-align:center;padding:20px">Không có giải nào được phân quyền</div>';
+    document.getElementById('giai-modal').classList.add('show');
+    return;
+  }
+
+  // "Tất cả giải" option
+  const allItem = document.createElement('label');
+  allItem.className = 'giai-item';
+  allItem.innerHTML = `<input type="checkbox" id="giai-all" ${_selectedGiai.includes('ALL')?'checked':''} onchange="_onGiaiAllToggle()"> <span>🏆 Tất cả giải (${allowed.length})</span>`;
+  list.appendChild(allItem);
+
+  allowed.forEach(t => {
+    const id = String(t[0]||'');
+    const name = String(t[1]||id);
+    const item = document.createElement('label');
+    item.className = 'giai-item';
+    const checked = _selectedGiai.includes('ALL') || _selectedGiai.includes(id);
+    item.innerHTML = `<input type="checkbox" class="giai-item-cb" value="${id.replace(/"/g,'&quot;')}" ${checked?'checked':''} onchange="_onGiaiItemToggle()"> <span>${name}</span>`;
+    list.appendChild(item);
+  });
+
+  document.getElementById('giai-modal').classList.add('show');
+}
+
+function _onGiaiAllToggle() {
+  const allChecked = document.getElementById('giai-all').checked;
+  document.querySelectorAll('.giai-item-cb').forEach(cb => cb.checked = allChecked);
+}
+
+function _onGiaiItemToggle() {
+  const cbs = Array.from(document.querySelectorAll('.giai-item-cb'));
+  const allChecked = cbs.every(cb => cb.checked);
+  document.getElementById('giai-all').checked = allChecked;
+}
+
+function closeGiaiModal() {
+  document.getElementById('giai-modal').classList.remove('show');
+}
+
+function saveGiaiSelection() {
+  const allChecked = document.getElementById('giai-all').checked;
+  if (allChecked) {
+    _selectedGiai = ['ALL'];
+  } else {
+    _selectedGiai = Array.from(document.querySelectorAll('.giai-item-cb'))
+      .filter(cb => cb.checked).map(cb => cb.value);
+    if (!_selectedGiai.length) _selectedGiai = ['ALL']; // tránh chọn rỗng
+  }
+  localStorage.setItem(GIAI_KEY, JSON.stringify(_selectedGiai));
+  updateGiaiTag();
+  closeGiaiModal();
+}
+
+function updateGiaiTag() {
+  const tag = document.getElementById('giai-tag');
+  if (_selectedGiai.includes('ALL')) {
+    tag.textContent = ROLE === 'manager' ? `Tất cả giải của bạn (${MY_GIAI_LIST.length||'?'})` : 'Tất cả giải';
+  } else {
+    const names = _selectedGiai.map(id => {
+      const t = _T.find(x => String(x[0]) === id);
+      return t ? String(t[1]||id) : id;
+    });
+    tag.textContent = names.length <= 2 ? names.join(', ') : `${names.length} giải đã chọn`;
+  }
+}
+
+// ── Kiểm tra một call có thuộc phạm vi đang theo dõi không ──
+function _matchSelectedGiai(rowGiai) {
+  if (!rowGiai) return true;
+  const rg = String(rowGiai).trim().toLowerCase();
+
+  // Resolve rowGiai -> {id, name} qua _T
+  let rgId = rg, rgName = rg;
+  const t = _T.find(x => String(x[0]||'').trim().toLowerCase() === rg || String(x[1]||'').trim().toLowerCase() === rg);
+  if (t) { rgId = String(t[0]||'').trim().toLowerCase(); rgName = String(t[1]||'').trim().toLowerCase(); }
+
+  // 1. Quyền hạn cơ bản: manager chỉ thấy giải trong MY_GIAI_LIST
+  if (ROLE === 'manager' && MY_GIAI_LIST.length) {
+    const allowed = MY_GIAI_LIST.some(g => {
+      const gl = g.trim().toLowerCase();
+      return gl === rgId || gl === rgName || gl === rg;
+    });
+    if (!allowed) return false;
+  }
+
+  // 2. Bộ lọc user chọn (giai-modal)
+  if (_selectedGiai.includes('ALL')) return true;
+  return _selectedGiai.some(id => {
+    const idl = String(id).trim().toLowerCase();
+    return idl === rgId || idl === rg;
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  POLLING — action=getCallPlayer
+// ════════════════════════════════════════════════════════════════
+function _cpStartPolling() {
+  _cpPoll();
+  if (_pollTimer) clearInterval(_pollTimer);
+  _pollTimer = setInterval(_cpPoll, 1500);
+}
+
+async function _cpPoll() {
+  const dot = document.getElementById('poll-dot');
+  const txt = document.getElementById('poll-text');
+  try {
+    const giaiParam = (ROLE === 'manager' && MY_GIAI_LIST.length === 1) ? encodeURIComponent(MY_GIAI_LIST[0]) : '';
+    const url = `${GAS_URL}?action=getCallPlayer&since=${_lastTs}&giai=${giaiParam}&_t=${Date.now()}`;
+    const res = await fetch(url, { method:'GET', redirect:'follow' });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(e) { throw new Error('parse'); }
+    if (!data || !data.ok) throw new Error('not ok');
+
+    _lastTs = Date.now();
+    dot.className = 'status-dot on';
+    txt.textContent = 'Đang theo dõi — cập nhật mỗi 1.5s';
+
+    const calls = data.calls || [];
+    // Sort theo ts tăng dần để đọc đúng thứ tự
+    calls.sort((a,b) => Number(a.ts||0) - Number(b.ts||0));
+
+    calls.forEach(call => {
+      const ts = Number(call.ts || 0);
+      if (_seenTs.has(ts)) return;
+      const rowGiai = String(call.matchGiai || '');
+      if (!_matchSelectedGiai(rowGiai)) return;
+
+      _seenTs.add(ts);
+      const callData = {
+        ts, callType: call.callType || 'match',
+        players: call.players || [],
+        matchBang: call.matchBang || '', matchCode: call.matchCode || '',
+        matchNd: call.matchNd || '', court: call.court || '',
+        referee: call.referee || '', matchGiai: rowGiai,
+      };
+      _hist.unshift(callData);
+      _hist = _hist.slice(0, 80);
+      saveHist();
+      showHero(callData, true);
+      prependHistRow(callData, true);
+      queueSpeech(callData);
+    });
+  } catch(e) {
+    dot.className = 'status-dot off';
+    txt.textContent = 'Mất kết nối — đang thử lại...';
+  }
+}
+
+function saveHist() {
+  try { localStorage.setItem(HIST_KEY, JSON.stringify(_hist.slice(0,80))); } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════════
+//  HIỂN THỊ — Hero card + lịch sử
+// ════════════════════════════════════════════════════════════════
+const _CP_LABELS = {
+  'player_a0': { text: 'GỌI VĐV 1 · ĐỘI A', icon: '📣', badge:'player' },
+  'player_a1': { text: 'GỌI VĐV 2 · ĐỘI A', icon: '📣', badge:'player' },
+  'player_b0': { text: 'GỌI VĐV 1 · ĐỘI B', icon: '📣', badge:'player' },
+  'player_b1': { text: 'GỌI VĐV 2 · ĐỘI B', icon: '📣', badge:'player' },
+  'team_a':    { text: 'GỌI CẢ ĐỘI A',       icon: '📢', badge:'team-a' },
+  'team_b':    { text: 'GỌI CẢ ĐỘI B',       icon: '📢', badge:'team-b' },
+  'match':     { text: 'GỌI TRẬN ĐẤU',        icon: '🔊', badge:'match' },
+};
+function _cpMeta(ct) { return _CP_LABELS[ct] || { text:'GỌI VĐV', icon:'📣', badge:'player' }; }
+function _cpSide(callType, idx) {
+  if (!callType) return 'a';
+  if (callType.includes('_b') || callType === 'team_b') return 'b';
+  if (callType === 'match') return idx < 2 ? 'a' : 'b';
+  return 'a';
+}
+
+let _heroTimer = null;
+function showHero(call, animate) {
+  const hero = document.getElementById('hero');
+  const meta = _cpMeta(call.callType);
+  const players = call.players || [];
+  const matchInfo = [call.matchBang, call.matchCode ? 'Mã ' + call.matchCode : '', call.matchNd].filter(Boolean).join(' · ');
+
+  let namesHtml = players.length
+    ? players.map((p,i) => `<span class="side-${_cpSide(call.callType,i)}">${p||'—'}</span>`).join(' &nbsp;·&nbsp; ')
+    : '—';
+
+  const timeStr = new Date(call.ts).toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  hero.innerHTML = `
+    <div class="hero-icon">${meta.icon}</div>
+    <div class="hero-type">${meta.text}</div>
+    <div class="hero-names">${namesHtml}</div>
+    ${matchInfo ? `<div class="hero-match">${matchInfo}</div>` : ''}
+    ${call.court ? `<div class="hero-court">📍 ${call.court}</div>` : ''}
+    <div class="hero-time">${timeStr}${call.referee ? ' · TT: '+call.referee : ''}</div>
+    <div class="hero-progress" id="hero-pb"></div>
+  `;
+  hero.classList.toggle('live', !!animate);
+
+  if (_heroTimer) clearTimeout(_heroTimer);
+  if (animate) {
+    const pb = document.getElementById('hero-pb');
+    if (pb) {
+      pb.style.transition = 'width 16s linear';
+      pb.style.width = '100%';
+      requestAnimationFrame(() => { pb.style.width = '0%'; });
+    }
+    _heroTimer = setTimeout(() => hero.classList.remove('live'), 16000);
+  }
+}
+
+function prependHistRow(call, isNew) {
+  const list = document.getElementById('hist-list');
+  const empty = list.querySelector('.hist-empty');
+  if (empty) empty.remove();
+
+  const meta = _cpMeta(call.callType);
+  const players = call.players || [];
+  const matchInfo = [call.matchBang, call.matchCode ? 'Mã ' + call.matchCode : '', call.matchNd].filter(Boolean).join(' · ');
+  const timeStr = new Date(call.ts).toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  const row = document.createElement('div');
+  row.className = 'hist-row' + (isNew ? ' new' : '');
+  row.innerHTML = `
+    <div class="hist-top">
+      <span class="hist-badge ${meta.badge}">${meta.icon} ${meta.text}</span>
+      <span class="hist-match">${matchInfo || '—'}</span>
+      <span class="hist-time">${timeStr}</span>
+      <button class="hist-replay" onclick='_replayCall(${JSON.stringify(call).replace(/'/g,"&#39;")})'>🔁 Đọc lại</button>
+    </div>
+    <div class="hist-players">${players.join(' · ') || '—'}</div>
+    ${call.court ? `<div class="hist-court">📍 ${call.court}${call.referee ? ' · TT: '+call.referee : ''}</div>` : ''}
+  `;
+  list.prepend(row);
+
+  // giới hạn hiển thị 80 dòng
+  while (list.children.length > 80) list.removeChild(list.lastChild);
+  document.getElementById('hist-count').textContent = `${_hist.length} lệnh gọi`;
+}
+
+function renderHistFromStorage() {
+  const list = document.getElementById('hist-list');
+  list.innerHTML = '';
+  if (!_hist.length) {
+    list.innerHTML = '<div class="hist-empty">Chưa có lệnh gọi nào</div>';
+    document.getElementById('hist-count').textContent = '';
+    return;
+  }
+  // hiển thị giải đầu tiên (mới nhất) lên hero (không animate)
+  showHero(_hist[0], false);
+  _hist.forEach(c => prependHistRowSilent(c));
+  document.getElementById('hist-count').textContent = `${_hist.length} lệnh gọi`;
+}
+// thêm vào cuối list (giữ thứ tự mới→cũ vì _hist đã unshift)
+function prependHistRowSilent(call) {
+  const list = document.getElementById('hist-list');
+  const meta = _cpMeta(call.callType);
+  const players = call.players || [];
+  const matchInfo = [call.matchBang, call.matchCode ? 'Mã ' + call.matchCode : '', call.matchNd].filter(Boolean).join(' · ');
+  const timeStr = new Date(call.ts).toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const row = document.createElement('div');
+  row.className = 'hist-row';
+  row.innerHTML = `
+    <div class="hist-top">
+      <span class="hist-badge ${meta.badge}">${meta.icon} ${meta.text}</span>
+      <span class="hist-match">${matchInfo || '—'}</span>
+      <span class="hist-time">${timeStr}</span>
+      <button class="hist-replay" onclick='_replayCall(${JSON.stringify(call).replace(/'/g,"&#39;")})'>🔁 Đọc lại</button>
+    </div>
+    <div class="hist-players">${players.join(' · ') || '—'}</div>
+    ${call.court ? `<div class="hist-court">📍 ${call.court}${call.referee ? ' · TT: '+call.referee : ''}</div>` : ''}
+  `;
+  list.appendChild(row);
+}
+
+function _replayCall(call) {
+  showHero(call, true);
+  queueSpeech(call, true);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  TEXT-TO-SPEECH — đọc tên, lặp 2 lần
+// ════════════════════════════════════════════════════════════════
+let _speakQueue = [];
+let _speaking = false;
+let _voices = [];
+let _selectedVoiceName = localStorage.getItem('pb_caller_voice_v1') || '';
+
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = () => { _voices = speechSynthesis.getVoices(); populateVoiceList(); };
+  _voices = speechSynthesis.getVoices();
+  // Một số trình duyệt (Chrome) trả voices rỗng ở lần đầu — thử lại sau 500ms/1.5s
+  setTimeout(() => { _voices = speechSynthesis.getVoices(); populateVoiceList(); }, 500);
+  setTimeout(() => { _voices = speechSynthesis.getVoices(); populateVoiceList(); }, 1500);
+}
+
+// Nhận diện giọng Tiếng Việt: ưu tiên theo mã ngôn ngữ 'vi*', dự phòng theo tên
+// (một số trình duyệt/engine gắn sai lang nhưng tên voice có "Vietnam"/"Việt")
+function _isViVoice(v) {
+  const lang = String(v.lang || '').toLowerCase().replace('_','-');
+  const name = String(v.name || '').toLowerCase();
+  return lang.startsWith('vi') || name.includes('vietnam') || name.includes('việt') || name.includes('viet');
+}
+
+function populateVoiceList() {
+  const sel = document.getElementById('voice-select');
+  const warn = document.getElementById('voice-warn');
+  if (!sel) return;
+  if (!_voices || !_voices.length) _voices = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
+
+  const viVoices = _voices.filter(_isViVoice);
+  const hasVi = viVoices.length > 0;
+  warn.style.display = hasVi ? 'none' : (_voices.length ? 'block' : 'none');
+
+  const list = hasVi ? viVoices : _voices;
+  if (!list.length) {
+    sel.innerHTML = '<option value="">— Không tìm thấy giọng đọc —</option>';
+    return;
+  }
+
+  // Nếu chưa từng chọn (hoặc voice đã chọn không còn) → mặc định chọn giọng VN đầu tiên
+  if (!_selectedVoiceName || !list.some(v => v.name === _selectedVoiceName)) {
+    _selectedVoiceName = list[0].name;
+    localStorage.setItem('pb_caller_voice_v1', _selectedVoiceName);
+  }
+
+  sel.innerHTML = list.map(v => {
+    const tag = _isViVoice(v) ? '🇻🇳' : '🌐';
+    return `<option value="${v.name.replace(/"/g,'&quot;')}" ${v.name===_selectedVoiceName?'selected':''}>${tag} ${v.name} (${v.lang})</option>`;
+  }).join('');
+}
+
+function onVoiceSelect() {
+  const sel = document.getElementById('voice-select');
+  _selectedVoiceName = sel.value;
+  localStorage.setItem('pb_caller_voice_v1', _selectedVoiceName);
+  // đọc thử ngay giọng vừa chọn
+  if (_soundUnlocked) {
+    _speakTwice('Xin mời các vận động viên Nguyễn Văn A và Trần Thị B. Bảng A, về sân 1 để chuẩn bị thi đấu. Xin cám ơn.', () => {});
+  }
+}
+
+function pickViVoice() {
+  if (!_voices || !_voices.length) _voices = speechSynthesis.getVoices();
+  if (_selectedVoiceName) {
+    const sel = _voices.find(v => v.name === _selectedVoiceName);
+    if (sel) return sel;
+  }
+  return _voices.find(_isViVoice) || null;
+}
+
+// Nối tên VĐV theo cách nói tự nhiên: "A và B" / "A, B và C"
+function _joinNamesNatural(players) {
+  if (!players || !players.length) return '';
+  if (players.length === 1) return players[0];
+  if (players.length === 2) return `${players[0]} và ${players[1]}`;
+  return players.slice(0, -1).join(', ') + ' và ' + players[players.length - 1];
+}
+
+// Mẫu câu thông báo — giống cách MC/loa sân thật đọc:
+// "Xin mời các vận động viên A và B. Bảng X về sân Y để chuẩn bị thi đấu. Xin cám ơn."
+// Lấy tên sân để đọc — sân đã được cấu hình tên đầy đủ (VD "Sân 1", "Sân Trung Tâm")
+// nên đọc nguyên tên đó; chỉ thêm tiền tố "sân" nếu admin chỉ điền số/tên ngắn (VD "1", "A1")
+function _courtPhrase(court) {
+  const c = String(court || '').trim();
+  if (!c) return 'sân thi đấu';
+  if (/^sân\b/i.test(c)) return c; // đã có chữ "Sân ..." sẵn → đọc nguyên
+  return `sân ${c}`;
+}
+
+function buildAnnounceText(call) {
+  const players = call.players || [];
+  const namesStr = _joinNamesNatural(players);
+  const bangPart = call.matchBang ? `Bảng ${call.matchBang}, ` : '';
+  const courtPart = _courtPhrase(call.court);
+  const who = namesStr ? `các vận động viên ${namesStr}` : 'các vận động viên';
+  return `Xin mời ${who}. ${bangPart}về ${courtPart} để chuẩn bị thi đấu. Xin cám ơn.`;
+}
+
+function queueSpeech(call, force) {
+  if (!_autoSpeak && !force) return;
+  if (!('speechSynthesis' in window)) return;
+  const text = buildAnnounceText(call);
+  _lastAnnounceText = text;
+  _speakQueue.push(text);
+  _processSpeechQueue();
+}
+
+function _processSpeechQueue() {
+  if (_speaking || !_speakQueue.length) return;
+  if (!_soundUnlocked) return; // chờ user bấm "Bật âm thanh"
+  _speaking = true;
+  const text = _speakQueue.shift();
+  _speakTwice(text, () => { _speaking = false; _processSpeechQueue(); });
+}
+
+// Đọc theo từng câu (ngắt ở dấu . ! ?) với khoảng nghỉ giữa các câu —
+// tạo nhịp điệu tự nhiên giống người dẫn chương trình thật, thay vì
+// đọc một lèo đều đều như máy.
+function _speakSegments(text, onDone) {
+  const segments = text.split(/(?<=[.!?])\s+/).filter(Boolean);
+  let i = 0;
+  function next() {
+    if (i >= segments.length) { onDone(); return; }
+    const seg = segments[i++];
+    const u = new SpeechSynthesisUtterance(seg);
+    u.lang = 'vi-VN';
+    u.rate = 0.93;   // tốc độ tự nhiên, không quá nhanh
+    u.pitch = 1.03;  // nhấn nhẹ cao độ — giống giọng MC, tránh đều đều
+    const v = pickViVoice();
+    if (v) u.voice = v;
+    u.onend = () => setTimeout(next, 320); // ngắt nghỉ ngắn giữa các câu
+    u.onerror = () => setTimeout(next, 100);
+    speechSynthesis.speak(u);
+  }
+  next();
+}
+
+function _speakTwice(text, done) {
+  let count = 0;
+  function once() {
+    try { speechSynthesis.cancel(); } catch(e) {}
+    _speakSegments(text, () => {
+      count++;
+      if (count < 2) setTimeout(once, 900); // nghỉ dài hơn giữa 2 lần đọc
+      else done();
+    });
+  }
+  once();
+}
+
+function enableSound() {
+  _soundUnlocked = true;
+  document.getElementById('sound-gate').classList.add('hidden');
+  document.getElementById('sound-dot').className = 'status-dot on';
+  document.getElementById('sound-text').textContent = 'Âm thanh: sẵn sàng';
+  // unlock bằng 1 utterance ngắn
+  try {
+    const u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0.01;
+    speechSynthesis.speak(u);
+  } catch(e) {}
+  populateVoiceList();
+  _processSpeechQueue();
+}
+
+function toggleAutoSpeak() {
+  _autoSpeak = !_autoSpeak;
+  localStorage.setItem(AUTO_KEY, _autoSpeak ? '1' : '0');
+  updateAutoSpeakBtn();
+}
+function updateAutoSpeakBtn() {
+  const btn = document.getElementById('auto-speak-btn');
+  if (_autoSpeak) {
+    btn.textContent = '🔊 Tự động đọc: BẬT';
+    btn.classList.add('on');
+  } else {
+    btn.textContent = '🔇 Tự động đọc: TẮT';
+    btn.classList.remove('on');
+  }
+}
+
+function repeatLast() {
+  if (!_hist.length) { alert('Chưa có lệnh gọi nào để đọc lại'); return; }
+  if (!_soundUnlocked) { enableSound(); }
+  _replayCall(_hist[0]);
+}
+
+function testAnnounce() {
+  if (!_soundUnlocked) { enableSound(); }
+  const test = {
+    ts: Date.now(), callType: 'player_a0',
+    players: ['Nguyễn Văn A'],
+    matchBang: 'Bảng A', matchCode: 'A1', matchNd: 'Đơn Nam',
+    court: 'Sân 1', referee: NAME || 'Trọng tài',
+    matchGiai: '',
+  };
+  showHero(test, true);
+  prependHistRow(test, true);
+  _hist.unshift(test); _hist = _hist.slice(0,80); saveHist();
+  document.getElementById('hist-count').textContent = `${_hist.length} lệnh gọi`;
+  queueSpeech(test, true);
+}
+
+document.getElementById('login-code').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>
