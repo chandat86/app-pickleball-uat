@@ -90,6 +90,8 @@ body{min-height:100vh;display:flex;flex-direction:column}
 .ctrl-btn{flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--bdr2);color:var(--tx);border-radius:10px;padding:12px 16px;font-family:var(--font-display);font-size:14px;font-weight:800;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s}
 .ctrl-btn:hover{border-color:var(--green);color:var(--green)}
 .ctrl-btn.on{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.voice-warn{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--amber);line-height:1.6}
+select#voice-select{appearance:none;-webkit-appearance:none;font-family:var(--font-body);font-weight:600;font-size:13px;background-position:right 12px center;background-repeat:no-repeat}
 
 /* history */
 .hist-section{flex:1;display:flex;flex-direction:column;min-height:0}
@@ -186,6 +188,17 @@ body{min-height:100vh;display:flex;flex-direction:column}
     <div class="controls">
       <button class="ctrl-btn on" id="auto-speak-btn" onclick="toggleAutoSpeak()">🔊 Tự động đọc: BẬT</button>
       <button class="ctrl-btn" onclick="repeatLast()">🔁 Đọc lại gần nhất</button>
+    </div>
+
+    <div class="controls" id="voice-row">
+      <select class="ctrl-btn" id="voice-select" onchange="onVoiceSelect()" style="text-align:left;justify-content:flex-start"></select>
+    </div>
+    <div class="voice-warn" id="voice-warn" style="display:none">
+      ⚠️ Thiết bị này <b>chưa có giọng đọc Tiếng Việt</b> nên loa đang đọc bằng giọng khác (có thể nghe như tiếng Anh).
+      Hãy cài thêm giọng Tiếng Việt rồi tải lại trang:
+      <br>• <b>Android</b>: Cài đặt → Hệ thống → Ngôn ngữ &amp; văn bản giọng nói → Tổng hợp giọng nói → cài "Tiếng Việt".
+      <br>• <b>Windows / Edge / Chrome</b>: Settings → Time &amp; Language → Speech → Add voices → Vietnamese.
+      <br>• <b>iPhone/iPad</b>: Settings → Accessibility → Spoken Content → Voices → Vietnamese.
     </div>
 
     <div class="hist-section">
@@ -330,6 +343,7 @@ async function startApp() {
 
   // auto-speak button state
   updateAutoSpeakBtn();
+  populateVoiceList();
 
   await loadTournaments();
   loadGiaiSelection();
@@ -661,15 +675,69 @@ function _replayCall(call) {
 let _speakQueue = [];
 let _speaking = false;
 let _voices = [];
+let _selectedVoiceName = localStorage.getItem('pb_caller_voice_v1') || '';
 
 if ('speechSynthesis' in window) {
-  speechSynthesis.onvoiceschanged = () => { _voices = speechSynthesis.getVoices(); };
+  speechSynthesis.onvoiceschanged = () => { _voices = speechSynthesis.getVoices(); populateVoiceList(); };
   _voices = speechSynthesis.getVoices();
+  // Một số trình duyệt (Chrome) trả voices rỗng ở lần đầu — thử lại sau 500ms/1.5s
+  setTimeout(() => { _voices = speechSynthesis.getVoices(); populateVoiceList(); }, 500);
+  setTimeout(() => { _voices = speechSynthesis.getVoices(); populateVoiceList(); }, 1500);
+}
+
+// Nhận diện giọng Tiếng Việt: ưu tiên theo mã ngôn ngữ 'vi*', dự phòng theo tên
+// (một số trình duyệt/engine gắn sai lang nhưng tên voice có "Vietnam"/"Việt")
+function _isViVoice(v) {
+  const lang = String(v.lang || '').toLowerCase().replace('_','-');
+  const name = String(v.name || '').toLowerCase();
+  return lang.startsWith('vi') || name.includes('vietnam') || name.includes('việt') || name.includes('viet');
+}
+
+function populateVoiceList() {
+  const sel = document.getElementById('voice-select');
+  const warn = document.getElementById('voice-warn');
+  if (!sel) return;
+  if (!_voices || !_voices.length) _voices = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
+
+  const viVoices = _voices.filter(_isViVoice);
+  const hasVi = viVoices.length > 0;
+  warn.style.display = hasVi ? 'none' : (_voices.length ? 'block' : 'none');
+
+  const list = hasVi ? viVoices : _voices;
+  if (!list.length) {
+    sel.innerHTML = '<option value="">— Không tìm thấy giọng đọc —</option>';
+    return;
+  }
+
+  // Nếu chưa từng chọn (hoặc voice đã chọn không còn) → mặc định chọn giọng VN đầu tiên
+  if (!_selectedVoiceName || !list.some(v => v.name === _selectedVoiceName)) {
+    _selectedVoiceName = list[0].name;
+    localStorage.setItem('pb_caller_voice_v1', _selectedVoiceName);
+  }
+
+  sel.innerHTML = list.map(v => {
+    const tag = _isViVoice(v) ? '🇻🇳' : '🌐';
+    return `<option value="${v.name.replace(/"/g,'&quot;')}" ${v.name===_selectedVoiceName?'selected':''}>${tag} ${v.name} (${v.lang})</option>`;
+  }).join('');
+}
+
+function onVoiceSelect() {
+  const sel = document.getElementById('voice-select');
+  _selectedVoiceName = sel.value;
+  localStorage.setItem('pb_caller_voice_v1', _selectedVoiceName);
+  // đọc thử ngay giọng vừa chọn
+  if (_soundUnlocked) {
+    _speakTwice('Xin mời vận động viên có mặt tại sân thi đấu.', () => {});
+  }
 }
 
 function pickViVoice() {
   if (!_voices || !_voices.length) _voices = speechSynthesis.getVoices();
-  return _voices.find(v => v.lang === 'vi-VN') || _voices.find(v => v.lang && v.lang.startsWith('vi')) || null;
+  if (_selectedVoiceName) {
+    const sel = _voices.find(v => v.name === _selectedVoiceName);
+    if (sel) return sel;
+  }
+  return _voices.find(_isViVoice) || null;
 }
 
 function buildAnnounceText(call) {
@@ -740,6 +808,7 @@ function enableSound() {
     u.volume = 0.01;
     speechSynthesis.speak(u);
   } catch(e) {}
+  populateVoiceList();
   _processSpeechQueue();
 }
 
