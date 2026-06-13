@@ -490,7 +490,7 @@ function _matchSelectedGiai(rowGiai) {
 function _cpStartPolling() {
   _cpPoll();
   if (_pollTimer) clearInterval(_pollTimer);
-  _pollTimer = setInterval(_cpPoll, 4000);
+  _pollTimer = setInterval(_cpPoll, 1500);
 }
 
 async function _cpPoll() {
@@ -507,7 +507,7 @@ async function _cpPoll() {
 
     _lastTs = Date.now();
     dot.className = 'status-dot on';
-    txt.textContent = 'Đang theo dõi — cập nhật mỗi 4s';
+    txt.textContent = 'Đang theo dõi — cập nhật mỗi 1.5s';
 
     const calls = data.calls || [];
     // Sort theo ts tăng dần để đọc đúng thứ tự
@@ -727,7 +727,7 @@ function onVoiceSelect() {
   localStorage.setItem('pb_caller_voice_v1', _selectedVoiceName);
   // đọc thử ngay giọng vừa chọn
   if (_soundUnlocked) {
-    _speakTwice('Xin mời vận động viên có mặt tại sân thi đấu.', () => {});
+    _speakTwice('Vận động viên Nguyễn Văn A về sân 1 để chuẩn bị thi đấu.', () => {});
   }
 }
 
@@ -742,21 +742,17 @@ function pickViVoice() {
 
 function buildAnnounceText(call) {
   const players = call.players || [];
-  const court = call.court ? `sân ${call.court}` : 'sân thi đấu';
+  const courtPart = call.court ? `về sân ${call.court}` : 'ra sân thi đấu';
   let who = '';
   if (call.callType === 'match') {
-    who = players.length ? `Các vận động viên ${players.join(', ')}` : 'Các vận động viên';
+    who = players.length ? `Vận động viên ${players.join(', ')}` : 'Các vận động viên';
   } else if (call.callType === 'team_a' || call.callType === 'team_b') {
     const team = call.callType === 'team_a' ? 'A' : 'B';
-    who = players.length ? `Các vận động viên đội ${team}: ${players.join(', ')}` : `Vận động viên đội ${team}`;
+    who = players.length ? `Vận động viên đội ${team}: ${players.join(', ')}` : `Vận động viên đội ${team}`;
   } else {
     who = players.length ? `Vận động viên ${players[0]}` : 'Vận động viên';
   }
-  const matchInfo = [call.matchNd, call.matchBang, call.matchCode ? `mã trận ${call.matchCode}` : ''].filter(Boolean).join(', ');
-  let text = `Xin mời ${who}`;
-  if (matchInfo) text += `, trận ${matchInfo}`;
-  text += `, có mặt tại ${court} để chuẩn bị thi đấu. Xin cảm ơn.`;
-  return text;
+  return `${who} ${courtPart} để chuẩn bị thi đấu.`;
 }
 
 function queueSpeech(call, force) {
