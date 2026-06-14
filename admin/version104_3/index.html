@@ -6279,6 +6279,10 @@ function switchNdTab(tab, _skipHash) {
   if (tab === 'bracket') {
     // Chỉ restore từ sessionStorage khi KHÔNG có context hiện tại (trường hợp reload trang)
     if (!_curGiaiId && !_curNd) _bkRestoreState();
+    // Đảm bảo _bkGiai/_bkNd luôn khớp _curGiaiId/_curNd trước khi render
+    if (_curGiaiId && _curGiaiId !== _bkGiai) { _bkGiai = _curGiaiId; _bkLastRenderKey = ''; }
+    if (_curNd     && _curNd     !== _bkNd)   { _bkNd   = _curNd;     _bkLastRenderKey = ''; }
+    _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
     // _ndBkRender() là async — tự detect thay đổi, load data đúng rồi mới render
     _ndBkRender();
     _ndBkUpdateToolbarUI();
@@ -7530,8 +7534,9 @@ async function confirmGenerateSchedule() {
 async function _ndBkRender() {
   if (_bkDeletedAt && Date.now() - _bkDeletedAt < 5000) return;
 
-  _bkGiai     = _curGiaiId || _bkGiai;
-  _bkNd       = _curNd     || _bkNd;
+  // Luôn dùng _curGiaiId/_curNd làm source of truth — không dùng _bkGiai cũ
+  if (_curGiaiId) _bkGiai = _curGiaiId;
+  if (_curNd)     _bkNd   = _curNd;
   _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
 
   const ndWrap = document.getElementById('nd-bk-wrap');
@@ -7749,13 +7754,25 @@ function openNdDetail(giaiId, nd) {
   const ndViewVisible = document.getElementById('tv-nd')?.style.display !== 'none';
   const activeTab = ndViewVisible ? _getActiveNdTab() : 'bangs';
 
-  // Lưu cache nd CŨ TRƯỚC khi chuyển (nếu đang ở tab bracket và có cây)
-  if ((_curNd !== nd || _curGiaiId !== giaiId) && _bkCurrentTree) {
-    _bkCacheSave(_bkGiai || _curGiaiId, _bkNd || _curNd, {
-      tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion,
-      byeRule: _bkByeRule, overrides: Object.assign({}, _bkOverrides), isEmpty: _bkIsEmpty
-    });
-    _bkCurrentTree = null; // xóa SAU khi đã lưu
+  // Khi đổi nội dung: lưu cache nd CŨ và reset state bracket
+  if (_curNd !== nd || _curGiaiId !== giaiId) {
+    // Lưu cache nd CŨ trước khi reset
+    if (_bkCurrentTree) {
+      _bkCacheSave(_bkGiai || _curGiaiId, _bkNd || _curNd, {
+        tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion,
+        byeRule: _bkByeRule, overrides: Object.assign({}, _bkOverrides), isEmpty: _bkIsEmpty
+      });
+    }
+    // Reset bracket state của nd cũ
+    _bkCurrentTree = null;
+    _bkApplied     = false;
+    _bkLastVersion = 0;
+    // Reset _bkLastRenderKey để _ndBkRender luôn detect ndChanged=true
+    _bkLastRenderKey = '';
+    // Set _bkGiai/_bkNd ngay để mọi hàm sau dùng đúng context
+    _bkGiai = giaiId;
+    _bkNd   = nd;
+    _bkGiaiName = _resolveGiaiName(giaiId) || giaiId;
   }
   _curNd = nd; _curGiaiId = giaiId;
   _switchPlayersCtx(giaiId, nd);
