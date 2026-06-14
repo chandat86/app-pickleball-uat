@@ -2881,20 +2881,11 @@ let _bkGen = 0;
 // v103: cache cây theo từng nội dung (key = "giai|nd") — hiển thị TỨC THÌ khi quay lại
 // nội dung đã xem trước đó (0ms, không "⏳ Đang tải"), vẫn giữ nguyên đúng vị trí seeding.
 // entry: { tree, applied, version, byeRule, overrides, ts }
-let _bkTreeCache = new Map();
-const _BK_CACHE_TTL = 10000; // 10s — trong khoảng này, swap qua lại không cần fetch lại bracketVersion
-function _bkCacheKey(giai, nd) {
-  const g = (_resolveGiaiName(giai) || giai || '').trim();
-  return g + '|' + (nd||'').trim();
-}
-function _bkCacheSave(giai, nd, extra) {
-  const key = _bkCacheKey(giai, nd);
-  const prev = _bkTreeCache.get(key) || {};
-  _bkTreeCache.set(key, { ...prev, ...extra, ts: Date.now() });
-}
-function _bkCacheGet(giai, nd) {
-  return _bkTreeCache.get(_bkCacheKey(giai, nd)) || null;
-}
+// v104: _bkTreeCache đã bị xóa — cache trong RAM gây lưu sai nd, hiển thị cây nhầm.
+// _ndBkRender luôn fetch SRV khi đổi nội dung — đúng 100%, không bao giờ nhầm.
+// _bkCacheSave/_bkCacheGet giữ lại như no-op để không vỡ code chỗ khác.
+function _bkCacheSave(giai, nd, extra) { /* no-op */ }
+function _bkCacheGet(giai, nd) { return null; }
 let _bkOverrides={};                               // bracket manual overrides
 let _bkByeMapGlobal = {};                            // map matchCode → {byeA,byeB} cho Lucky check
 let _bkDragMode = false;
@@ -7527,8 +7518,7 @@ async function confirmGenerateSchedule() {
 async function _ndBkRender(forceGiai, forceNd) {
   if (_bkDeletedAt && Date.now() - _bkDeletedAt < 5000) return;
 
-  // Nếu được gọi với tham số rõ ràng (forceGiai/forceNd) → dùng ngay, không đọc global cũ
-  // Nếu không → fallback về _curGiaiId/_curNd (source of truth của navigation)
+  // Source of truth: tham số rõ ràng > _curGiaiId/_curNd > global cũ
   const targetGiai = forceGiai || _curGiaiId || _bkGiai;
   const targetNd   = forceNd   || _curNd     || _bkNd;
   _bkGiai     = targetGiai;
@@ -7538,18 +7528,18 @@ async function _ndBkRender(forceGiai, forceNd) {
   const ndWrap = document.getElementById('nd-bk-wrap');
   if (!ndWrap || !_bkGiai || !_bkNd) return;
 
+  // Snapshot để guard callback async
   const _snapGiai = _bkGiai, _snapNd = _bkNd;
   const _isBkStale = () => _bkGiai !== _snapGiai || _bkNd !== _snapNd;
 
   const _curKey  = _bkGiai + '|' + _bkNd;
-  const _oldKey  = _bkLastRenderKey;
-  const ndChanged = (_oldKey !== _curKey);
+  const ndChanged = (_bkLastRenderKey !== _curKey);
   _bkLastRenderKey = _curKey;
 
   if (ndChanged) _bkGen++;
   const _snapGen = _bkGen;
 
-  // ── Helper render DOM ──
+  // ── Helper render DOM (không gọi _ndBkRender lại) ──
   const _renderNow = () => {
     if (_isBkStale() || _bkGen !== _snapGen) return;
     const ndContent = document.getElementById('nd-bk-content');
@@ -7566,48 +7556,14 @@ async function _ndBkRender(forceGiai, forceNd) {
   };
 
   if (ndChanged) {
+    // Đổi nội dung → reset state
     _bkStopAutoPolling();
     _bkLastKoDoneKeys = new Set();
     _bkCurrentTree = null;
     _bkApplied     = false;
     _bkLastVersion = 0;
 
-    // Kiểm tra cache nd MỚI — chỉ dùng nếu cây đã Applied (đúng vị trí seeding)
-    const _ce = _bkCacheGet(_bkGiai, _bkNd);
-    if (_ce && _ce.tree && _ce.applied) {
-      // Cache có cây Applied → khôi phục ngay, đúng vị trí, 0ms
-      _bkCurrentTree = _bkCloneTree(_ce.tree);
-      _bkApplied     = true;
-      _bkLastVersion = _ce.version || 0;
-      if (_ce.byeRule)   _bkByeRule  = _ce.byeRule;
-      if (_ce.overrides) _bkOverrides = Object.assign({}, _ce.overrides);
-      _bkSetEmpty(!!_ce.isEmpty);
-      // Xóa DOM cũ
-      const ndContent = document.getElementById('nd-bk-content');
-      if (ndContent) ndContent.innerHTML = '';
-      // Render ngay từ cache
-      _renderNow();
-      // Sync SRV ngầm nếu cache cũ hơn TTL
-      if (Date.now() - (_ce.ts||0) >= _BK_CACHE_TTL) {
-        setTimeout(async () => {
-          if (_isBkStale() || _bkGen !== _snapGen) return;
-          const loaded = await _bkLoadTreeFromSheet();
-          if (_isBkStale() || _bkGen !== _snapGen) return;
-          if (loaded) {
-            _bkCacheSave(_bkGiai, _bkNd, {
-              tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion,
-              byeRule: _bkByeRule, overrides: Object.assign({}, _bkOverrides), isEmpty: _bkIsEmpty
-            });
-            _renderNow();
-          }
-        }, 300);
-      }
-      _bkSaveState();
-      return;
-    }
-
-    // Không có cache Applied → hiện ⏳ rồi fetch SRV
-    // KHÔNG build preview từ _M vì _M có thể chưa load đúng nd này
+    // Hiện ⏳ ngay để xóa cây cũ
     const ndContent = document.getElementById('nd-bk-content');
     const _loadingHtml = '<div class="empty"><div class="ei">⏳</div><p>Đang tải cây thi đấu…</p></div>';
     if (ndContent) ndContent.innerHTML = _loadingHtml;
@@ -7616,25 +7572,19 @@ async function _ndBkRender(forceGiai, forceNd) {
     _bkOverrides = _bkLoadOverrides();
     _bkSaveState();
 
-    // Fetch _M và cây SRV song song
+    // Fetch _M của nd mới (cần cho bkRender)
     try { await loadMatchesCache(_snapGiai, true); } catch(e) {}
     if (_isBkStale() || _bkGen !== _snapGen) return;
 
-    const loaded = await _bkLoadTreeFromSheet();
+    // Fetch cây từ SRV — luôn fetch, không dùng cache
+    await _bkLoadTreeFromSheet();
     if (_isBkStale() || _bkGen !== _snapGen) return;
 
-    if (loaded) {
-      // SRV có cây Applied → lưu cache, render
-      _bkCacheSave(_bkGiai, _bkNd, {
-        tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion,
-        byeRule: _bkByeRule, overrides: Object.assign({}, _bkOverrides), isEmpty: _bkIsEmpty
-      });
-    }
     _renderNow();
     return;
   }
 
-  // ── ndChanged = false: cùng nd, chỉ re-render (poll/live update) ──
+  // ── ndChanged = false: cùng nd → re-render từ state hiện tại ──
   _bkSaveState();
   _renderNow();
 } // end _ndBkRender
@@ -7650,7 +7600,6 @@ async function ndBkRefresh() {
   // Invalidate sẽ xóa cache local dẫn đến mất tên đội BK/CK chưa push Máy chủ
   _bkCurrentTree = null;
   // v103: xóa cache per-nd của nd này để buộc lấy lại từ SRV (user bấm "Làm mới" chủ động)
-  _bkTreeCache.delete(_bkCacheKey(_bkGiai, _bkNd));
   try {
     await loadMatchesCache(_bkGiai, true); // forceRefresh=true: fetch Máy chủ nhưng smart merge
     await _ndBkRender(_bkGiai, _bkNd);
@@ -7752,13 +7701,6 @@ function openNdDetail(giaiId, nd) {
 
   // Khi đổi nội dung: lưu cache nd CŨ và reset state bracket
   if (_curNd !== nd || _curGiaiId !== giaiId) {
-    // Lưu cache nd CŨ trước khi reset — dùng _bkGiai/_bkNd HIỆN TẠI (nd cũ)
-    if (_bkCurrentTree) {
-      _bkCacheSave(_bkGiai, _bkNd, {
-        tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion,
-        byeRule: _bkByeRule, overrides: Object.assign({}, _bkOverrides), isEmpty: _bkIsEmpty
-      });
-    }
     // Reset bracket state
     _bkCurrentTree = null;
     _bkApplied     = false;
@@ -15037,7 +14979,6 @@ async function bkDeleteTree() {
       _bkLastVersion = 0;
       try { localStorage.removeItem(_bkKey()); } catch(e) {}
       // v103: xóa cache per-nd — tránh quay lại nd này thấy cây "đã xóa" hiện lại từ cache
-      _bkTreeCache.delete(_bkCacheKey(_bkGiai, _bkNd));
 
       // 3. Xóa trận KO khỏi local _M (để bkRender không vẽ lại)
       for (let i = _M.length - 1; i >= 0; i--) {
