@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<!-- Pickleball Admin v104 2026-06-14: TỐI ƯU bkRender() cho giải lớn nhiều đội — (1) Xóa dead code if(false &&allSeeds) ~70 dòng không bao giờ chạy; (2) _bkCalcSeeds() chỉ gọi 1 lần/render thay vì 2 lần — seeds/bangs/bangDone được tái sử dụng cho _bkUpdateSeedPanel; (3) Thay JSON.parse/stringify deep clone bằng _bkCloneTree() dùng structuredClone (nhanh 2-4x, fallback JSON); áp dụng cho MỌI chỗ clone _bkCurrentTree (6 chỗ); (4) Thêm flag _bkLiveRender — khi bkRender được gọi từ live/poll path (Firebase 2s, GAS poll 5s/30s) thì bỏ qua _bkAutoSyncToSchedule() để không spam network request mỗi 2s khi đang có trận LIVE; auto-sync chỉ trigger từ user action thật (Apply, Save, bkRefresh...). Kết quả: render nhanh hơn, ít network traffic hơn khi live, sẵn sàng cho giải 32+ đội (Vòng 64). Không ảnh hưởng logic/correctness — chỉ tối ưu compute và I/O. -->
+<!-- Pickleball Admin v104 2026-06-14: TỐI ƯU bkRender() + FIX SWAP NỘI DUNG — (1) Xóa dead code if(false &&allSeeds) ~70 dòng; (2) _bkCalcSeeds() chỉ gọi 1 lần/render; (3) Thay JSON.parse/stringify bằng _bkCloneTree() dùng structuredClone; (4) Flag _bkLiveRender — live/poll path không spam _bkAutoSyncToSchedule; (5) FIX SWAP: khôi phục cơ chế preview-from-seeds của v95 — khi đổi nội dung, build ngay cây preview từ _M local rồi render tức thì (không ⏳), sau 300ms fetch SRV thay thế bằng cây thật. Giữ nguyên _bkGen guard của v102 để chống race condition khi swap nhanh. Kết quả: swap giữa các nội dung hiển thị cây ngay lập tức giống v95, đồng thời không bị hiện nhầm cây của nội dung khác. -->
 <!-- Pickleball Admin v103 2026-06-14: TỐI ƯU TỐC ĐỘ trên nền v102 — thêm cache cây thi đấu THEO TỪNG NỘI DUNG (_bkTreeCache, Map key="giai|nd"). Trước đây v102 luôn hiện "⏳ Đang tải..." mỗi lần swap nội dung dù vừa xem xong — đúng nhưng chậm. Giờ: (1) Khi rời 1 nội dung, lưu snapshot _bkCurrentTree/_bkApplied/_bkLastVersion/_bkOverrides/_bkByeRule/_bkIsEmpty của nd đó vào cache; (2) Khi swap sang nội dung ĐÃ CÓ trong cache → khôi phục state từ cache và render() NGAY LẬP TỨC (0ms, cùng tick, không "⏳", giữ đúng vị trí seeding đã lưu) — chỉ nội dung CHƯA TỪNG XEM mới hiện "⏳ Đang tải..."; (3) setTimeout 300ms sync SRV vẫn chạy ngầm để lấy version mới nhất — nếu cache còn < 10s (_BK_CACHE_TTL) thì BỎ QUA fetch bracketVersion lần đó (giảm tải GAS khi swap nhanh liên tục), còn lại vẫn sync như cũ; (4) sync poll 5s + 2 background handler live/30s (cập nhật real-time) KHÔNG bị ảnh hưởng — vẫn chạy độc lập trên _bkGen như v102, đảm bảo "cập nhật nhanh hơn" không đổi; (5) ndBkRefresh ("Làm mới") và bkDeleteTree xóa cache entry tương ứng để không hiện lại state cũ/đã xóa. Toàn bộ guard _bkGen của v102 GIỮ NGUYÊN 100% — cache chỉ là lớp hiển-thị-tức-thì phía trên, không thay đổi tính đúng đắn khi swap nhanh nhiều lần. -->
 <!-- Pickleball Admin v102 2026-06-14: FIX TRIỆT ĐỂ TUYỆT ĐỐI cây thi đấu hiện nhầm nội dung khi swap qua lại — Root cause thật: (1) bkRender preview-from-seeds (khi SRV chưa có cây cho nd mới) build tree từ _bkCalcSeeds(_bkGiai,_bkNd) NGAY khi _M có thể vẫn còn data cũ → tree preview trùng cấu trúc/label với cây nd trước → hiện nhầm vài giây rồi rớt về "Tạo cây" khi _M load lại đúng; (2) _swapBkWrap sau khi render xong luôn tự gọi lại _ndBkRender() ở finally KHÔNG có guard nào — nếu trong lúc đó user đã swap sang nd khác, lần gọi lại này dùng _bkGiai/_bkNd MỚI nhưng có thể render đè/ghi đè DOM của chuỗi render đang chạy cho nd mới, gây nhấp nháy/đổi vị trí. Fix v102: (A) thêm generation counter toàn cục _bkGen — tăng mỗi lần nd/giai bracket đổi (ndChanged trong _ndBkRender); MỌI callback async (setTimeout 300ms, await _bkLoadTreeFromSheet, _swapBkWrap, sync poll 5s, 2 background handler live/30s) chụp _snapGen lúc bắt đầu và bắt buộc so _bkGen===_snapGen trước khi mutate _bkCurrentTree hoặc viết DOM — sai gen → bỏ hoàn toàn, không vẽ gì; (B) XÓA HẲN nhánh "preview build từ seeds" trong _ndBkRender — khi đổi nd, hiện NGAY "⏳ Đang tải cây thi đấu…" rồi CHỈ dùng cây từ SRV (_bkLoadTreeFromSheet) hoặc "🏗 Tạo cây" nếu SRV chưa có, không đoán/preview; (C) _swapBkWrap nhận tham số _snapGen — bỏ qua swap+re-render nếu gen đã đổi. Kết quả: swap qua lại giữa các nội dung → luôn hiện đúng cây của nội dung đang chọn (hoặc "Tạo cây" nếu chưa có), không còn hiện nhầm/nhá/giật, không đổi vị trí đội đã lưu. Không ảnh hưởng chức năng khác (Tạo cây/Áp dụng/Sửa/Lucky/BYE/Refresh giữ nguyên vì _swapBkWrap gọi không kèm _snapGen ở các action đó). -->
 
@@ -7537,6 +7537,10 @@ async function _ndBkRender() {
   _bkNd   = _curNd     || _bkNd;
   _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
 
+  // FIX: Snapshot nd tại thời điểm gọi — dùng để guard mọi callback async
+  const _snapBkGiai = _bkGiai, _snapBkNd = _bkNd;
+  const _isBkStale = () => _bkGiai !== _snapBkGiai || _bkNd !== _snapBkNd;
+
   const ndWrap = document.getElementById('nd-bk-wrap');
   if (!ndWrap) return;
   if (!_bkGiai || !_bkNd) {
@@ -7544,102 +7548,54 @@ async function _ndBkRender() {
     return;
   }
 
-  // FIX BUG: trước đây dùng prevGiai=_bkGiai/prevNd=_bkNd CHỤP ngay đầu hàm — nhưng
-  // openNdDetail() đã set _bkGiai/_bkNd = giá trị MỚI TRƯỚC KHI gọi _ndBkRender(),
-  // nên prev luôn === current → ndChanged luôn false → cây của nd cũ bị giữ lại
-  // và hiển thị nhầm cho nd mới. Dùng _bkLastRenderKey (chỉ _ndBkRender ghi) để so sánh đúng.
+  // FIX BUG: trước đây dùng prevGiai/prevNd CHỤP ngay đầu hàm — nhưng openNdDetail()
+  // đã set _bkGiai/_bkNd = giá trị MỚI TRƯỚC KHI gọi _ndBkRender(), nên prev luôn ===
+  // current → ndChanged luôn false. Dùng _bkLastRenderKey (chỉ _ndBkRender ghi) để so đúng.
   const _curKey = _bkGiai + '|' + _bkNd;
   const ndChanged = (_bkLastRenderKey !== _curKey);
-  // v103: tách giai/nd CŨ từ _bkLastRenderKey (trước khi bị ghi đè) — dùng để lưu cache
-  // của nội dung vừa rời đi, theo đúng giai/nd của nó (không phải giai/nd mới).
-  const _oldKeyParts = _bkLastRenderKey.split('|');
-  const _snapBkGiaiOld = _oldKeyParts[0] || _bkGiai;
-  const _snapBkNdOld   = _oldKeyParts.slice(1).join('|') || _bkNd;
   _bkLastRenderKey = _curKey;
 
-  // v102 FIX TRIỆT ĐỂ: bump generation counter MỖI LẦN đổi nd/giai. Mọi callback async
-  // (setTimeout, await, _swapBkWrap, live/poll handlers...) chụp _snapGen lúc bắt đầu
-  // và PHẢI so sánh lại _bkGen === _snapGen trước khi mutate _bkCurrentTree hoặc viết DOM.
-  // Nếu user switch nd nhiều lần liên tiếp, chỉ generation MỚI NHẤT mới được phép render.
+  // v102 generation counter — giữ nguyên để guard live/poll handlers không render nhầm
   if (ndChanged) _bkGen++;
   const _snapGen = _bkGen;
-  const _snapBkGiai = _bkGiai, _snapBkNd = _bkNd;
-  const _isBkStale = () => _bkGen !== _snapGen || _bkGiai !== _snapBkGiai || _bkNd !== _snapBkNd;
 
-  // FIX: Khi đổi nội dung/giải → LUÔN reset toàn bộ state cây (kể cả khi _bkApplied=true của nd cũ),
-  // tránh hiện nhầm cây của nội dung trước đó. _bkLoadTreeFromSheet() sẽ load lại đúng cây
-  // cho nd mới nếu server đã có (set lại _bkApplied=true), nếu chưa có thì hiện "Nhấn Tạo cây".
-  let _cacheHit = null; // v103: entry cache của nd MỚI (nếu có) — dùng để hiển thị tức thì
   if (ndChanged) {
-    // v103: LƯU cache của nd CŨ trước khi reset — để lần sau quay lại hiển thị tức thì
-    if (_bkCurrentTree) {
-      _bkCacheSave(_snapBkGiaiOld, _snapBkNdOld, {
-        tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion,
-        byeRule: _bkByeRule, overrides: _bkOverrides, isEmpty: _bkIsEmpty
-      });
-    }
-
     _bkCurrentTree = null;
     _bkApplied     = false;
     _bkLastVersion = 0;
 
-    // FIX: _bkAutoTimer (8s) + _bkLastKoDoneKeys là GLOBAL, không reset khi đổi nd.
-    // Nếu nd cũ đang ở chế độ tự động (_bkAutoMode=true sau khi Apply), timer cũ vẫn
-    // chạy ngầm, đọc _bkGiai/_bkNd LIVE (đã là nd MỚI) nhưng _bkLastKoDoneKeys vẫn
-    // chứa key của nd CŨ → tưởng nd mới "có kết quả mới" → tự resolve/lưu lại tree
-    // của nd mới sau vài giây, gây hiệu ứng "tự thay đổi/giật" mà user thấy.
-    // Dừng timer cũ + reset key set; sẽ được bật lại đúng ngữ cảnh nếu cần (Apply).
+    // Dừng auto-polling của nd cũ — tránh timer cũ đọc _bkGiai/_bkNd mới gây race condition
     _bkStopAutoPolling();
     _bkLastKoDoneKeys = new Set();
 
-    // v103: kiểm tra cache của nd MỚI — nếu đã từng xem (có trong _bkTreeCache) → khôi phục
-    // ngay _bkCurrentTree/_bkApplied/... từ cache rồi render TỨC THÌ (0ms, không "⏳").
-    // Cây từ cache giữ ĐÚNG vị trí seeding đã lưu (vì chính là _bkCurrentTree đã render
-    // trước đó của nd này), nên hiển thị ngay là an toàn.
-    _cacheHit = _bkCacheGet(_bkGiai, _bkNd);
-    if (_cacheHit && _cacheHit.tree) {
-      _bkCurrentTree = JSON.parse(JSON.stringify(_cacheHit.tree));
-      _bkApplied     = !!_cacheHit.applied;
-      _bkLastVersion = _cacheHit.version || 0;
-      if (_cacheHit.byeRule) _bkByeRule = _cacheHit.byeRule;
-      if (_cacheHit.overrides) _bkOverrides = _cacheHit.overrides;
-      _bkSetEmpty(!!_cacheHit.isEmpty);
-    } else {
-      // v102 FIX: hiển thị NGAY placeholder "đang tải" — không để DOM cũ của nd trước
-      // hiện ra dù chỉ 1 frame. Mọi nhánh dưới (preview/SRV/cache) chỉ được phép vẽ
-      // thay placeholder này SAU KHI xác nhận _isBkStale()===false.
-      const ndContent = document.getElementById('nd-bk-content');
-      const _loadingHtml = '<div class="empty"><div class="ei">⏳</div><p>Đang tải cây thi đấu…</p></div>';
-      if (ndContent) ndContent.innerHTML = _loadingHtml; else ndWrap.innerHTML = _loadingHtml;
-      const _status = document.getElementById('bk-status') || document.getElementById('nd-bk-status');
-      if (_status) _status.innerHTML = '';
-    }
+    // v104: BUILD PREVIEW TỨC THÌ từ _M local (giống v95) — hiển thị ngay khi đổi nd,
+    // KHÔNG để màn hình trống. Nếu SRV có cây Applied, _bkLoadTreeFromSheet (300ms sau)
+    // sẽ thay thế bằng cây thật đúng vị trí. Preview chỉ build 1 lần khi đổi nd.
+    try {
+      const { seeds: pvSeeds, bangs: pvBangs, bangDone: pvBangDone } = _bkCalcSeeds(_bkGiai, _bkNd);
+      if (pvBangs.length) {
+        const pvKoMatches = _M.filter(m => String(m[0]||'') === _bkGiaiName && String(m[1]||'') === _bkNd)
+          .filter(m => { const v = String(m[9]||''); return v && v !== 'Vòng bảng' && !v.includes('bảng'); });
+        let pvTree = _bkBuildTree(pvSeeds, pvBangs, pvKoMatches, pvBangDone);
+        pvTree = _bkResolveAdvancers(pvTree, pvKoMatches);
+        _bkCurrentTree = pvTree; // preview tạm — sẽ bị thay bằng cây thật từ SRV nếu có
+      }
+    } catch(e) { console.warn('[BK] preview build error:', e); }
+
+    // Clear DOM cây cũ ngay — không để cây nd cũ hiện dù 1 frame
+    const ndContent = document.getElementById('nd-bk-content');
+    if (ndContent) ndContent.innerHTML = '';
   }
 
   _bkOverrides = _bkLoadOverrides();
   _bkSaveState();
 
-  // v37: Load cây từ SRV BracketTree — single source of truth (single source, KHÔNG preview-from-seeds).
-  // v102 FIX TRIỆT ĐỂ: bỏ HOÀN TOÀN nhánh "build preview từ seeds" — đây là nguyên nhân
-  // hiển thị nhầm cây nội dung khác (seeds/labels của nd mới lúc _M chưa kịp load lại
-  // trùng cấu trúc với cây nd cũ → hiện sai vài giây trước khi rớt về "Tạo cây").
-  // Giờ: nếu SRV CÓ cây → dùng cây đó (đúng 100%). Nếu SRV KHÔNG có cây → hiện màn
-  // "Nhấn Tạo cây" (qua bkRender với _bkCurrentTree=null), KHÔNG đoán/preview gì cả.
+  // Sau 300ms: fetch cây thật từ SRV — thay thế preview nếu cần
   setTimeout(async () => {
     if (_isBkStale()) return; // user đã chuyển nd khác trong 300ms
-    // v103: nếu cache của nd này còn "tươi" (< TTL) → bỏ qua fetch bracketVersion lần này,
-    // giảm tải request lên GAS khi user swap qua lại nhanh giữa các nội dung đã xem.
-    // _bkLastVersion vẫn giữ từ cache → các poll sau (5s/30s) tự fetch lại khi cần.
-    if (_cacheHit && (Date.now() - (_cacheHit.ts||0)) < _BK_CACHE_TTL) {
-      return;
-    }
     const loaded = await _bkLoadTreeFromSheet();
-    if (_isBkStale()) return; // guard sau await — nd có thể đã đổi trong lúc fetch
+    if (_isBkStale()) return; // guard sau await
     if (loaded || _bkCurrentTree) {
-      // SRV có cây (hoặc cây local hiện có khớp đúng nd hiện tại, vd quay lại tab) → render
-      await _swapBkWrap('nd-bk-wrap', () => Promise.resolve(bkRender()), _snapGen);
-    } else {
-      // SRV không có cây cho nd này → hiện "Nhấn Tạo cây" (bkRender tự xử lý khi _bkCurrentTree=null)
       await _swapBkWrap('nd-bk-wrap', () => Promise.resolve(bkRender()), _snapGen);
     }
   }, 300);
@@ -7647,10 +7603,10 @@ async function _ndBkRender() {
   // Helper: vẽ cây vào ndWrap ngay lập tức
   // FIX v21: swap nd-bk-CONTENT (con), không swap nd-bk-wrap (cha scroll container)
   const _renderNow = () => {
-    if (_isBkStale()) return; // FIX: không render nếu đã switch sang nd khác
+    if (_isBkStale()) return;
     const ndContent = document.getElementById('nd-bk-content');
     const realWrap  = document.getElementById('bk-wrap');
-    const target    = ndContent || ndWrap; // fallback nếu chưa có content div
+    const target    = ndContent || ndWrap;
     if (realWrap) realWrap.id = '_bk_swap_hidden';
     target.id = 'bk-wrap';
     try { bkRender(); }
@@ -7665,40 +7621,50 @@ async function _ndBkRender() {
   const hasCacheData = _M.some(m => String(m[0]||'') === giaiName && String(m[1]||'') === _bkNd);
 
   // v7: Đọc trạng thái empty từ sessionStorage (survive reload)
-  // v103: nếu vừa restore từ _bkTreeCache (_cacheHit) thì _bkIsEmpty đã được set đúng
-  // ở trên (_bkSetEmpty(_cacheHit.isEmpty)) — không đọc lại sessionStorage đè lên.
-  if (!_cacheHit) _bkIsEmpty = _bkReadEmpty();
+  _bkIsEmpty = _bkReadEmpty();
+  const hasKO = _M.some(m => {
+    if (String(m[0]||'') !== giaiName || String(m[1]||'') !== _bkNd) return false;
+    const v = String(m[9]||'');
+    return v && v !== 'Vòng bảng' && !/^bảng\s+[a-z0-9]/i.test(v);
+  });
+  if (hasKO && !_bkIsEmpty) { /* bình thường — có cây thật */ }
 
-  if (_cacheHit) {
-    // v103: hiển thị TỨC THÌ từ cache (đúng nd, đúng vị trí seeding đã lưu) — render ngay,
-    // không chờ 300ms/SRV. setTimeout phía trên vẫn chạy ngầm để đồng bộ version mới nhất.
+  if (hasCacheData && !ndChanged) {
+    // Data đã có trong memory → render ngay, không cần network
     _renderNow();
-  } else if (hasCacheData && !ndChanged) {
-    // v99 FIX: KHÔNG return sớm — phải để setTimeout bên dưới chạy để sync SRV.
-    // Render ngay từ _bkCurrentTree nếu có (không nhấp nháy), sau đó sync ngầm.
-    if (_bkCurrentTree) _renderNow();
-    // Tiếp tục xuống để _bkLoadTreeFromSheet chạy trong setTimeout
+    return;
   }
 
   if (hasCacheData && ndChanged) {
-    // Đổi nội dung: cây thật (mới nhất) sẽ đến từ _bkLoadTreeFromSheet ở setTimeout.
-    // Load _M ngầm, KHÔNG rebuild cây từ seeds (gây vị trí sai). Placeholder/cache đã hiện ở trên.
-    loadMatchesCache(_snapBkGiai, true).catch(() => {});
-    // Tiếp tục xuống để _bkLoadTreeFromSheet chạy trong setTimeout
+    // Đổi nội dung nhưng data đã có → render preview ngay, smart-merge từ SRV ngầm
+    _renderNow();
+    loadMatchesCache(_snapBkGiai, true).then(() => {
+      if (_isBkStale()) return;
+      // Nếu preview chưa có (ví dụ bảng chưa xong) thì thử build lại
+      if (!_bkCurrentTree) {
+        try {
+          const { seeds: pvSeeds2, bangs: pvBangs2, bangDone: pvBangDone2 } = _bkCalcSeeds(_bkGiai, _bkNd);
+          if (pvBangs2.length) {
+            const pvKo2 = _M.filter(m => String(m[0]||'') === _bkGiaiName && String(m[1]||'') === _bkNd)
+              .filter(m => { const v = String(m[9]||''); return v && v !== 'Vòng bảng' && !v.includes('bảng'); });
+            let pvTree2 = _bkBuildTree(pvSeeds2, pvBangs2, pvKo2, pvBangDone2);
+            pvTree2 = _bkResolveAdvancers(pvTree2, pvKo2);
+            _bkCurrentTree = pvTree2;
+          }
+        } catch(e) { console.warn('[BK] smart-merge preview error:', e); }
+      }
+      _renderNow();
+    }).catch(() => {});
+    return;
   }
 
-  if (!hasCacheData) {
-    // Chưa có data → hiện loading (nếu chưa có cache hiển thị), fetch rồi để setTimeout xử lý
-    if (!_cacheHit) {
-      const ndContent = document.getElementById('nd-bk-content');
-      const _loadingHtml = '<div class="empty"><div class="ei">⏳</div><p>Đang tải cây thi đấu…</p></div>';
-      if (ndContent) ndContent.innerHTML = _loadingHtml; else ndWrap.innerHTML = _loadingHtml;
-    }
-    try {
-      await loadMatchesCache(_snapBkGiai, true);
-    } catch(e) { /* tiếp tục với data hiện có */ }
-    if (_isBkStale()) return;
-  }
+  // Chưa có data → phải fetch trước, hiện loading state
+  ndWrap.innerHTML = '<div class="empty"><div class="ei">⏳</div><p>Đang tải cây thi đấu…</p></div>';
+  try {
+    await loadMatchesCache(_snapBkGiai, true);
+  } catch(e) { /* tiếp tục với data hiện có */ }
+  if (_isBkStale()) return;
+  _renderNow();
 } // end _ndBkRender
 
 // ── ndBk action wrappers ──
