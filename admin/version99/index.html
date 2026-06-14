@@ -7508,6 +7508,7 @@ async function _ndBkRender() {
     // Dừng timer cũ + reset key set; sẽ được bật lại đúng ngữ cảnh nếu cần (Apply).
     _bkStopAutoPolling();
     _bkLastKoDoneKeys = new Set();
+  }
 
   // FIX: Khi switch nội dung → clear cây ngay, không để cây cũ hiện trong khi load
   if (ndChanged) {
@@ -7601,7 +7602,7 @@ async function _ndBkRender() {
     } catch(e) { /* tiếp tục với data hiện có */ }
     if (_isBkStale()) return;
   }
-}
+} // end _ndBkRender
 
 // ── ndBk action wrappers ──
 async function ndBkRefresh() {
