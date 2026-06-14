@@ -6185,10 +6185,7 @@ async function ndRefresh() {
     _invalidateMatchCache(_curGiaiId||''); // force fetch từ Máy chủ, không dùng cache cũ
     await loadMatchesCache(_curGiaiId||'', true);
     if (bracketActive) {
-      _bkGiai = _curGiaiId || _bkGiai;
-      _bkNd   = _curNd     || _bkNd;
-      _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
-      _ndBkRender();
+      _ndBkRender(_curGiaiId || _bkGiai, _curNd || _bkNd);
     } else {
       renderBangList(_curGiaiId||'', _curNd||'');
     }
@@ -6279,12 +6276,8 @@ function switchNdTab(tab, _skipHash) {
   if (tab === 'bracket') {
     // Chỉ restore từ sessionStorage khi KHÔNG có context hiện tại (trường hợp reload trang)
     if (!_curGiaiId && !_curNd) _bkRestoreState();
-    // Đảm bảo _bkGiai/_bkNd luôn khớp _curGiaiId/_curNd trước khi render
-    if (_curGiaiId && _curGiaiId !== _bkGiai) { _bkGiai = _curGiaiId; _bkLastRenderKey = ''; }
-    if (_curNd     && _curNd     !== _bkNd)   { _bkNd   = _curNd;     _bkLastRenderKey = ''; }
-    _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
-    // _ndBkRender() là async — tự detect thay đổi, load data đúng rồi mới render
-    _ndBkRender();
+    // Luôn truyền _curGiaiId/_curNd trực tiếp vào _ndBkRender — không đọc global _bkGiai/_bkNd
+    _ndBkRender(_curGiaiId || _bkGiai, _curNd || _bkNd);
     _ndBkUpdateToolbarUI();
     // Hiện thanh cuộn ngang fixed
     const sb = document.getElementById('nd-bk-scrollbar-wrap');
@@ -6845,7 +6838,7 @@ async function renamePlayer(idx) {
       if (m.teamB === oldName) m.teamB = nn;
     }));
     const bkPanel = document.getElementById('nd-panel-bracket');
-    if (bkPanel && bkPanel.style.display !== 'none' && typeof _ndBkRender === 'function') _ndBkRender();
+    if (bkPanel && bkPanel.style.display !== 'none' && typeof _ndBkRender === 'function') _ndBkRender(_curGiaiId || _bkGiai, _curNd || _bkNd);
   }
 
   // 6. Sync lên GSheets (nền — không block UI)
@@ -7531,12 +7524,15 @@ async function confirmGenerateSchedule() {
 
 // ── Render cây thi đấu vào nd-bk-wrap (dùng ID swap) ──
 // v2: render ngay từ cache → nhanh, rồi fetch ngầm nếu data cũ/đổi nội dung
-async function _ndBkRender() {
+async function _ndBkRender(forceGiai, forceNd) {
   if (_bkDeletedAt && Date.now() - _bkDeletedAt < 5000) return;
 
-  // Luôn dùng _curGiaiId/_curNd làm source of truth — không dùng _bkGiai cũ
-  if (_curGiaiId) _bkGiai = _curGiaiId;
-  if (_curNd)     _bkNd   = _curNd;
+  // Nếu được gọi với tham số rõ ràng (forceGiai/forceNd) → dùng ngay, không đọc global cũ
+  // Nếu không → fallback về _curGiaiId/_curNd (source of truth của navigation)
+  const targetGiai = forceGiai || _curGiaiId || _bkGiai;
+  const targetNd   = forceNd   || _curNd     || _bkNd;
+  _bkGiai     = targetGiai;
+  _bkNd       = targetNd;
   _bkGiaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
 
   const ndWrap = document.getElementById('nd-bk-wrap');
@@ -7657,7 +7653,7 @@ async function ndBkRefresh() {
   _bkTreeCache.delete(_bkCacheKey(_bkGiai, _bkNd));
   try {
     await loadMatchesCache(_bkGiai, true); // forceRefresh=true: fetch Máy chủ nhưng smart merge
-    await _ndBkRender();
+    await _ndBkRender(_bkGiai, _bkNd);
     // Cũng re-render bảng đấu nếu đang ở tab đó
     if (_curGiaiId === _bkGiai && _curNd === _bkNd) {
       const tvNd = document.getElementById('tv-nd');
@@ -7756,23 +7752,18 @@ function openNdDetail(giaiId, nd) {
 
   // Khi đổi nội dung: lưu cache nd CŨ và reset state bracket
   if (_curNd !== nd || _curGiaiId !== giaiId) {
-    // Lưu cache nd CŨ trước khi reset
+    // Lưu cache nd CŨ trước khi reset — dùng _bkGiai/_bkNd HIỆN TẠI (nd cũ)
     if (_bkCurrentTree) {
-      _bkCacheSave(_bkGiai || _curGiaiId, _bkNd || _curNd, {
+      _bkCacheSave(_bkGiai, _bkNd, {
         tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion,
         byeRule: _bkByeRule, overrides: Object.assign({}, _bkOverrides), isEmpty: _bkIsEmpty
       });
     }
-    // Reset bracket state của nd cũ
+    // Reset bracket state
     _bkCurrentTree = null;
     _bkApplied     = false;
     _bkLastVersion = 0;
-    // Reset _bkLastRenderKey để _ndBkRender luôn detect ndChanged=true
-    _bkLastRenderKey = '';
-    // Set _bkGiai/_bkNd ngay để mọi hàm sau dùng đúng context
-    _bkGiai = giaiId;
-    _bkNd   = nd;
-    _bkGiaiName = _resolveGiaiName(giaiId) || giaiId;
+    _bkLastRenderKey = ''; // force ndChanged=true ở lần render tiếp
   }
   _curNd = nd; _curGiaiId = giaiId;
   _switchPlayersCtx(giaiId, nd);
@@ -7787,11 +7778,12 @@ function openNdDetail(giaiId, nd) {
 
   // Switch tab đúng
   if (activeTab === 'bracket') {
+    // Set _bkGiai/_bkNd trước switchNdTab để _bkStartSyncPoll snapshot đúng key
     _bkGiai = giaiId;
     _bkNd   = nd;
     _bkGiaiName = _resolveGiaiName(giaiId) || giaiId;
     switchNdTab('bracket', true);
-    // _ndBkRender() tự fetch _M và SRV bên trong — không cần gọi thêm lần 2 ở đây
+    // _ndBkRender đã được gọi trong switchNdTab với đúng giaiId/nd qua tham số
     loadMatchesCache(giaiId, true)
       .then(async () => {
         if (_curGiaiId !== giaiId || _curNd !== nd) return;
@@ -10631,7 +10623,7 @@ function bkSetByeRule(rule) {
 function _bkForceRender() {
   // Trang nội dung nd-bk
   if (typeof _ndBkRender === 'function' && document.getElementById('bk-wrap')) {
-    _ndBkRender();
+    _ndBkRender(_curGiaiId || _bkGiai, _curNd || _bkNd);
   }
   // Trang bracket chính
   if (typeof bkRender === 'function') {
@@ -12189,7 +12181,7 @@ function ndBkCancelEdit() {
   _bkAutoMode = _bkAutoModeBeforeEdit;
   if (_bkAutoMode) _bkStartAutoPolling();
   _ndBkUpdateToolbarUI();
-  _ndBkRender(); // re-render để rollback visual
+  _ndBkRender(_bkGiai, _bkNd); // re-render để rollback visual
 }
 
 // ── Update toàn bộ toolbar UI theo trạng thái hiện tại ──
