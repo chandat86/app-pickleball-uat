@@ -13672,11 +13672,17 @@ function bkApplyQuickSwap(code, slot) {
     }
     _bkSaveOverrides();
     document.getElementById('bk-qs-mo')?.remove();
-    // bkRender tự apply _bkOverrides.isByeA/B → hiển thị BYE ngay
-    bkRender();
-    if (_bkCurrentTree) {
-      _bkNdCacheSet(_bkGiai, _bkNd, { tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion });
-    }
+    requestAnimationFrame(() => {
+      if (_bkCurrentTree) {
+        _bkCurrentTree.rounds.forEach(r => r.matches.forEach(m => {
+          if (m.code !== code) return;
+          if (slot === 'A') { m.teamA = 'BYE'; m.seedA = 'BYE'; m.isByeA = true; }
+          else               { m.teamB = 'BYE'; m.seedB = 'BYE'; m.isByeB = true; }
+        }));
+      }
+      bkRender();
+      if (_bkCurrentTree) _bkNdCacheSet(_bkGiai, _bkNd, { tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion });
+    });
     toast('⏳ Đang lưu BYE...', 'in');
     _bkSyncByeToSchedule(code, slot).then(() => {
       toast(`✅ ${code} slot ${slot === 'A' ? 'trên' : 'dưới'}: BYE · Đã lưu`, 'ok');
@@ -13702,17 +13708,27 @@ function bkApplyQuickSwap(code, slot) {
   _bkSaveOverrides();
   document.getElementById('bk-qs-mo')?.remove();
 
-  // bkRender() tự apply _bkOverrides vào tree → hiển thị ngay tức thì
-  bkRender();
-  // Cập nhật cache sau render
-  if (_bkCurrentTree) {
-    _bkNdCacheSet(_bkGiai, _bkNd, { tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion });
-  }
+  // Render sau micro-tick để DOM modal unmount xong — tránh bk-wrap bị ẩn
+  const _label = team || selVal || '—';
+  requestAnimationFrame(() => {
+    // Cập nhật _bkCurrentTree.seedB/seedA trực tiếp để render đúng label ngay
+    if (_bkCurrentTree) {
+      _bkCurrentTree.rounds.forEach(r => r.matches.forEach(m => {
+        if (m.code !== code) return;
+        if (slot === 'A') { m.teamA = team; m.seedA = selVal || m.seedA; m.isByeA = false; }
+        else              { m.teamB = team; m.seedB = selVal || m.seedB; m.isByeB = false; }
+      }));
+    }
+    bkRender();
+    if (_bkCurrentTree) {
+      _bkNdCacheSet(_bkGiai, _bkNd, { tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion });
+    }
+  });
 
   // Lưu SRV ngầm — không block UI
   toast(`⏳ Đang lưu ${code}...`, 'in');
   _bkSyncOverrideToSchedule(code).then(() => {
-    toast(`✅ ${code} slot ${slot === 'A' ? 'trên' : 'dưới'}: ${team||selVal||'—'} · Đã lưu`, 'ok');
+    toast(`✅ ${code} slot ${slot === 'A' ? 'trên' : 'dưới'}: ${_label} · Đã lưu`, 'ok');
     if (_bkCurrentTree) {
       _bkNdCacheSet(_bkGiai, _bkNd, { tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion });
     }
@@ -13775,11 +13791,17 @@ function bkSaveEdit(code, seedA, seedB) {
   _bkSaveOverrides();
   document.getElementById('bk-edit-mo')?.remove();
 
-  // Cập nhật _bkCurrentTree NGAY — user thấy thay đổi tức thì không chờ SRV
-  bkRender(); // _bkOverrides đã set → bkRender tự apply → hiển thị ngay
-  if (_bkCurrentTree) {
-    _bkNdCacheSet(_bkGiai, _bkNd, { tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion });
-  }
+  requestAnimationFrame(() => {
+    if (_bkCurrentTree) {
+      _bkCurrentTree.rounds.forEach(rr => rr.matches.forEach(m => {
+        if (m.code !== code) return;
+        m.teamA = a; m.seedA = seedCodeA || m.seedA;
+        m.teamB = b; m.seedB = seedCodeB || m.seedB;
+      }));
+    }
+    bkRender();
+    if (_bkCurrentTree) _bkNdCacheSet(_bkGiai, _bkNd, { tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion });
+  });
 
   const dispA = a || '(auto)', dispB = b || '(auto)';
   const isBYECase = (isByeA && !!a) || (isByeB && !!b);
