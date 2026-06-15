@@ -7807,13 +7807,21 @@ function _getActiveNdTab() {
 }
 
 function openNdDetail(giaiId, nd) {
-  // Ghi nhớ tab đang active để giữ lại khi đổi nội dung (cây thi đấu)
+  // Ghi nhớ tab đang active để giữ lại khi đổi nội dung
   const ndViewVisible = document.getElementById('tv-nd')?.style.display !== 'none';
   const activeTab = ndViewVisible ? _getActiveNdTab() : 'bangs';
 
-  // Xóa cache cây cũ khi chuyển sang nội dung khác
-  if (_curNd !== nd || _curGiaiId !== giaiId) _bkCurrentTree = null;
+  const ndChanged = (_curNd !== nd || _curGiaiId !== giaiId);
+
+  // Xóa cây cũ khi chuyển nội dung (y chang renderBangList xóa data cũ)
+  if (ndChanged) _bkCurrentTree = null;
+
   _curNd = nd; _curGiaiId = giaiId;
+  // Set _bkGiai/_bkNd NGAY — để _ndBkRender() đọc đúng khi gọi
+  _bkGiai = giaiId;
+  _bkNd   = nd;
+  _bkGiaiName = _resolveGiaiName(giaiId) || giaiId;
+
   _switchPlayersCtx(giaiId, nd);
   const r = _T.find(t=>String(t[0]||'')===giaiId);
   if (!r) return;
@@ -7826,30 +7834,32 @@ function openNdDetail(giaiId, nd) {
 
   // Switch tab đúng
   if (activeTab === 'bracket') {
-    _bkGiai = giaiId;
-    _bkNd   = nd;
-    _bkGiaiName = _resolveGiaiName(giaiId) || giaiId;
     switchNdTab('bracket', true);
-    loadMatchesCache(giaiId, true)
-      .then(async () => {
-        if (_curGiaiId !== giaiId || _curNd !== nd) return;
-        await _bkLoadOverridesFromGAS();
-        if (_curGiaiId !== giaiId || _curNd !== nd) return;
-        switchNdTab('bracket', true);
-        await new Promise(r => setTimeout(r, 300));
-        _syncBkScrollbar();
-      })
-      .catch(() => { if (_curGiaiId === giaiId && _curNd === nd) switchNdTab('bracket', true); });
   } else {
     switchNdTab(activeTab, true);
   }
 
-  // Render NGAY từ _M local (y chang v20 — không chờ GAS)
+  // ── Bảng đấu: render NGAY từ _M local, rồi fetch ngầm (y chang v20) ──
   renderBangList(giaiId, nd);
 
-  // Load GAS nền — dùng _renameOverrides bảo vệ tên mới
+  // ── Cây thi đấu: render NGAY từ _M local (preview), rồi fetch SRV ngầm ──
+  // Y hệt cơ chế renderBangList — không chờ mạng, hiển thị ngay tức thì
+  _ndBkRender();
+
+  // ── Fetch ngầm cả hai ──
   loadMatchesCache(giaiId, true)
-    .then(() => { if (_curGiaiId === giaiId && _curNd === nd) renderBangList(giaiId, nd); })
+    .then(async () => {
+      if (_curGiaiId !== giaiId || _curNd !== nd) return;
+      // Cập nhật bảng đấu với data mới nhất
+      renderBangList(giaiId, nd);
+      // Cập nhật cây thi đấu từ SRV (nếu đang hiển thị)
+      await _bkLoadOverridesFromGAS();
+      if (_curGiaiId !== giaiId || _curNd !== nd) return;
+      if (activeTab === 'bracket') {
+        switchNdTab('bracket', true);
+        setTimeout(_syncBkScrollbar, 300);
+      }
+    })
     .catch(() => {});
 
   // Nếu localStorage chưa có VĐV/bảng → thử load từ SRV
