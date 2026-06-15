@@ -6194,7 +6194,7 @@ async function ndRefresh() {
     _invalidateMatchCache(_curGiaiId||''); // force fetch từ Máy chủ, không dùng cache cũ
     await loadMatchesCache(_curGiaiId||'', true);
     if (bracketActive) {
-      _ndBkRender(_curGiaiId || _bkGiai, _curNd || _bkNd);
+      _ndBkRender();
     } else {
       renderBangList(_curGiaiId||'', _curNd||'');
     }
@@ -6288,8 +6288,8 @@ function switchNdTab(tab, _skipHash) {
   if (tab === 'bracket') {
     // Chỉ restore từ sessionStorage khi KHÔNG có context hiện tại (trường hợp reload trang)
     if (!_curGiaiId && !_curNd) _bkRestoreState();
-    // Luôn truyền _curGiaiId/_curNd trực tiếp vào _ndBkRender — không đọc global _bkGiai/_bkNd
-    _ndBkRender(_curGiaiId || _bkGiai, _curNd || _bkNd);
+    // _ndBkRender() là async — tự detect thay đổi, load data đúng rồi mới render
+    _ndBkRender();
     _ndBkUpdateToolbarUI();
     // Hiện thanh cuộn ngang fixed
     const sb = document.getElementById('nd-bk-scrollbar-wrap');
@@ -6850,7 +6850,7 @@ async function renamePlayer(idx) {
       if (m.teamB === oldName) m.teamB = nn;
     }));
     const bkPanel = document.getElementById('nd-panel-bracket');
-    if (bkPanel && bkPanel.style.display !== 'none' && typeof _ndBkRender === 'function') _ndBkRender(_curGiaiId || _bkGiai, _curNd || _bkNd);
+    if (bkPanel && bkPanel.style.display !== 'none' && typeof _ndBkRender === 'function') _ndBkRender();
   }
 
   // 6. Sync lên GSheets (nền — không block UI)
@@ -10670,7 +10670,7 @@ function bkSetByeRule(rule) {
 function _bkForceRender() {
   // Trang nội dung nd-bk
   if (typeof _ndBkRender === 'function' && document.getElementById('bk-wrap')) {
-    _ndBkRender(_curGiaiId || _bkGiai, _curNd || _bkNd);
+    _ndBkRender();
   }
   // Trang bracket chính
   if (typeof bkRender === 'function') {
