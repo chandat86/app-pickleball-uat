@@ -6244,14 +6244,13 @@ function _bkStartSyncPoll() {
       if (remoteVer <= _bkLastVersion) return;
       console.log('[BK SYNC] SRV BracketTree mới (v', remoteVer, '>', _bkLastVersion, ') — đang tải...');
       // Có phiên bản mới → load cây từ SRV
-      const loaded = await _bkLoadTreeFromSheet();
+      const loaded = await _bkLoadTreeFromSheet(_bkGiai, _bkNd);
       // Guard kép lần 3 sau await dài nhất (_bkLoadTreeFromSheet fetch GAS ~1-3s)
       if (_pollGen !== _bkGen) return;
       if ((_bkGiai + '|' + _bkNd) !== _pollKey) return;
       if (_bkLastRenderKey !== _pollKey) return;
-      if (loaded && _bkIsActiveNd()) {
-        // _bkLoadTreeFromSheet() đã set _bkCurrentTree = d.tree + _bkApplied = true.
-        // _bkIsActiveNd() đảm bảo chỉ render nếu user vẫn đang ở nd này
+      if (loaded) {
+        // _bkLoadTreeFromSheet đã guard bằng _bkGiai/_bkNd, nếu loaded=true thì đúng nd
         _bkNdCacheSet(_bkGiai, _bkNd, {
           tree: _bkCurrentTree, applied: _bkApplied, version: _bkLastVersion
         });
@@ -7565,7 +7564,7 @@ async function _ndBkRender() {
   const ndChanged = (_bkLastRenderKey !== _curKey);
   _bkLastRenderKey = _curKey;
   // FIX: Khi đổi nội dung/giải → LUÔN reset toàn bộ state cây (kể cả khi _bkApplied=true của nd cũ),
-  // tránh hiện nhầm cây của nội dung trước đó. _bkLoadTreeFromSheet() sẽ load lại đúng cây
+  // tránh hiện nhầm cây của nội dung trước đó. _bkLoadTreeFromSheet(_snapBkGiai, _snapBkNd) sẽ load lại đúng cây
   // cho nd mới nếu server đã có (set lại _bkApplied=true), nếu chưa có thì hiện "Nhấn Tạo cây".
   if (ndChanged) {
     _bkCurrentTree = null;
@@ -7598,7 +7597,7 @@ async function _ndBkRender() {
   // Render local trước (nhanh), sau đó sync từ SRV
   setTimeout(async () => {
     if (_isBkStale()) return; // FIX: user đã chuyển nd khác trong 300ms
-    const loaded = await _bkLoadTreeFromSheet();
+    const loaded = await _bkLoadTreeFromSheet(_snapBkGiai, _snapBkNd);
     if (_isBkStale()) return; // FIX: guard sau await
     if (loaded || _bkCurrentTree) {
       await _swapBkWrap('nd-bk-wrap', () => Promise.resolve(bkRender()));
@@ -11435,44 +11434,39 @@ function _bkLoadOverrides() {
 // ── SRV BracketTree sync — v37: single source of truth ──
 
 // Load cây từ SRV BracketTree (GET, không cần auth POST)
-async function _bkLoadTreeFromSheet(callerToken) {
-  if (!_bkGiai || !_bkNd || !GS) return false;
+async function _bkLoadTreeFromSheet(_snapGiai, _snapNd) {
+  // _snapGiai/_snapNd: giaiId/nd tại thời điểm gọi — guard chống race condition
+  // Nếu không truyền → dùng global hiện tại (backward compat)
+  const _reqGiai = _snapGiai || _bkGiai;
+  const _reqNd   = _snapNd   || _bkNd;
+  if (!_reqGiai || !_reqNd || !GS) return false;
   try {
-    const giaiName = _resolveGiaiName(_bkGiai) || _bkGiai;
+    const giaiName = _resolveGiaiName(_reqGiai) || _reqGiai;
     const url = new URL(GS);
     url.searchParams.set('action', 'bracketTree');
     url.searchParams.set('giai', giaiName);
-    url.searchParams.set('nd', _bkNd);
+    url.searchParams.set('nd', _reqNd);
     url.searchParams.set('_t', Date.now());
     const r = await fetch(url.toString(), { cache: 'no-store' });
     const d = await r.json();
     if (d.ok && d.tree && d.version) {
-      if (d.version <= _bkLastVersion) return false; // không có gì mới
-      // GUARD: chỉ ghi _bkCurrentTree nếu vẫn đang ở đúng nd này
-      // Token guard: reject nếu caller đã bị supersede
-      if (callerToken !== undefined && callerToken !== _bkState.token) {
-        console.warn('[BK TREE] REJECT — stale token', callerToken, '!= current', _bkState.token);
-        return false;
-      }
-      if (!_bkIsActiveNd()) {
-        console.warn('[BK TREE] REJECT — nd đã đổi');
+      // Guard duy nhất: user đã chuyển sang nd khác trong lúc fetch
+      if (_bkGiai !== _reqGiai || _bkNd !== _reqNd) {
+        console.warn('[BK TREE] Bỏ qua — nd đã đổi trong lúc fetch');
         return false;
       }
       _bkCurrentTree = d.tree;
-      _bkState.setTree(d.tree, true, d.version, callerToken);
-      _bkApplied = true; // v37: Loaded từ SRV → cây đã Apply, khóa lại
+      _bkApplied     = true;
+      _bkLastVersion = d.version;
       if (d.tree._overrides) {
         _bkOverrides = d.tree._overrides;
         try { localStorage.setItem(_bkKey(), JSON.stringify(_bkOverrides)); } catch(ex){}
       }
       if (d.tree._byeRule) _bkByeRule = d.tree._byeRule;
-      _bkLastVersion = d.version;
-      // v104: cập nhật cache ngay sau khi load từ SRV — đảm bảo swap nội dung hiển thị đúng cây Applied
-      // Cập nhật cache nd sau khi load từ SRV
-      _bkNdCacheSet(_bkGiai, _bkNd, {
+      _bkNdCacheSet(_reqGiai, _reqNd, {
         tree: _bkCurrentTree, applied: true, version: _bkLastVersion
       });
-      console.log('[BK TREE] Loaded from SRV v', d.version, '— rounds:', _bkCurrentTree?.rounds?.length, '(LOCKED)');
+      console.log('[BK TREE] Loaded v', d.version, 'nd:', _reqNd, 'rounds:', _bkCurrentTree?.rounds?.length);
       return true;
     }
     return false;
@@ -11522,7 +11516,7 @@ async function _bkSaveTreeToSheet() {
 // Debounce lưu overrides + push tree lên SRV
 async function _bkLoadOverridesFromGAS() {
   // Giờ load từ SRV tree (đã embed overrides)
-  await _bkLoadTreeFromSheet();
+  await _bkLoadTreeFromSheet(_bkGiai, _bkNd);
 }
 
 function _bkSaveOverrides() {
