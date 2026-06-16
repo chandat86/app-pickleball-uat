@@ -1726,8 +1726,9 @@ function _bkBuildAndRenderTree(nd,wrap){
     const rB=m.isByeB?(luckyPickedB?'':isLuckySlotB?'r-lucky':'r-bye'):(!tB?'r-tbd':winB?'r-win':'');
     const nA=m.isByeA?(luckyPickedA?(tA||'—'):isLuckySlotA?'🍀 Lucky':'BYE'):(tA||'—');
     const nB=m.isByeB?(luckyPickedB?(tB||'—'):isLuckySlotB?'🍀 Lucky':'BYE'):(tB||'—');
-    const plA=luckyPickedA?(_ov_m.luckyLabelA||'🍀'):pillLabel(m.seedA||'');
-    const plB=luckyPickedB?(_ov_m.luckyLabelB||'🍀'):pillLabel(m.seedB||'');
+    // v4 FIX: Lucky slot chưa chọn đội → pill hiện '🍀' thay vì 'BYE'
+    const plA=luckyPickedA?(_ov_m.luckyLabelA||'🍀'):isLuckySlotA?'🍀':pillLabel(m.seedA||'');
+    const plB=luckyPickedB?(_ov_m.luckyLabelB||'🍀'):isLuckySlotB?'🍀':pillLabel(m.seedB||'');
     const pcA=isLuckySlotA?'p-lucky':pillCls(m.seedA||'');
     const pcB=isLuckySlotB?'p-lucky':pillCls(m.seedB||'');
     const scA=fs?`<div class="bk-sbox${winA?' s-win':''}">${fs.scoreA}</div>`:'<div class="bk-sbox s-empty">—</div>';
@@ -2034,8 +2035,9 @@ function _bkRenderFromSnapshot(nd,snap,wrap){
     const rB=m.isByeB?(luckyPickedB?'':isLuckySlotB?'r-lucky':'r-bye'):(!tB?'r-tbd':winB?'r-win':'');
     const nA=m.isByeA?(luckyPickedA?(tA||'—'):isLuckySlotA?'🍀 Lucky':'BYE'):(tA||'—');
     const nB=m.isByeB?(luckyPickedB?(tB||'—'):isLuckySlotB?'🍀 Lucky':'BYE'):(tB||'—');
-    const plA=luckyPickedA?(_ov.luckyLabelA||'🍀'):pillLabel(m.seedA||'');
-    const plB=luckyPickedB?(_ov.luckyLabelB||'🍀'):pillLabel(m.seedB||'');
+    // v4 FIX: Lucky slot chưa chọn đội → pill hiện '🍀' thay vì 'BYE'
+    const plA=luckyPickedA?(_ov.luckyLabelA||'🍀'):isLuckySlotA?'🍀':pillLabel(m.seedA||'');
+    const plB=luckyPickedB?(_ov.luckyLabelB||'🍀'):isLuckySlotB?'🍀':pillLabel(m.seedB||'');
     const pcA=isLuckySlotA?'p-lucky':pillCls(m.seedA||'');
     const pcB=isLuckySlotB?'p-lucky':pillCls(m.seedB||'');
     // Score box: done → kết quả chính thức, live → tỉ số realtime
