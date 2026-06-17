@@ -545,26 +545,36 @@ function _initDisplayFirebase(){
     _fbDLiveRef = _fbDDb.ref('liveScores');
     _fbDLiveRef.on('value', snap => {
       const val = snap.val() || {};
-      // Build _live từ Firebase (format tương tự GAS /live)
       const fbLive = [];
       Object.entries(val).forEach(([k, d]) => {
-        if (!d || (d.status && d.status !== 'playing')) return;
+        if (!d) return;
+        // Chỉ lấy trận đang thi đấu (status='playing' hoặc rỗng = đang đấu)
+        const st = String(d.status||'').toLowerCase();
+        if (st && st !== 'playing') return; // bỏ qua 'finished','cancelled'...
+        // Lọc theo giải được phân quyền
+        if (SESS_GIAI.length) {
+          const dGiaiUp = String(d.giai||'').trim().toUpperCase();
+          const ok = SESS_GIAI.some(g => {
+            const gUp = g.trim().toUpperCase();
+            return dGiaiUp === gUp || dGiaiUp.includes(gUp) || gUp.includes(dGiaiUp);
+          });
+          if (!ok) return;
+        }
         fbLive.push([
-          k,                        // col[0]: key (giai|nd|bang|code)
-          d.giai || '',             // col[1]: giải
-          d.teamA || '',            // col[2]: đội A
-          d.scoreA ?? '',           // col[3]: điểm A
-          d.scoreB ?? '',           // col[4]: điểm B
-          d.teamB || '',            // col[5]: đội B
-          d.serve || '',            // col[6]: giao bóng
-          d.game || '',             // col[7]: game
-          d.updatedAt || '',        // col[8]: cập nhật
-          d.status || 'playing',    // col[9]: trạng thái
-          d.referee || '',          // col[10]: trọng tài
+          k,                          // col[0]: key (giai|nd|bang|code)
+          d.giai    || '',            // col[1]: giải
+          d.teamA   || '',            // col[2]: đội A
+          d.scoreA  ?? '',            // col[3]: điểm A
+          d.scoreB  ?? '',            // col[4]: điểm B
+          d.teamB   || '',            // col[5]: đội B
+          d.serve   || '',            // col[6]: giao bóng
+          d.game    || '',            // col[7]: game
+          d.updatedAt || '',          // col[8]: cập nhật
+          'playing',                  // col[9]: trạng thái — đã filter trên
+          d.referee || '',            // col[10]: trọng tài
         ]);
       });
       _live = dedupeLive(fbLive);
-      console.log('[FB Display] liveScores →', _live.length, 'trận live');
       render();
     }, err => { console.warn('[FB Display] liveScores err:', err.message); });
 
@@ -575,32 +585,35 @@ function _initDisplayFirebase(){
       const fbResults = [];
       Object.entries(val).forEach(([k, d]) => {
         if (!d) return;
-        // v4 FIX: chỉ nhận kết quả từ giải được phân quyền
+        // Chỉ lấy kết quả từ giải được phân quyền
         if (SESS_GIAI.length) {
-          const rGiaiUp = String(d.giai||'').trim().toUpperCase();
-          const allowed = SESS_GIAI.some(g => g.trim().toUpperCase() === rGiaiUp);
-          if (!allowed) return;
+          const dGiaiUp = String(d.giai||'').trim().toUpperCase();
+          const ok = SESS_GIAI.some(g => {
+            const gUp = g.trim().toUpperCase();
+            return dGiaiUp === gUp || dGiaiUp.includes(gUp) || gUp.includes(dGiaiUp);
+          });
+          if (!ok) return;
         }
         fbResults.push([
-          d.ts || '',               // col[0]: timestamp
-          d.giai || '',             // col[1]: giải
-          d.nd || '',               // col[2]: nội dung
-          d.bang || '',             // col[3]: bảng
-          d.code || '',             // col[4]: mã trận
-          d.teamA || '',            // col[5]: đội A
-          d.teamB || '',            // col[6]: đội B
-          d.scoreA ?? '',           // col[7]: điểm A
-          d.scoreB ?? '',           // col[8]: điểm B
-          d.winner || '',           // col[9]: thắng
-          d.court || '',            // col[10]: sân
-          d.referee || '',          // col[11]: TT
-          d.rule || '',             // col[12]: quy tắc
+          d.ts||'', d.giai||'', d.nd||'', d.bang||'', d.code||'',
+          d.teamA||'', d.teamB||'',
+          d.scoreA??'', d.scoreB??'',
+          d.winner||'', d.court||'', d.referee||'', d.rule||''
         ]);
       });
-      // v4 FIX: ghi đè _results hoàn toàn bằng Firebase data (không merge với GAS cũ)
-      // GAS results chỉ dùng khi Firebase không connected (fetchAll fallback)
-      _results = fbResults;
-      console.log('[FB Display] results →', _results.length, 'kết quả');
+      // Merge: Firebase kết quả mới nhất override GAS, giữ lại kết quả GAS cũ không có trong Firebase
+      // Key merge: giai|nd|bang|code (4 trường)
+      if(fbResults.length > 0){
+        const fbKeySet = new Set(fbResults.map(r =>
+          `${String(r[1]||'')}|${String(r[2]||'')}|${String(r[3]||'')}|${String(r[4]||'')}`
+        ));
+        // Giữ lại GAS results không có trong Firebase (kết quả cũ hơn chưa push Firebase)
+        const gasOnly = _results.filter(r =>
+          !fbKeySet.has(`${String(r[1]||'')}|${String(r[2]||'')}|${String(r[3]||'')}|${String(r[4]||'')}`)
+        );
+        _results = [...gasOnly, ...fbResults];
+      }
+      // Nếu Firebase trả về rỗng (không có kết quả nào) → giữ nguyên _results từ GAS
       processData(); render();
     }, err => { console.warn('[FB Display] results err:', err.message); });
 
@@ -781,39 +794,37 @@ async function get(action,giaiVal,extra=''){
 
 async function fetchAll(){
   try{
+    // Luôn reset _matches trước mỗi poll (GAS poll 60s)
     _matches=[];
-    // v4: Firebase đã handle liveScores + results realtime
-    // → chỉ fetch matches (sân/TT/giờ) từ GAS; live/results dùng Firebase
-    if(!_fbDConnected){
-      _results=[];_live=[];
-    } else {
-      // Firebase connected: _results do _fbResults quản lý — reset GAS results
-      _results = [];
-    }
+
+    // Firebase đã handle live + results realtime
+    // Chỉ fetch matches (lịch/sân/TT) từ GAS; nếu Firebase chưa connect → fetch thêm results+live
+    if(!_fbDConnected){ _results=[]; _live=[]; }
+
     for(const giai of SESS_GIAI){
-      // Luôn fetch matches (lịch thi đấu, sân, TT — Firebase không cover)
       const mRes = await get('matches', giai);
       if(mRes?.rows?.length>1) _matches.push(...mRes.rows.slice(1));
-      // Chỉ fetch live/results từ GAS khi Firebase chưa connect (fallback)
       if(!_fbDConnected){
         const [rRes,lRes] = await Promise.all([
-          get('results', giai),
-          get('live', giai, '&code=all')
+          get('results',giai),
+          get('live',giai,'&code=all')
         ]);
         if(rRes?.rows?.length>1) _results.push(...rRes.rows.slice(1));
-        if(lRes?.rows?.length>1) _live.push(...lRes.rows.slice(1).filter(r=>String(r[9]||'')==='playing'||String(r[9]||'')===''));
+        if(lRes?.rows?.length>1) _live.push(...lRes.rows.slice(1)
+          .filter(r=>String(r[9]||'')==='playing'||String(r[9]||'')===''));
       }
     }
-    // Lọc theo nội dung được phân quyền
+
+    // Lọc nội dung được phân quyền
     if(SESS_ND.length){
       const ndSet=new Set(SESS_ND.map(s=>s.toUpperCase()));
-      const ndMatch=nd=>ndSet.has(String(nd||'').toUpperCase()) ||
-                        [...ndSet].some(x=>String(nd||'').toUpperCase().includes(x)||x.includes(String(nd||'').toUpperCase()));
+      const ndMatch=nd=>ndSet.has(String(nd||'').toUpperCase())||
+        [...ndSet].some(x=>String(nd||'').toUpperCase().includes(x)||x.includes(String(nd||'').toUpperCase()));
       _matches=_matches.filter(r=>ndMatch(r[1]));
       if(!_fbDConnected){
         _results=_results.filter(r=>ndMatch(r[2]));
         _live=_live.filter(r=>{
-          const k=String(r[0]||'');const p=k.split('|');
+          const p=String(r[0]||'').split('|');
           const nd=p.length>=4?p[1]:(p.length>=3?p[0]:'');
           return ndMatch(nd);
         });
