@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TV Display v4 — Pickleball DA NANG (Login)</title>
+<title>TV Display v5 — Pickleball DA NANG (Login)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -428,8 +428,7 @@ html,body{width:100%;background:var(--bg);color:var(--tx);font-family:var(--font
         <span class="live-text">ĐANG ĐẤU</span>
       </div>
       <div class="clock" id="clock"></div>
-      <!-- v4: Firebase status indicator -->
-      <div id="fb-status" title="Firebase realtime" style="width:8px;height:8px;border-radius:50%;background:#4b5563;margin-left:6px;flex-shrink:0;transition:background .5s" title="Firebase"></div>
+      <div id="fb-status" style="width:8px;height:8px;border-radius:50%;background:#4b5563;margin-left:6px;flex-shrink:0;transition:background .5s" title="Firebase"></div>
       <button class="logout-btn" onclick="doLogout()" title="Đăng xuất">⏻ Đăng xuất</button>
     </div>
   </div>
@@ -508,22 +507,22 @@ html,body{width:100%;background:var(--bg);color:var(--tx);font-family:var(--font
   </div>
 </div>
 
-<!-- v4: Firebase SDK — realtime liveScores + results + bracketTree (không cần GAS poll liên tục) -->
+<!-- v4: Firebase SDK realtime -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
 <script>
 // ════════════════════════════════════════════════════════
-// CẤU HÌNH CỐ ĐỊNH — Admin chỉnh URL này 1 lần khi triển khai
+// CẤU HÌNH CỐ ĐỊNH
 // ════════════════════════════════════════════════════════
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWasb4KravYHNR6Q9d55qevrut8O9Kep80nZKBq4Rj05TA3XhNF-fymIRtr75HRJv6/exec';
 
-// v4: Firebase realtime → giảm GAS poll từ 10s xuống 60s (chỉ fallback sync)
+// v4: Firebase realtime → GAS poll chỉ 60s (fallback sync matches)
 const POLL_SEC=60, ROTATE_SEC=20;
 let _pollTimer=null, _rotateTimer=null, _activeNdIdx=0;
 let _matches=[], _results=[], _live=[], _groups=[], _nds=[];
 
-// v4: Firebase state
+// v4: Firebase realtime state
 const _FB_CFG_D = {
   apiKey:      'AIzaSyAJV0Ojod9lQ4vec-y90l52xX7HUTP-dvA',
   authDomain:  'app-pickleball.firebaseapp.com',
@@ -534,141 +533,96 @@ const _FB_CFG_D = {
 let _fbDApp=null, _fbDDb=null, _fbDConnected=false;
 let _fbDLiveRef=null, _fbDResultsRef=null, _fbDBracketRef=null;
 
-// v4: Khởi động Firebase cho Display — 3 listeners: liveScores + results + bracketTree
 function _initDisplayFirebase(){
-  try {
+  try{
     if(typeof firebase==='undefined'){console.warn('[FB Display] SDK chưa load');return;}
-    if(!_fbDApp) _fbDApp = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(_FB_CFG_D);
-    _fbDDb = firebase.database(_fbDApp);
+    if(!_fbDApp) _fbDApp=firebase.apps.length?firebase.apps[0]:firebase.initializeApp(_FB_CFG_D);
+    _fbDDb=firebase.database(_fbDApp);
 
-    // ── Listener 1: /liveScores — điểm live real-time <100ms ──
-    _fbDLiveRef = _fbDDb.ref('liveScores');
-    _fbDLiveRef.on('value', snap => {
-      const val = snap.val() || {};
-      const fbLive = [];
-      Object.entries(val).forEach(([k, d]) => {
-        if (!d) return;
-        // Chỉ lấy trận đang thi đấu (status='playing' hoặc rỗng = đang đấu)
-        const st = String(d.status||'').toLowerCase();
-        if (st && st !== 'playing') return; // bỏ qua 'finished','cancelled'...
-        // Lọc theo giải được phân quyền
-        if (SESS_GIAI.length) {
-          const dGiaiUp = String(d.giai||'').trim().toUpperCase();
-          const ok = SESS_GIAI.some(g => {
-            const gUp = g.trim().toUpperCase();
-            return dGiaiUp === gUp || dGiaiUp.includes(gUp) || gUp.includes(dGiaiUp);
-          });
-          if (!ok) return;
+    // Listener 1: /liveScores
+    _fbDLiveRef=_fbDDb.ref('liveScores');
+    _fbDLiveRef.on('value',snap=>{
+      const val=snap.val()||{};
+      const fbLive=[];
+      Object.entries(val).forEach(([k,d])=>{
+        if(!d)return;
+        const st=String(d.status||'').toLowerCase();
+        if(st&&st!=='playing')return; // chỉ lấy đang đấu
+        if(SESS_GIAI.length){
+          const dG=String(d.giai||'').trim().toUpperCase();
+          const ok=SESS_GIAI.some(g=>{const gU=g.trim().toUpperCase();return dG===gU||dG.includes(gU)||gU.includes(dG);});
+          if(!ok)return;
         }
-        fbLive.push([
-          k,                          // col[0]: key (giai|nd|bang|code)
-          d.giai    || '',            // col[1]: giải
-          d.teamA   || '',            // col[2]: đội A
-          d.scoreA  ?? '',            // col[3]: điểm A
-          d.scoreB  ?? '',            // col[4]: điểm B
-          d.teamB   || '',            // col[5]: đội B
-          d.serve   || '',            // col[6]: giao bóng
-          d.game    || '',            // col[7]: game
-          d.updatedAt || '',          // col[8]: cập nhật
-          'playing',                  // col[9]: trạng thái — đã filter trên
-          d.referee || '',            // col[10]: trọng tài
-        ]);
+        fbLive.push([k,d.giai||'',d.teamA||'',d.scoreA??'',d.scoreB??'',d.teamB||'',
+          d.serve||'',d.game||'',d.updatedAt||'','playing',d.referee||'']);
       });
-      _live = dedupeLive(fbLive);
+      _live=dedupeLive(fbLive);
       render();
-    }, err => { console.warn('[FB Display] liveScores err:', err.message); });
+    },err=>console.warn('[FB Display] live err:',err.message));
 
-    // ── Listener 2: /results — kết quả ngay khi TT bấm Lưu ──
-    _fbDResultsRef = _fbDDb.ref('results');
-    _fbDResultsRef.on('value', snap => {
-      const val = snap.val() || {};
-      const fbResults = [];
-      Object.entries(val).forEach(([k, d]) => {
-        if (!d) return;
-        // Chỉ lấy kết quả từ giải được phân quyền
-        if (SESS_GIAI.length) {
-          const dGiaiUp = String(d.giai||'').trim().toUpperCase();
-          const ok = SESS_GIAI.some(g => {
-            const gUp = g.trim().toUpperCase();
-            return dGiaiUp === gUp || dGiaiUp.includes(gUp) || gUp.includes(dGiaiUp);
-          });
-          if (!ok) return;
+    // Listener 2: /results
+    _fbDResultsRef=_fbDDb.ref('results');
+    _fbDResultsRef.on('value',snap=>{
+      const val=snap.val()||{};
+      const fbResults=[];
+      Object.entries(val).forEach(([k,d])=>{
+        if(!d)return;
+        if(SESS_GIAI.length){
+          const dG=String(d.giai||'').trim().toUpperCase();
+          const ok=SESS_GIAI.some(g=>{const gU=g.trim().toUpperCase();return dG===gU||dG.includes(gU)||gU.includes(dG);});
+          if(!ok)return;
         }
-        fbResults.push([
-          d.ts||'', d.giai||'', d.nd||'', d.bang||'', d.code||'',
-          d.teamA||'', d.teamB||'',
-          d.scoreA??'', d.scoreB??'',
-          d.winner||'', d.court||'', d.referee||'', d.rule||''
-        ]);
+        fbResults.push([d.ts||'',d.giai||'',d.nd||'',d.bang||'',d.code||'',
+          d.teamA||'',d.teamB||'',d.scoreA??'',d.scoreB??'',
+          d.winner||'',d.court||'',d.referee||'',d.rule||'']);
       });
-      // Merge: Firebase kết quả mới nhất override GAS, giữ lại kết quả GAS cũ không có trong Firebase
-      // Key merge: giai|nd|bang|code (4 trường)
-      if(fbResults.length > 0){
-        const fbKeySet = new Set(fbResults.map(r =>
-          `${String(r[1]||'')}|${String(r[2]||'')}|${String(r[3]||'')}|${String(r[4]||'')}`
-        ));
-        // Giữ lại GAS results không có trong Firebase (kết quả cũ hơn chưa push Firebase)
-        const gasOnly = _results.filter(r =>
-          !fbKeySet.has(`${String(r[1]||'')}|${String(r[2]||'')}|${String(r[3]||'')}|${String(r[4]||'')}`)
-        );
-        _results = [...gasOnly, ...fbResults];
+      // Merge: Firebase (mới) + GAS (cũ không có trong Firebase)
+      if(fbResults.length>0){
+        const fbKeys=new Set(fbResults.map(r=>`${r[1]}|${r[2]}|${r[3]}|${r[4]}`));
+        const gasOnly=_results.filter(r=>!fbKeys.has(`${r[1]}|${r[2]}|${r[3]}|${r[4]}`));
+        _results=[...gasOnly,...fbResults];
       }
-      // Nếu Firebase trả về rỗng (không có kết quả nào) → giữ nguyên _results từ GAS
-      processData(); render();
-    }, err => { console.warn('[FB Display] results err:', err.message); });
+      processData();render();
+    },err=>console.warn('[FB Display] results err:',err.message));
 
-    // ── Listener 3: /bracketTree — cây thi đấu real-time (khi Admin Apply) ──
-    _fbDBracketRef = _fbDDb.ref('bracketTree');
-    _fbDBracketRef.on('value', snap => {
-      const val = snap.val();
-      if(!val) return;
-      // Cập nhật cache và re-render các bracket đang hiển thị
-      Object.values(val).forEach(d => {
-        if(!d || !d.nd || !d.rounds) return;
-        // Kiểm tra giải có được phân quyền không
-        const dGiaiUp = String(d.giai||'').toUpperCase();
-        const allowed = SESS_GIAI.some(g => g.toUpperCase()===dGiaiUp || dGiaiUp.includes(g.toUpperCase()));
-        if(SESS_GIAI.length && !allowed) return;
-        const nd = d.nd;
-        const tree = { rounds: d.rounds, _overrides: d._overrides||{}, _byeRule: d._byeRule||'bye', _meta: d._meta||{}, _dkMode: !!d._dkMode };
-        const prevVersion = (_bracketCache[nd]||{}).version || 0;
-        if(d.version <= prevVersion) return; // không update nếu cũ hơn
-        _bracketCache[nd] = { tree, version: d.version, _dkMode: !!d._dkMode };
-        console.log('[FB Display] bracketTree →', nd, 'v', d.version, 'dkMode:', d._dkMode);
-        // Re-render bracket nếu đang hiển thị
-        const safeId = nd.replace(/[^a-zA-Z0-9]/g,'_');
-        const bEl = document.getElementById('bracket-'+safeId);
-        if(bEl){
-          const treeWithDk = {...tree, _dkMode: !!d._dkMode};
-          renderBracket(nd, treeWithDk, bEl);
-          scaleBracket(safeId);
-          // Hiện sub-tab bracket nếu đang ẩn
-          const stB = document.getElementById('st-bracket-'+safeId);
-          if(stB) stB.style.display='';
-          // Badge MỚI nếu đang xem tab khác
-          const badge = document.getElementById('st-badge-'+safeId);
-          if(badge && _ndSubTab[safeId]!=='bracket') badge.style.display='';
+    // Listener 3: /bracketTree
+    _fbDBracketRef=_fbDDb.ref('bracketTree');
+    _fbDBracketRef.on('value',snap=>{
+      const val=snap.val();if(!val)return;
+      Object.values(val).forEach(d=>{
+        if(!d||!d.nd||!d.rounds)return;
+        if(SESS_GIAI.length){
+          const dG=String(d.giai||'').toUpperCase();
+          const ok=SESS_GIAI.some(g=>dG===g.toUpperCase()||dG.includes(g.toUpperCase()));
+          if(!ok)return;
         }
+        const tree={rounds:d.rounds,_overrides:d._overrides||{},_byeRule:d._byeRule||'bye',_meta:d._meta||{},_dkMode:!!d._dkMode};
+        const prev=(_bracketCache[d.nd]||{}).version||0;
+        if(d.version<=prev)return;
+        _bracketCache[d.nd]={tree,version:d.version,_dkMode:!!d._dkMode};
+        const safeId=d.nd.replace(/[^a-zA-Z0-9]/g,'_');
+        const bEl=document.getElementById('bracket-'+safeId);
+        if(bEl){renderBracket(d.nd,{...tree,_dkMode:!!d._dkMode},bEl);scaleBracket(safeId);}
+        const stB=document.getElementById('st-bracket-'+safeId);if(stB)stB.style.display='';
+        const badge=document.getElementById('st-badge-'+safeId);
+        if(badge&&_ndSubTab[safeId]!=='bracket')badge.style.display='';
       });
-    }, err => { console.warn('[FB Display] bracketTree err:', err.message); });
+    },err=>console.warn('[FB Display] bracket err:',err.message));
 
-    _fbDConnected = true;
+    _fbDConnected=true;
     const dot=document.getElementById('fb-status');
-    if(dot){dot.style.background='#22d374';dot.title='Firebase ✅ realtime';}
-    console.log('[FB Display] ✅ Firebase connected — liveScores + results + bracketTree');
-  } catch(e) {
-    console.warn('[FB Display] init error:', e.message);
-  }
+    if(dot){dot.style.background='#22d374';dot.title='Firebase ✅';}
+    console.log('[FB Display] ✅ connected');
+  }catch(e){console.warn('[FB Display] init err:',e.message);}
 }
 
-// Dừng Firebase khi logout
 function _stopDisplayFirebase(){
-  try {
-    if(_fbDLiveRef)    { _fbDLiveRef.off('value');    _fbDLiveRef=null; }
-    if(_fbDResultsRef) { _fbDResultsRef.off('value'); _fbDResultsRef=null; }
-    if(_fbDBracketRef) { _fbDBracketRef.off('value'); _fbDBracketRef=null; }
-  } catch(e) {}
-  _fbDConnected = false;
+  try{
+    if(_fbDLiveRef){_fbDLiveRef.off('value');_fbDLiveRef=null;}
+    if(_fbDResultsRef){_fbDResultsRef.off('value');_fbDResultsRef=null;}
+    if(_fbDBracketRef){_fbDBracketRef.off('value');_fbDBracketRef=null;}
+  }catch(e){}
+  _fbDConnected=false;
   const dot=document.getElementById('fb-status');
   if(dot){dot.style.background='#4b5563';dot.title='Firebase offline';}
 }
@@ -714,7 +668,7 @@ function doLogout(){
   if(!confirm('Đăng xuất khỏi màn hình hiển thị?'))return;
   try{localStorage.removeItem(SESS_KEY);}catch(e){}
   clearInterval(_pollTimer);clearInterval(_rotateTimer);
-  _stopDisplayFirebase(); // v4: dừng Firebase listeners
+  _stopDisplayFirebase(); // v4: dừng Firebase
   document.getElementById('screen').style.display='none';
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('login-phone').value=''; // clear cả phone lẫn mã
@@ -730,7 +684,7 @@ async function enterDisplay(){
   // Lấy thông tin giải đấu (tên, địa điểm) từ tournaments — dùng giải đầu tiên được phân
   await loadTournamentInfo();
   startClock(); fetchAll(); startPolling();
-  _initDisplayFirebase(); // v4: Firebase realtime listeners
+  _initDisplayFirebase(); // v4: Firebase realtime
 }
 
 async function loadTournamentInfo(){
@@ -794,28 +748,18 @@ async function get(action,giaiVal,extra=''){
 
 async function fetchAll(){
   try{
-    // Luôn reset _matches trước mỗi poll (GAS poll 60s)
     _matches=[];
-
-    // Firebase đã handle live + results realtime
-    // Chỉ fetch matches (lịch/sân/TT) từ GAS; nếu Firebase chưa connect → fetch thêm results+live
-    if(!_fbDConnected){ _results=[]; _live=[]; }
-
+    if(!_fbDConnected){_results=[];_live=[];}
     for(const giai of SESS_GIAI){
-      const mRes = await get('matches', giai);
-      if(mRes?.rows?.length>1) _matches.push(...mRes.rows.slice(1));
+      const mRes=await get('matches',giai);
+      if(mRes?.rows?.length>1)_matches.push(...mRes.rows.slice(1));
       if(!_fbDConnected){
-        const [rRes,lRes] = await Promise.all([
-          get('results',giai),
-          get('live',giai,'&code=all')
-        ]);
-        if(rRes?.rows?.length>1) _results.push(...rRes.rows.slice(1));
-        if(lRes?.rows?.length>1) _live.push(...lRes.rows.slice(1)
+        const [rRes,lRes]=await Promise.all([get('results',giai),get('live',giai,'&code=all')]);
+        if(rRes?.rows?.length>1)_results.push(...rRes.rows.slice(1));
+        if(lRes?.rows?.length>1)_live.push(...lRes.rows.slice(1)
           .filter(r=>String(r[9]||'')==='playing'||String(r[9]||'')===''));
       }
     }
-
-    // Lọc nội dung được phân quyền
     if(SESS_ND.length){
       const ndSet=new Set(SESS_ND.map(s=>s.toUpperCase()));
       const ndMatch=nd=>ndSet.has(String(nd||'').toUpperCase())||
@@ -830,8 +774,8 @@ async function fetchAll(){
         });
       }
     }
-    if(!_fbDConnected) _live=dedupeLive(_live);
-    processData(); render();
+    if(!_fbDConnected)_live=dedupeLive(_live);
+    processData();render();
   }catch(e){console.error(e);}
 }
 
@@ -865,50 +809,47 @@ function dedupeLive(rows){
 const KO_BANG_REGEX = /^(vòng\s*\d+|vong\s*\d+|tứ\s*kết|tu\s*ket|bán\s*kết|ban\s*ket|chung\s*kết|chung\s*ket|hạng\s*\d|hang\s*\d|playoff|ko|knockout)/i;
 
 function processData(){
-  // _matches col[0]=giai, col[1]=nd, col[2]=bang
-  // _results col[1]=giai, col[2]=nd, col[3]=bang
-  // v4 FIX: nhóm theo giai§nd (composite key) tránh gộp nhầm nhiều giải cùng tên nội dung
-  const ndKeySet = [...new Set(_matches.map(r=>{
-    const g=String(r[0]||'').trim(), n=String(r[1]||'').trim();
-    return g&&n ? g+'§'+n : n;
+  // v4 FIX: nhóm theo giai§nd — tránh Bảng A nhiều giải bị gộp thành 1
+  // _matches: col[0]=giai, col[1]=nd, col[2]=bang, col[4]=ĐộiA, col[7]=ĐộiB
+  // _results: col[1]=giai, col[2]=nd, col[3]=bang, col[5]=ĐộiA, col[6]=ĐộiB
+  const ndKeySet=[...new Set(_matches.map(r=>{
+    const g=String(r[0]||'').trim(),n=String(r[1]||'').trim();
+    return g&&n?g+'§'+n:n;
   }).filter(Boolean))];
 
-  // _nds: danh sách composite key "giai§nd" để render tabs (sẽ lấy nd từ split)
-  _nds = ndKeySet;
+  _nds=ndKeySet; // composite key "giai§nd" — dùng trong renderTabs
   _groups=[];
   ndKeySet.forEach(ndKey=>{
-    const sep   = ndKey.indexOf('§');
-    const giai  = sep>=0 ? ndKey.slice(0,sep) : '';
-    const nd    = sep>=0 ? ndKey.slice(sep+1) : ndKey;
+    const sep=ndKey.indexOf('§');
+    const giai=sep>=0?ndKey.slice(0,sep):'';
+    const nd=sep>=0?ndKey.slice(sep+1):ndKey;
 
+    // Lấy các bảng — lọc chính xác theo giai+nd
     let bangs=[...new Set(_matches.filter(r=>
-      String(r[0]||'').trim()===giai && String(r[1]||'').trim()===nd
+      String(r[0]||'').trim()===giai&&String(r[1]||'').trim()===nd
     ).map(r=>String(r[2]||'')).filter(Boolean))].sort();
 
-    // Bỏ bảng KO (Tứ kết, Bán kết, Chung kết, Vòng 16...)
+    // Bỏ bảng KO (Tứ kết, Bán kết, Chung kết, Vòng 16/32, Hạng 3...)
     bangs=bangs.filter(b=>!KO_BANG_REGEX.test(b.trim()));
 
     bangs.forEach(bang=>{
+      // mList: đúng giai+nd+bang
       const mList=_matches.filter(r=>
-        String(r[0]||'').trim()===giai &&
-        String(r[1]||'').trim()===nd   &&
+        String(r[0]||'').trim()===giai&&
+        String(r[1]||'').trim()===nd&&
         String(r[2]||'').trim()===bang
       );
+      // rList: đúng giai+nd+bang
       const rList=_results.filter(r=>
-        String(r[1]||'').trim()===giai &&
-        String(r[2]||'').trim()===nd   &&
+        String(r[1]||'').trim()===giai&&
+        String(r[2]||'').trim()===nd&&
         String(r[3]||'').trim()===bang
       );
-      const allTeams=[];
-      const seen=new Set();
+      // Thu thập đội theo thứ tự xuất hiện trong lịch
+      const allTeams=[],seen=new Set();
       mList.slice().sort((a,b)=>String(a[3]||'').localeCompare(String(b[3]||''),undefined,{numeric:true,sensitivity:'base'}))
-        .forEach(m=>{
-          [String(m[4]||''),String(m[7]||'')].forEach(t=>{
-            if(t&&!seen.has(t)){seen.add(t);allTeams.push(t);}
-          });
-        });
+        .forEach(m=>[String(m[4]||''),String(m[7]||'')].forEach(t=>{if(t&&!seen.has(t)){seen.add(t);allTeams.push(t);}}));
       const standings=calcStandings(rList,allTeams);
-      // Lưu cả ndKey (composite) để render có thể filter chính xác
       _groups.push({giai,nd,ndKey,bang,matches:mList,results:rList,standings});
     });
   });
@@ -950,17 +891,15 @@ function render(){
 }
 
 function renderStats(){
-  // v6 FIX: thống kê theo NỘI DUNG đang xem (tab active), không phải tổng cả giải
-  // v4 FIX: ndList dùng ndKey (giai§nd) để phân biệt nội dung cùng tên nhiều giải
   const ndList=_nds;
   const ndName=k=>{const s=k.indexOf('§');return s>=0?k.slice(s+1):k;};
   const activeNdKey=ndList[_activeNdIdx]||'';
-  const activeNd=ndName(activeNdKey); // tên nd hiển thị để match với _matches/_live
+  const activeNd=ndName(activeNdKey);
   const activeGiai=activeNdKey.indexOf('§')>=0?activeNdKey.slice(0,activeNdKey.indexOf('§')):''; 
-  const mList=activeNdKey?_matches.filter(r=>String(r[1]||'')===activeNd&&(!activeGiai||String(r[0]||'')===activeGiai)):_matches;
+  const mList=activeNdKey?_matches.filter(r=>String(r[0]||'').trim()===activeGiai&&String(r[1]||'').trim()===activeNd):_matches;
   const lList=_live.filter(r=>{
     if(String(r[0]||'').startsWith('CALL'))return false;
-    if(!activeNdKey)return true;
+    if(!activeNd)return true;
     const {nd}=_liveKeyParts(r);
     return nd===activeNd;
   });
@@ -985,46 +924,34 @@ let _tabsBuilt=false; // bodies chỉ build 1 lần duy nhất
 function renderTabs(){
   const tabs=document.getElementById('panel-tabs');
   const bodies=document.getElementById('panel-bodies');
-  // v4 FIX: ndList dùng ndKey (giai§nd) để phân biệt nội dung cùng tên nhiều giải
-  const ndList=_nds; // composite key 'giai§nd'
-  const ndName=k=>{const s=k.indexOf('§');return s>=0?k.slice(s+1):k;} // lấy tên hiển thị
+  // v4 FIX: _nds = composite key "giai§nd"; hiển thị chỉ tên nd
+  const ndList=_nds;
+  const ndName=k=>{const s=k.indexOf('§');return s>=0?k.slice(s+1):k;};
   if(!ndList.length)return;
 
-  // Khôi phục tab đã chọn (chỉ 1 lần)
   if(!_tabRestored){
     _tabRestored=true;
-    try{
-      const saved=localStorage.getItem(ACTIVE_ND_KEY);
-      if(saved){const idx=ndList.indexOf(saved);if(idx>=0)_activeNdIdx=idx;}
-    }catch(e){}
+    try{const saved=localStorage.getItem(ACTIVE_ND_KEY);if(saved){const idx=ndList.indexOf(saved);if(idx>=0)_activeNdIdx=idx;}}catch(e){}
   }
   if(_activeNdIdx>=ndList.length)_activeNdIdx=0;
 
-  // Tabs header: rebuild mỗi lần (nhẹ, không ảnh hưởng DOM bên dưới)
   tabs.innerHTML=ndList.map((ndKey,i)=>`<div class="panel-tab${i===_activeNdIdx?' active':''}" onclick="switchNd(${i})">${ndName(ndKey)}</div>`).join('');
 
   if(!_tabsBuilt){
-    // Lần đầu: tạo toàn bộ panel-body + sub-tab + bracket placeholder
     _tabsBuilt=true;
     bodies.innerHTML=ndList.map((ndKey,i)=>{
       const nd=ndName(ndKey);
-      const giai=ndKey.indexOf('§')>=0?ndKey.slice(0,ndKey.indexOf('§')):'';
       const ndGroups=_groups.filter(g=>g.ndKey===ndKey);
       return `<div class="panel-body${i===_activeNdIdx?' active':''}" data-nd-idx="${i}">${renderNdBody(nd,ndGroups)}</div>`;
     }).join('');
-  } else {
-    // Các lần sau: chỉ update BXH in-place, KHÔNG đụng đến sub-tab/bracket HTML
+  }else{
     ndList.forEach((ndKey,i)=>{
       const nd=ndName(ndKey);
       const ndGroups=_groups.filter(g=>g.ndKey===ndKey);
       const n=ndGroups.length;
       const safeId=nd.replace(/[^a-zA-Z0-9]/g,'_');
-
-      // Cập nhật active trên panel-body
       const pb=document.querySelector(`.panel-body[data-nd-idx="${i}"]`);
       if(pb)pb.classList.toggle('active',i===_activeNdIdx);
-
-      // Update BXH grid in-place
       const gridEl=document.getElementById('bxh-grid-'+safeId);
       if(gridEl){
         let colClass='',sizeClass='';
@@ -1034,13 +961,9 @@ function renderTabs(){
         gridEl.className=`bxh-grid ${colClass} ${sizeClass}`;
         gridEl.innerHTML=ndGroups.map(g=>renderBXHCard(g,n)).join('');
       }
-
-      // Re-render bracket scores in-place (KHÔNG fetch lại API, chỉ cập nhật điểm từ _results)
       if(_bracketCache[nd]){
         const bEl=document.getElementById('bracket-'+safeId);
-        // v4: gắn _dkMode vào tree trước khi render để mkCard biết mode
-        const cachedTree = {..._bracketCache[nd].tree, _dkMode: !!_bracketCache[nd]._dkMode};
-        if(bEl){renderBracket(nd,cachedTree,bEl);scaleBracket(safeId);}
+        if(bEl){renderBracket(nd,_bracketCache[nd].tree,bEl);scaleBracket(safeId);}
       }
     });
   }
@@ -1105,8 +1028,9 @@ function switchSubTab(safeId, which){
 
 // ── BRACKET: lấy giải đấu (tên) tương ứng với 1 nội dung từ _matches ──
 function getGiaiForNd(nd){
+  // v4: tìm từ _groups (đã có giai+nd chính xác)
   const g=_groups.find(g=>g.nd===nd);
-  if(g && g.giai) return g.giai;
+  if(g&&g.giai)return g.giai;
   const m=_matches.find(r=>String(r[1]||'')===nd);
   return m?String(m[0]||''):'';
 }
@@ -1115,21 +1039,6 @@ let _bracketCache={}; // nd -> {tree, version}
 async function loadBracket(nd, safeId){
   const giai=getGiaiForNd(nd);
   if(!giai)return;
-
-  // v4: nếu Firebase đã push cây vào cache → dùng luôn, không fetch GAS
-  if(_bracketCache[nd]?.tree?.rounds?.length){
-    const el=document.getElementById('bracket-'+safeId);
-    const stB=document.getElementById('st-bracket-'+safeId);
-    if(el){
-      const treeWithDk={..._bracketCache[nd].tree, _dkMode:!!_bracketCache[nd]._dkMode};
-      if(stB)stB.style.display='';
-      renderBracket(nd, treeWithDk, el);
-      scaleBracket(safeId);
-    }
-    return;
-  }
-
-  // Fallback: fetch GAS (Firebase chưa push hoặc chưa connected)
   try{
     const url=`${GAS_URL}?action=bracketTree&giai=${encodeURIComponent(giai)}&nd=${encodeURIComponent(nd)}&_t=${Date.now()}`;
     const r=await fetch(url,{cache:'no-store'});
@@ -1139,21 +1048,24 @@ async function loadBracket(nd, safeId){
     const stB=document.getElementById('st-bracket-'+safeId);
     const badge=document.getElementById('st-badge-'+safeId);
     if(!d.ok||!d.tree?.rounds?.length){
+      // Chưa có cây → ẩn sub-tab bracket
       if(stB)stB.style.display='none';
       return;
     }
+    // Có cây → hiện sub-tab bracket
     if(stB)stB.style.display='';
-    // v4: lưu _dkMode vào cache
-    _bracketCache[nd]={tree:d.tree, version:d.version, _dkMode:!!(d.tree?._dkMode)};
-    const treeWithDk={...d.tree, _dkMode:!!d.tree._dkMode};
-    renderBracket(nd, treeWithDk, el);
+    _bracketCache[nd]={tree:d.tree,version:d.version};
+    renderBracket(nd, d.tree, el);
     scaleBracket(safeId);
-    const ndGroups=_groups.filter(g=>g.ndKey===ndKey||g.nd===nd);
+    // Kiểm tra vòng bảng đã 100% chưa
+    const ndGroups=_groups.filter(g=>g.nd===nd); // nd đã là tên thuần, filter thêm sẽ OK vì ndKey unique
     const allDone=ndGroups.length>0&&ndGroups.every(g=>g.matches.length>0&&g.results.length>=g.matches.length);
-    if(!allDone){
-      if(badge&&_ndSubTab[safeId]!=='bracket')badge.style.display='';
+    // v10: KHÔNG tự động chuyển sub-tab — user tự chọn khi muốn xem cây
+    // Chỉ hiện badge MỚI để thông báo cây đã sẵn sàng
+    if(allDone){
+      if(badge)badge.style.display='none'; // vòng bảng xong → không cần badge
     } else {
-      if(badge)badge.style.display='none';
+      if(badge&&_ndSubTab[safeId]!=='bracket')badge.style.display=''; // cây mới có → badge
     }
   }catch(e){
     console.error('loadBracket:',e);
@@ -1184,42 +1096,6 @@ function renderBracket(nd, tree, el){
   const rounds=tree.rounds||[];
   if(!rounds.length){el.innerHTML='<div class="bracket-empty">Chưa có cây thi đấu</div>';return;}
 
-  // v4: directKO — resolve tên đội từ _meta.allSeeds hoặc vòng 1 snapshot
-  const isDkMode = !!(tree._dkMode);
-  const allSeedsMeta = (isDkMode && tree._meta?.allSeeds) ? tree._meta.allSeeds : [];
-
-  // Lookup tên đội từ seedLabel (S1,S2...) cho directKO
-  const _resolveSeedLabel = (label, rounds) => {
-    if(!isDkMode || !label) return '';
-    if(!/^S\d+$/i.test(label.trim())) return '';
-    const sIdx = parseInt(label.trim().slice(1)) - 1;
-    // Ưu tiên _meta.allSeeds (đầy đủ nhất)
-    if(allSeedsMeta[sIdx]) return allSeedsMeta[sIdx].team || '';
-    // Fallback: tìm trong vòng 1 của rounds
-    const r0 = rounds[0];
-    if(r0) for(const m of r0.matches||[]){
-      if(m.seedA===label && m.teamA) return m.teamA;
-      if(m.seedB===label && m.teamB) return m.teamB;
-    }
-    return '';
-  };
-
-  // v4: Pre-patch tên đội vào các vòng sau cho directKO (khi teamA/B rỗng nhưng seedA/B có S1..)
-  if(isDkMode){
-    rounds.forEach(round=>{
-      (round.matches||[]).forEach(m=>{
-        if(!m.teamA && m.seedA && !m.isByeA){
-          const t=_resolveSeedLabel(m.seedA, rounds);
-          if(t) m.teamA=t;
-        }
-        if(!m.teamB && m.seedB && !m.isByeB){
-          const t=_resolveSeedLabel(m.seedB, rounds);
-          if(t) m.teamB=t;
-        }
-      });
-    });
-  }
-
   // Xác định fromFin cho từng round (đếm từ cuối)
   const total=rounds.length;
   const fromFin=i=>total-1-i; // 0=chung kết, 1=bán kết, 2=tứ kết, ...
@@ -1246,8 +1122,29 @@ function renderBracket(nd, tree, el){
     return'cc-r16';
   };
 
+  // v4: directKO — resolve tên đội từ _meta.allSeeds khi seedLabel là S1,S2...
+  const isDkMode=!!(tree._dkMode);
+  const allSeedsMeta=(isDkMode&&tree._meta?.allSeeds)?tree._meta.allSeeds:[];
+  const resolveSeed=(label,rounds)=>{
+    if(!isDkMode||!label||!/^S\d+$/i.test(label.trim()))return'';
+    const idx=parseInt(label.trim().slice(1))-1;
+    if(allSeedsMeta[idx])return allSeedsMeta[idx].team||'';
+    const r0=rounds[0];
+    if(r0)for(const m of r0.matches||[]){
+      if(m.seedA===label&&m.teamA)return m.teamA;
+      if(m.seedB===label&&m.teamB)return m.teamB;
+    }
+    return'';
+  };
+  // Pre-patch tên đội cho vòng sau khi seedA/B là S1..Sn
+  if(isDkMode){
+    rounds.forEach(round=>(round.matches||[]).forEach(m=>{
+      if(!m.teamA&&m.seedA&&!m.isByeA){const t=resolveSeed(m.seedA,rounds);if(t)m.teamA=t;}
+      if(!m.teamB&&m.seedB&&!m.isByeB){const t=resolveSeed(m.seedB,rounds);if(t)m.teamB=t;}
+    }));
+  }
+
   const mkCard=(m,ff)=>{
-    // v4: hiển thị tên đội — directKO dùng teamA/B trực tiếp, vòng bảng dùng seedA/B làm fallback
     const nameA=m.teamA||(m.isByeA?'BYE':m.seedA&&!m.seedA.startsWith('Thắng')&&!m.seedA.startsWith('S')?m.seedA:'—');
     const nameB=m.teamB||(m.isByeB?'BYE':m.seedB&&!m.seedB.startsWith('Thắng')&&!m.seedB.startsWith('S')?m.seedB:'—');
     const isTbdA=!m.teamA&&!m.isByeA;
@@ -1343,17 +1240,15 @@ function renderBXHCard(g,n){
 }
 
 function renderLive(){
-  // v5 FIX: chỉ hiện trận đang đấu thuộc NỘI DUNG đang xem (tab active)
-  // v4 FIX: ndList dùng ndKey (giai§nd) để phân biệt nội dung cùng tên nhiều giải
   const ndList=_nds;
   const ndName=k=>{const s=k.indexOf('§');return s>=0?k.slice(s+1):k;};
   const activeNdKey=ndList[_activeNdIdx]||'';
-  const activeNdName=ndName(activeNdKey);
+  const activeNd=ndName(activeNdKey);
   const liveMatches=_live.filter(r=>{
     if(String(r[0]||'').startsWith('CALL'))return false;
-    if(!activeNdKey)return true;
+    if(!activeNd)return true; // chưa xác định tab → hiện tất cả
     const {nd}=_liveKeyParts(r);
-    return nd===activeNdName;
+    return nd===activeNd;
   });
   const badge=document.getElementById('live-count-badge');
   if(badge)badge.textContent=liveMatches.length;
@@ -1393,13 +1288,10 @@ function renderLive(){
 }
 
 function renderUpcoming(){
-  // v7 FIX: "Trận kế tiếp" — mỗi BẢNG (của nội dung đang xem) lấy 2 trận chưa đấu
-  // gần nhất theo MÃ TRẬN (vd: A1 đang đấu/đã xong → hiện A2, A3)
-  // v4 FIX: ndList dùng ndKey (giai§nd) để phân biệt nội dung cùng tên nhiều giải
   const ndList=_nds;
   const ndName=k=>{const s=k.indexOf('§');return s>=0?k.slice(s+1):k;};
   const activeNdKey=ndList[_activeNdIdx]||'';
-  const activeNdName=ndName(activeNdKey);
+  const activeNd=ndName(activeNdKey);
   const ndGroups=activeNdKey?_groups.filter(g=>g.ndKey===activeNdKey):_groups;
 
   const liveCodes=new Set(_live.filter(r=>!String(r[0]).startsWith('CALL')).map(r=>{
@@ -1413,7 +1305,7 @@ function renderUpcoming(){
       String(a[3]||'').localeCompare(String(b[3]||''),undefined,{numeric:true,sensitivity:'base'}));
     const next2=ms.filter(r=>{
       const code=String(r[3]||'');
-      const key=String(r[1]||'')+'|'+String(r[2]||'')+'|'+code;
+      const key=String(r[0]||'')+'|'+String(r[1]||'')+'|'+String(r[2]||'')+'|'+code;
       return !liveCodes.has(code) && !done.has(key);
     }).slice(0,2);
     pending.push(...next2);
@@ -1439,16 +1331,15 @@ function renderUpcoming(){
 }
 
 function renderTicker(){
-  // v5: ticker live cũng chỉ hiện theo nội dung đang xem (đồng bộ với panel phải)
-  // v4 FIX: ndList dùng ndKey (giai§nd) để phân biệt nội dung cùng tên nhiều giải
   const ndList=_nds;
   const ndName=k=>{const s=k.indexOf('§');return s>=0?k.slice(s+1):k;};
-  const activeNd=ndList[_activeNdIdx]||'';
+  const activeNdKey=ndList[_activeNdIdx]||'';
+  const activeNd=ndName(activeNdKey);
   const liveMatches=_live.filter(r=>{
     if(String(r[0]||'').startsWith('CALL'))return false;
-    if(!activeNdKey)return true;
+    if(!activeNd)return true;
     const {nd}=_liveKeyParts(r);
-    return nd===activeNdName;
+    return nd===activeNd;
   });
   const items=[];
   liveMatches.forEach(r=>{
@@ -1524,10 +1415,7 @@ function switchNd(idx){
   renderLive(); renderTicker(); renderStats(); renderUpcoming();
   notifyScrollReset(); // tab mới → báo scroll detect element mới
   // v5 FIX: lưu lại nội dung đang xem để giữ nguyên sau khi reload
-  // v4 FIX: ndList dùng ndKey (giai§nd) để phân biệt nội dung cùng tên nhiều giải
-  const ndList=_nds; // composite key 'giai§nd'
-  const ndName=k=>{const s=k.indexOf('§');return s>=0?k.slice(s+1):k;} // lấy tên hiển thị
-  if(ndList[idx]){try{localStorage.setItem(ACTIVE_ND_KEY,ndList[idx]);}catch(e){}}
+  if(_nds[idx]){try{localStorage.setItem(ACTIVE_ND_KEY,_nds[idx]);}catch(e){}}
   resetRotate();
 }
 
@@ -1538,19 +1426,9 @@ function resetRotate(){ /* no-op */ }
 // ── POLLING ──
 function startPolling(){
   startRotate();
-  // v4: Firebase đã handle live/results realtime → poll GAS ít hơn (chỉ sync matches 60s)
-  // Nếu Firebase chưa ready: poll nhanh hơn 15s để fallback
-  const interval = _fbDConnected ? POLL_SEC*1000 : 15*1000;
-  _pollTimer=setInterval(fetchAll, interval);
-  // Khi Firebase connect muộn → restart timer với interval đúng
-  setTimeout(()=>{
-    if(_fbDConnected && !_pollTimer._fbAdjusted){
-      clearInterval(_pollTimer);
-      _pollTimer=setInterval(fetchAll, POLL_SEC*1000);
-      _pollTimer._fbAdjusted=true;
-      console.log('[Display] Firebase connected → poll interval → 60s');
-    }
-  }, 5000);
+  _pollTimer=setInterval(fetchAll, POLL_SEC*1000);
+  // Auto-scroll khởi động 1 lần duy nhất tại đây sau khi data sẵn sàng
+  // (initAutoScroll trong render() sẽ xử lý, không cần gọi thêm)
 }
 
 // ── UTILS ──
