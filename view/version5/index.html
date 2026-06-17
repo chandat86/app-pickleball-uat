@@ -850,18 +850,39 @@ function dedupeLive(rows){
 const KO_BANG_REGEX = /^(vòng\s*\d+|vong\s*\d+|tứ\s*kết|tu\s*ket|bán\s*kết|ban\s*ket|chung\s*kết|chung\s*ket|hạng\s*\d|hang\s*\d|playoff|ko|knockout)/i;
 
 function processData(){
-  // Nội dung
-  _nds=[...new Set(_matches.map(r=>String(r[1]||'')).filter(Boolean))];
-  // Groups: {nd, bang, matches[], results[], standings[]}
+  // v4 FIX: nhóm theo GiAI+ND — tránh gộp Bảng A của nhiều giải khác nhau
+  // _matches col[0]=giai, col[1]=nd, col[2]=bang
+  // _results col[1]=giai, col[2]=nd, col[3]=bang
+  const ndKeys=[...new Set(_matches.map(r=>{
+    const g=String(r[0]||'').trim(), n=String(r[1]||'').trim();
+    return g&&n ? g+'§'+n : (n||'');
+  }).filter(Boolean))];
+
+  _nds=[...new Set(ndKeys.map(k=>k.includes('§')?k.split('§')[1]:k))];
   _groups=[];
-  _nds.forEach(nd=>{
-    let bangs=[...new Set(_matches.filter(r=>String(r[1]||'')===nd).map(r=>String(r[2]||'')).filter(Boolean))].sort();
+  ndKeys.forEach(ndKey=>{
+    const hasSep = ndKey.includes('§');
+    const giai   = hasSep ? ndKey.split('§')[0] : '';
+    const nd     = hasSep ? ndKey.split('§')[1] : ndKey;
+
+    let bangs=[...new Set(_matches.filter(r=>{
+      const rg=String(r[0]||'').trim(), rn=String(r[1]||'').trim();
+      return rn===nd && (!giai || rg===giai);
+    }).map(r=>String(r[2]||'')).filter(Boolean))].sort();
+
     // v3 FIX: bỏ các bảng thuộc vòng loại trực tiếp (Tứ kết, Bán kết, Chung kết, Vòng 16/32, Hạng 3...)
     bangs=bangs.filter(b=>!KO_BANG_REGEX.test(b.trim()));
     bangs.forEach(bang=>{
-      const mList=_matches.filter(r=>String(r[1]||'')===nd&&String(r[2]||'')===bang);
-      const rList=_results.filter(r=>String(r[2]||'')===nd&&String(r[3]||'')===bang);
-      // v3: thu thập TẤT CẢ đội trong bảng theo thứ tự xuất hiện trận đấu (giống thứ tự admin)
+      // v4 FIX: filter theo CẢ giai + nd + bang (tránh Bảng A nhiều giải bị gộp)
+      const mList=_matches.filter(r=>{
+        const rg=String(r[0]||'').trim(), rn=String(r[1]||'').trim(), rb=String(r[2]||'').trim();
+        return rn===nd && rb===bang && (!giai || rg===giai);
+      });
+      const rList=_results.filter(r=>{
+        const rg=String(r[1]||'').trim(), rn=String(r[2]||'').trim(), rb=String(r[3]||'').trim();
+        return rn===nd && rb===bang && (!giai || rg===giai);
+      });
+      // v3: thu thập TẤT CẢ đội trong bảng theo thứ tự xuất hiện trận đấu
       const allTeams=[];
       const seen=new Set();
       mList.slice().sort((a,b)=>String(a[3]||'').localeCompare(String(b[3]||''),undefined,{numeric:true,sensitivity:'base'}))
@@ -871,7 +892,7 @@ function processData(){
           });
         });
       const standings=calcStandings(rList,allTeams);
-      _groups.push({nd,bang,matches:mList,results:rList,standings});
+      _groups.push({giai,nd,bang,matches:mList,results:rList,standings});
     });
   });
 }
@@ -1058,6 +1079,10 @@ function switchSubTab(safeId, which){
 
 // ── BRACKET: lấy giải đấu (tên) tương ứng với 1 nội dung từ _matches ──
 function getGiaiForNd(nd){
+  // v4 FIX: tìm từ _groups (đã có giai) thay vì _matches (có thể nhầm nhiều giải)
+  const g=_groups.find(g=>g.nd===nd);
+  if(g && g.giai) return g.giai;
+  // Fallback: tìm trực tiếp từ _matches
   const m=_matches.find(r=>String(r[1]||'')===nd);
   return m?String(m[0]||''):'';
 }
