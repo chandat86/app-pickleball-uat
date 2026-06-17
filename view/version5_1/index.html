@@ -558,7 +558,10 @@ function _initDisplayFirebase(){
         // v5 FIX: khi Firebase key có dạng cũ "nd|bang|code" (3 phần, không có giai prefix)
         // → vẫn parse được qua _liveKeyParts. Không filter theo nd ở đây vì
         // renderLive/renderStats đã dùng _ndMatch để filter đúng.
-        fbLive.push([k,d.giai||'',d.teamA||'',d.scoreA??'',d.scoreB??'',d.teamB||'',
+        // v5 FIX: dùng d.key (field gốc "giai|nd|bang|code" có dấu |) thay vì k (Firebase node key đã sanitize → dùng _)
+        // _liveKeyParts split bằng | → cần d.key để parse đúng nd/bang/code
+        const liveRowKey = d.key || k; // fallback k nếu d.key không có
+        fbLive.push([liveRowKey,d.giai||'',d.teamA||'',d.scoreA??'',d.scoreB??'',d.teamB||'',
           d.serve||'',d.game||'',d.updatedAt||'','playing',d.referee||'']);
       });
       _live=dedupeLive(fbLive);
