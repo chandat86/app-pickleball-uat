@@ -597,8 +597,8 @@ function _initDisplayFirebase(){
       const gasOnly=_gasResults.filter(r=>!fbKeys.has(`${normStr(r[1])}|${normStr(r[2])}|${normStr(r[3])}|${normStr(r[4])}`));
       _results=[...gasOnly,..._fbResults];
       processData();render();
-      // v5 FIX: re-render bracket ngay khi kết quả mới → tên đội xuất hiện không cần chờ
-      setTimeout(_reRenderActiveBrackets, 100);
+      // v5 FIX: re-render bracket + check auto-switch khi kết quả mới
+      setTimeout(()=>{_reRenderActiveBrackets();_checkAutoSwitchToBracket();}, 100);
     },err=>console.warn('[FB Display] results err:',err.message));
 
     // Listener 3: /bracketTree
@@ -635,6 +635,8 @@ function _initDisplayFirebase(){
         const stB=document.getElementById('st-bracket-'+safeId);if(stB)stB.style.display='';
         const badge=document.getElementById('st-badge-'+safeId);
         if(badge&&_ndSubTab[safeId]!=='bracket')badge.style.display='';
+        // v5: check auto-switch sau khi nhận cây mới
+        setTimeout(_checkAutoSwitchToBracket, 300);
       });
     },err=>console.warn('[FB Display] bracket err:',err.message));
 
@@ -1256,6 +1258,71 @@ function renderBracket(nd, tree, el){
     }));
   }
 
+  // v5 FIX: Auto-seed từ BXH vòng bảng — điền tên đội vào round-0 khi bảng đã xong
+  // Mirrors admin _bkResolveAdvancers resolvePoolSeed logic
+  const _normNm=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ');
+  const rnMap={'nhất':1,'nhì':2,'ba':3,'tư':4,'1':1,'2':2,'3':3,'4':4};
+  // Build pool seed lookup from _groups
+  const poolByBang={}; // "A"→[{rank,team},...], "Bảng A"→...
+  (_groups||[]).forEach(g=>{
+    if(!g.nd||!_ndMatch(g.nd,nd))return;
+    const bangChar=(g.bang||'').replace(/^Bảng\s*/i,'').trim().toUpperCase();
+    if(!bangChar)return;
+    poolByBang[bangChar]=g.standings||[];
+    poolByBang['Bảng '+bangChar]=g.standings||[];
+  });
+  const resolvePoolSeedDisplay=(seedStr)=>{
+    if(!seedStr)return'';
+    const m2=seedStr.match(/^(Nhất|Nhì|Ba|Tư|\d+)\s+(?:Bảng\s+)?([A-Z])$/i);
+    if(m2){
+      const rank=rnMap[(m2[1]||'').toLowerCase()]||parseInt(m2[1]);
+      const bangC=m2[2].toUpperCase();
+      const st=poolByBang[bangC]||poolByBang['Bảng '+bangC]||[];
+      const entry=st.find(x=>x.rank===rank);
+      return entry?entry.team:'';
+    }
+    return'';
+  };
+  // Apply auto-seed to round-0
+  if(rounds.length>0){
+    rounds[0].matches.forEach(m=>{
+      if(!m.teamA&&m.seedA&&!m.seedA.startsWith('Thắng')&&!m.seedA.startsWith('S')&&!m.isByeA){
+        const t=resolvePoolSeedDisplay(m.seedA);if(t)m.teamA=t;
+      }
+      if(!m.teamB&&m.seedB&&!m.seedB.startsWith('Thắng')&&!m.seedB.startsWith('S')&&!m.isByeB){
+        const t=resolvePoolSeedDisplay(m.seedB);if(t)m.teamB=t;
+      }
+    });
+    // Propagate winners forward (round 1+)
+    rounds.forEach((round,ri)=>{
+      if(ri===0)return;
+      round.matches.forEach(m=>{
+        if(!m.teamA&&m.seedA&&m.seedA.startsWith('Thắng ')){
+          const srcCode=m.seedA.replace('Thắng ','').trim();
+          // Find winner of srcCode in previous rounds
+          for(let ri2=0;ri2<ri;ri2++){
+            const src=rounds[ri2].matches.find(sm=>sm.code===srcCode);
+            if(src&&src.teamA&&src.teamB){
+              // Check _results for winner
+              const res=_results.find(r=>String(r[4]||'')===srcCode&&String(r[2]||'')===nd);
+              if(res){const win=String(res[9]||'');if(win)m.teamA=win;}
+            }
+          }
+        }
+        if(!m.teamB&&m.seedB&&m.seedB.startsWith('Thắng ')){
+          const srcCode=m.seedB.replace('Thắng ','').trim();
+          for(let ri2=0;ri2<ri;ri2++){
+            const src=rounds[ri2].matches.find(sm=>sm.code===srcCode);
+            if(src){
+              const res=_results.find(r=>String(r[4]||'')===srcCode&&String(r[2]||'')===nd);
+              if(res){const win=String(res[9]||'');if(win)m.teamB=win;}
+            }
+          }
+        }
+      });
+    });
+  }
+
   // v5 FIX: Đổi label "Nhất Bảng A" → "1A", "Nhì Bảng B" → "2B" giống admin
   const _shortSeedLabel=s=>{
     if(!s)return s;
@@ -1545,6 +1612,40 @@ function switchNd(idx){
 // ── AUTO ROTATE NOIDUNG ──
 function startRotate(){ /* v10: TẮT auto-rotate — giữ nguyên nội dung đang xem */ }
 function resetRotate(){ /* no-op */ }
+
+// v5: Auto-switch to bracket tab when all groups done + bracket cache available
+const _autoSwitchedToBracket = {};
+function _checkAutoSwitchToBracket() {
+  try {
+    const ndMap = {};
+    (_groups||[]).forEach(g => {
+      if(!ndMap[g.ndKey])ndMap[g.ndKey]=[];
+      ndMap[g.ndKey].push(g);
+    });
+    Object.entries(ndMap).forEach(([ndKey, groups]) => {
+      if(_autoSwitchedToBracket[ndKey])return;
+      const allDone=groups.length>0&&groups.every(g=>{
+        const total=(g.matches||[]).length;
+        if(!total)return false;
+        // Đủ kết quả: mỗi trận trong mList có trong rList
+        const doneCount=(g.results||[]).length;
+        return doneCount>=total;
+      });
+      if(!allDone)return;
+      const sep=ndKey.indexOf('§');
+      const nd=sep>=0?ndKey.slice(sep+1):ndKey;
+      if(!_bracketCache[nd])return;
+      const safeId=nd.replace(/[^a-zA-Z0-9]/g,'_');
+      if(_ndSubTab[safeId]!=='bracket'){
+        console.log('[Display] Auto-switch bracket tab:',nd);
+        _autoSwitchedToBracket[ndKey]=true;
+        switchSubTab(safeId,'bracket');
+        const el=document.getElementById('st-bracket-'+safeId);
+        if(el)setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),200);
+      }
+    });
+  }catch(e){console.warn('[Display] autoSwitch err:',e.message);}
+}
 
 // ── POLLING ──
 function startPolling(){
