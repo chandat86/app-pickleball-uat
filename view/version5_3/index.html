@@ -244,6 +244,10 @@ html,body{width:100%;background:var(--bg);color:var(--tx);font-family:var(--font
 .bk-card-team .tn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
 .bk-card-team .ts{font-family:var(--font-display);font-weight:900;font-size:14px;flex-shrink:0;min-width:16px;text-align:right}
 .bk-card-team .tbd{color:var(--tx4);font-style:italic;font-size:10px}
+.bk-live-dot{display:inline-block}
+.live-score{color:#fb923c!important;font-weight:900}
+.live-team{background:rgba(249,115,22,.07)}
+@keyframes livePulse{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.0)}50%{box-shadow:0 0 8px 2px rgba(249,115,22,.3)}}
 /* Connector lines */
 .bk-conn-col{display:flex;flex-direction:column;flex-shrink:0;width:20px;align-self:stretch}
 .bk-conn-pair{display:flex;flex-direction:column;flex:1;min-height:120px}
@@ -567,6 +571,8 @@ function _initDisplayFirebase(){
       });
       _live=dedupeLive(fbLive);
       render();
+      // v5 FIX: re-render bracket với live score mới — tức thì theo thời gian thực
+      setTimeout(_reRenderActiveBrackets, 50);
     },err=>console.warn('[FB Display] live err:',err.message));
 
     // Listener 2: /results
@@ -1334,12 +1340,18 @@ function renderBracket(nd, tree, el){
     if(m3)return m3[1];
     return s;
   };
+  // v5 FIX: mkCard với normalize nd + live score từ _live
+  const _normND=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ');
   const mkCard=(m,ff)=>{
     const nameA=m.teamA||(m.isByeA?'BYE':m.seedA&&!m.seedA.startsWith('S')?_shortSeedLabel(m.seedA):'—');
     const nameB=m.teamB||(m.isByeB?'BYE':m.seedB&&!m.seedB.startsWith('S')?_shortSeedLabel(m.seedB):'—');
     const isTbdA=!m.teamA&&!m.isByeA;
     const isTbdB=!m.teamB&&!m.isByeB;
-    const res=_results.find(r=>String(r[2]||'')===nd&&String(r[4]||'')===m.code);
+    // FIX: normalize nd + filter theo nd và code (giai không bắt buộc để tăng recall)
+    const res=_results.find(r=>{
+      const rNd=String(r[2]||'');const rCode=String(r[4]||'');
+      return _normND(rNd)===_normND(nd)&&rCode===m.code;
+    })||_results.find(r=>String(r[4]||'')===m.code&&_ndMatch(String(r[2]||''),nd));
     let sA='',sB='',winA=false,winB=false,isDone=false;
     if(res){
       sA=res[7]??'';sB=res[8]??'';
@@ -1348,7 +1360,19 @@ function renderBracket(nd, tree, el){
       winB=!!(win&&win===String(res[6]||''));
       isDone=!!(win);
     }
-    const isLive=_live.some(r=>{const{code}=_liveKeyParts(r);return code===m.code;});
+    // FIX: tìm live entry đúng theo nd+code, lấy tỉ số đang chơi từ _live
+    const liveRow=_live.find(r=>{
+      const{nd:lnd,code:lcode}=_liveKeyParts(r);
+      return lcode===m.code&&_ndMatch(lnd,nd);
+    });
+    const isLive=!!liveRow;
+    // Tỉ số: ưu tiên live (đang đấu) → kết quả đã lưu
+    if(isLive&&liveRow){
+      // liveRow: [key, giai, teamA, scoreA, scoreB, teamB, serve, game, updatedAt, status, referee]
+      // FIX: dùng đúng index từ fbLive.push format
+      const lsA=liveRow[3]??''; const lsB=liveRow[4]??'';
+      if(lsA!==''||lsB!==''){sA=lsA;sB=lsB;}
+    }
     const cc=cardCls(ff,isDone,isLive);
     // Tên: split theo " - " nếu đôi
     const tnHtml=n=>{
@@ -1356,9 +1380,15 @@ function renderBracket(nd, tree, el){
       if(ps.length===1)return`<span class="tn${isTbdA&&n===nameA||isTbdB&&n===nameB?' tbd':''}">${esc(n)}</span>`;
       return`<span class="tn">${ps.map(p=>`<span style="display:block;line-height:1.2">${esc(p)}</span>`).join('')}</span>`;
     };
-    return`<div class="bk-card ${cc}">
-      <div class="bk-card-team${winA?' winner':winB?' loser':''}">${tnHtml(nameA)}<span class="ts">${sA!==''?esc(String(sA)):''}</span></div>
-      <div class="bk-card-team${winB?' winner':winA?' loser':''}">${tnHtml(nameB)}<span class="ts">${sB!==''?esc(String(sB)):''}</span></div>
+    const liveStyle=isLive?'animation:livePulse 1.5s infinite;':'';
+    return`<div class="bk-card ${cc}" style="${liveStyle}">
+      <div class="bk-card-team${winA?' winner':winB?' loser':isLive?' live-team':''}">
+        ${isLive?'<span class="bk-live-dot" style="width:6px;height:6px;background:#f97316;border-radius:50%;flex-shrink:0;margin-right:3px;animation:liveDot 1s infinite"></span>':''}
+        ${tnHtml(nameA)}<span class="ts${isLive?' live-score':''}">${sA!==''?esc(String(sA)):''}</span>
+      </div>
+      <div class="bk-card-team${winB?' winner':winA?' loser':''}">
+        ${tnHtml(nameB)}<span class="ts${isLive?' live-score':''}">${sB!==''?esc(String(sB)):''}</span>
+      </div>
     </div>`;
   };
 
