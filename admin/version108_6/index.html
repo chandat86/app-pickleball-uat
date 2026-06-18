@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<!-- Pickleball Admin v107 2026-06-16: MODE DIRECTKO — Knockout trực tiếp không vòng bảng.
+<!-- Pickleball Admin v108 2026-06-16: MODE DIRECTKO — Knockout trực tiếp không vòng bảng.
   (1) Form tạo giải: thêm radio "Loại thi đấu" cho từng nội dung (Vòng bảng / Knockout trực tiếp).
   (2) State mới: _dkMode, _dkSeeds[], _dkSeedsSaved — riêng biệt với _players/_bocThamGroups.
   (3) renderPlayersPanel: detect _dkMode → hiện UI nhập seeds thay vì bốc thăm.
@@ -27,7 +27,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Admin v95 — Referee Pickleball / DA NANG ®</title>
+<title>Admin v108 — Referee Pickleball / DA NANG ®</title>
 <style>
 /* ═══════════════════════════════════════════════════════
    Pickleball Admin — Mobile-First Professional UI
@@ -2888,6 +2888,25 @@ let _renameOverrides = {};
 // v96 FIX: bảo vệ giờ thi đấu đã chỉnh local khỏi bị prefetchAll ghi đè bằng data cũ từ Máy chủ.
 // key = "giải|nd|bảng|mã" → giá trị giờ mới (HH:MM). Xóa sau 90s đủ thời gian GAS commit.
 let _timeOverrides = {}; // { "key": { time: "HH:MM", exp: timestamp } }
+// v108 FIX: bảo vệ sân/TT/giờ cây thi đấu đã lưu local khỏi bị Firebase /matches listener ghi đè
+// key = "giải|nd|bảng|mã" → {court, ref, time, exp}. Xóa sau 90s khi GAS đã commit xong.
+let _bkMatchOverrides = {}; // { key: { court, ref, time, exp } }
+function _setBkMatchOverride(giaiName, nd, bang, code, court, ref, time) {
+  const k = `${giaiName}|${nd}|${bang}|${code}`;
+  _bkMatchOverrides[k] = { court, ref, time, exp: Date.now() + 90000 };
+}
+function _applyBkMatchOverride(row) {
+  const now = Date.now();
+  Object.keys(_bkMatchOverrides).forEach(k => { if (_bkMatchOverrides[k].exp < now) delete _bkMatchOverrides[k]; });
+  const k = `${String(row[0]||'')}|${String(row[1]||'')}|${String(row[2]||'')}|${String(row[3]||'')}`;
+  if (_bkMatchOverrides[k] && _bkMatchOverrides[k].exp >= now) {
+    const ov = _bkMatchOverrides[k];
+    if (ov.court !== undefined) row[8]  = ov.court;
+    if (ov.ref   !== undefined) row[10] = ov.ref;
+    if (ov.time  !== undefined) row[11] = ov.time;
+  }
+  return row;
+}
 function _setTimeOverride(giaiName, nd, bang, code, timeVal) {
   const k = `${giaiName}|${nd}|${bang}|${code}`;
   _timeOverrides[k] = { time: timeVal, exp: Date.now() + 90000 };
@@ -4065,6 +4084,10 @@ function _onMatchData(matchesObj) {
     if (d.court !== undefined) _M[mIdx][8]  = d.court;
     if (d.ref   !== undefined) _M[mIdx][10] = d.ref;
     if (d.time  !== undefined) _M[mIdx][11] = d.time;
+    // v108 FIX: Bảo vệ giá trị local vừa lưu khỏi bị Firebase ghi đè trước khi GAS commit
+    // Khi bkSaveEditNew update _M rồi bkRender(), Firebase /matches listener fire với data cũ
+    // → _bkMatchOverrides giữ court/TT/giờ mới trong 90s đủ GAS xử lý xong
+    _applyBkMatchOverride(_M[mIdx]);
     // Cập nhật liveDetail trong _dashData nếu đang có
     if (_dashData?.liveDetail) {
       const ld = _dashData.liveDetail.find(l => l.nd===d.nd && l.code===d.code && l.bang===d.bang);
@@ -12532,13 +12555,17 @@ function bkRender() {
       <div class="bk-round-slots">`;
     round.matches.forEach(m => {
       const koM=koMatches.find(km=>String(km[3]||'')===m.code);
-      const done=koM&&isMatchDone(koM), live=koM&&_lK.has(`${_bkNd}|${koM[2]||''}|${m.code}`);
+      const done=koM&&isMatchDone(koM);
+      // v108 FIX: check cả 3-part key (nd|bang|code) lẫn 4-part key (giai|nd|bang|code)
+      const lk3=`${_bkNd}|${koM?String(koM[2]||''):''}|${m.code}`;
+      const lkGiai=`${_bkGiai}|${_bkNd}|${koM?String(koM[2]||''):''}|${m.code}`;
+      const lkName=`${_resolveGiaiName(_bkGiai)||_bkGiai}|${_bkNd}|${koM?String(koM[2]||''):''}|${m.code}`;
+      const live=koM&&(_lK.has(lk3)||_lK.has(lkGiai)||_lK.has(lkName));
+      const liveData=_liveScores[lk3]||_liveScores[lkGiai]||_liveScores[lkName];
       const fs=done?getFinalScore(koM):null;
-      // FIX v75d: Hiển thị tỉ số LIVE trên cây thi đấu
-      const lk76=`${_bkNd}|${koM?String(koM[2]||''):''}|${m.code}`;
-      const liveFs=live&&_liveScores[lk76]?{
-        scoreA:_liveScores[lk76].scoreA,
-        scoreB:_liveScores[lk76].scoreB
+      const liveFs=live&&liveData?{
+        scoreA:liveData.scoreA,
+        scoreB:liveData.scoreB
       }:null;
       html += `<div class="bk-slot">${mkCard(m,done,live,liveFs||fs,mc,false,koM)}</div>`;
     });
@@ -13659,13 +13686,18 @@ function bkSaveEditNew(code) {
     if (!newRow[7]) newRow[7] = String(koM3[7]||'');
     const mIdx = _M.indexOf(koM3);
     if (mIdx >= 0) _M[mIdx] = newRow;
+    // v108 FIX TRIỆT ĐỂ: Đăng ký _bkMatchOverride TRƯỚC bkRender()
+    // → Firebase /matches listener sẽ không ghi đè court/TT/giờ mới trong 90s
+    const _giaiNameOv = _resolveGiaiName(_bkGiai) || _bkGiai;
+    _setBkMatchOverride(_giaiNameOv, _bkNd, String(koM3[2]||''), code, courtVal, refVal, timeVal);
+
     // Cập nhật _bkCurrentTree ngay để bkRender() hiện đúng
     if (_bkCurrentTree?.rounds) {
       _bkCurrentTree.rounds.forEach(rd => (rd.matches||[]).forEach(m => {
         if (m.code === code) {
-          if (courtVal) m.court = courtVal;
-          if (refVal)   m.referee = refVal;
-          if (timeVal)  m.time = timeVal;
+          if (courtVal !== undefined) m.court = courtVal;
+          if (refVal   !== undefined) m.referee = refVal;
+          if (timeVal  !== undefined) m.time = timeVal;
         }
       }));
     }
