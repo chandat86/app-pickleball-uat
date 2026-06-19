@@ -245,8 +245,8 @@ html,body{width:100%;background:var(--bg);color:var(--tx);font-family:var(--font
 .bk-card-team .ts{font-family:var(--font-display);font-weight:900;font-size:14px;flex-shrink:0;min-width:16px;text-align:right}
 .bk-card-team .tbd{color:var(--tx4);font-style:italic;font-size:10px}
 .bk-live-dot{display:inline-block}
-.live-score{color:#fb923c!important;font-weight:900}
-.live-team{background:rgba(249,115,22,.07)}
+.bk-live-score{color:#fb923c!important;font-weight:900}
+.bk-live-team{border-left:2px solid #f97316}
 @keyframes livePulse{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.0)}50%{box-shadow:0 0 8px 2px rgba(249,115,22,.3)}}
 /* Connector lines */
 .bk-conn-col{display:flex;flex-direction:column;flex-shrink:0;width:20px;align-self:stretch}
@@ -1380,14 +1380,18 @@ function renderBracket(nd, tree, el){
       if(ps.length===1)return`<span class="tn${isTbdA&&n===nameA||isTbdB&&n===nameB?' tbd':''}">${esc(n)}</span>`;
       return`<span class="tn">${ps.map(p=>`<span style="display:block;line-height:1.2">${esc(p)}</span>`).join('')}</span>`;
     };
-    const liveStyle=isLive?'animation:livePulse 1.5s infinite;':'';
-    return`<div class="bk-card ${cc}" style="${liveStyle}">
-      <div class="bk-card-team${winA?' winner':winB?' loser':isLive?' live-team':''}">
-        ${isLive?'<span class="bk-live-dot" style="width:6px;height:6px;background:#f97316;border-radius:50%;flex-shrink:0;margin-right:3px;animation:liveDot 1s infinite"></span>':''}
-        ${tnHtml(nameA)}<span class="ts${isLive?' live-score':''}">${sA!==''?esc(String(sA)):''}</span>
+    // v5 FIX: layout giống admin — tên trái, tỉ số phải, dot live nhỏ trong header card
+    const liveDot=isLive?'<span style="width:6px;height:6px;background:#f97316;border-radius:50%;display:inline-block;flex-shrink:0;vertical-align:middle;margin-left:4px"></span>':'';
+    const cardStyle=isLive?'border-left:2px solid #f97316;animation:livePulse 1.5s infinite':'';
+    return`<div class="bk-card ${cc}" style="${cardStyle}">
+      <div class="bk-card-hd" style="display:flex;align-items:center;justify-content:space-between;padding:2px 6px 0;opacity:.6;font-size:9px">
+        <span>${esc(m.code||'')}</span>${liveDot}
+      </div>
+      <div class="bk-card-team${winA?' winner':winB?' loser':''}">
+        ${tnHtml(nameA)}<span class="ts${isLive&&!isDone?' bk-live-score':''}">${sA!==''?esc(String(sA)):''}</span>
       </div>
       <div class="bk-card-team${winB?' winner':winA?' loser':''}">
-        ${tnHtml(nameB)}<span class="ts${isLive?' live-score':''}">${sB!==''?esc(String(sB)):''}</span>
+        ${tnHtml(nameB)}<span class="ts${isLive&&!isDone?' bk-live-score':''}">${sB!==''?esc(String(sB)):''}</span>
       </div>
     </div>`;
   };
