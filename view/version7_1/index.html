@@ -276,9 +276,10 @@ html,body{width:100%;background:var(--bg);color:var(--tx);font-family:var(--font
 .sub-tab .new-badge{background:var(--amber);color:#000;font-size:8px;font-weight:900;padding:1px 5px;border-radius:4px;letter-spacing:.5px}
 .sub-body{flex:1;min-height:0;overflow-y:auto;scroll-behavior:smooth;display:none;padding:12px 14px}
 .sub-body.active{display:block}
-.bracket-wrap{padding:8px 0 12px;transform-origin:top left;will-change:transform;overflow-x:auto}
-.bracket-scaler{overflow:hidden;width:100%;flex:1;min-height:0}
-.bracket-empty{padding:24px;text-align:center;color:var(--tx3);font-size:12px}
+/* v7: bracket-wrap scroll ngang trực tiếp thay vì scale nhỏ */
+.bracket-wrap{padding:8px 0 16px;transform-origin:top left;will-change:transform}
+.bracket-scaler{width:100%;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch}
+.bracket-empty{padding:40px 24px;text-align:center;color:var(--tx3);font-size:13px}
 
 /* ── BRACKET từ Admin (đồng bộ) ── */
 .bk-bracket{display:flex;flex-direction:row;align-items:stretch;padding:0 4px 8px;gap:0;min-width:max-content;width:max-content}
@@ -444,6 +445,24 @@ html,body{width:100%;background:var(--bg);color:var(--tx);font-family:var(--font
 @media (min-width:1280px){
   .screen{height:100vh;overflow:hidden}
   .main{flex:1;min-height:0;overflow:hidden}
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .panel-left{width:100%}
+  .panel-right{display:none}
+  .hdr-title h1{font-size:18px}
+  .bk-card{width:140px;min-width:140px;max-width:140px}
+  .bk-round{min-width:152px}
+  .bk-tname .p1{font-size:9px}
+  .bk-sbox{min-width:22px;height:20px;font-size:11px}
+}
+@media(max-width:480px){
+  .bk-card{width:120px;min-width:120px;max-width:120px}
+  .bk-round{min-width:132px}
+  .bk-row{padding:4px 6px;gap:4px}
+  .bk-pill{width:18px;height:18px;font-size:8px}
+  .bk-sbox{min-width:20px;height:18px;font-size:10px}
 }
 </style>
 </head>
@@ -1298,20 +1317,31 @@ async function loadBracket(nd, safeId){
 }
 
 function scaleBracket(safeId){
-  // Auto-scale toàn bộ bracket vừa khung container — không cần scroll
-  requestAnimationFrame(()=>{
-    const scaler=document.getElementById('bracket-scaler-'+safeId);
-    const wrap=document.getElementById('bracket-'+safeId);
+  // v7: scale vừa chiều ngang container, cuộn dọc tự nhiên — không ép chiều cao
+  requestAnimationFrame(function(){
+    var scaler=document.getElementById('bracket-scaler-'+safeId);
+    var wrap=document.getElementById('bracket-'+safeId);
     if(!scaler||!wrap)return;
-    const cW=scaler.clientWidth, cH=scaler.clientHeight||600;
-    const wW=wrap.scrollWidth, wH=wrap.scrollHeight;
-    if(wW<=0||wH<=0)return;
-    const scaleX=cW/wW, scaleY=cH/wH;
-    const scale=Math.min(scaleX,scaleY,1); // không zoom in, chỉ zoom out
-    wrap.style.transform=`scale(${scale})`;
-    wrap.style.transformOrigin='top left';
-    // Đặt height container = height sau scale để không có khoảng trắng
-    scaler.style.height=Math.ceil(wH*scale)+'px';
+    var cW=scaler.clientWidth||scaler.offsetWidth;
+    var wW=wrap.scrollWidth;
+    if(!cW||!wW)return;
+    // Chỉ scale nếu bracket rộng hơn container (scale out), không scale in
+    var scale=cW/wW;
+    if(scale>=1){
+      // Vừa hoặc nhỏ hơn container → reset transform, cho scroll
+      wrap.style.transform='';
+      wrap.style.transformOrigin='';
+      scaler.style.height='';
+      scaler.style.overflow='auto';
+    } else {
+      // Bracket rộng hơn → scale fit chiều ngang
+      wrap.style.transform='scale('+scale+')';
+      wrap.style.transformOrigin='top left';
+      wrap.style.display='block';
+      // Chiều cao sau scale
+      scaler.style.height=Math.ceil(wrap.scrollHeight*scale+16)+'px';
+      scaler.style.overflow='hidden';
+    }
   });
 }
 
@@ -1463,7 +1493,7 @@ function renderBracket(nd, tree, el){
   }
 
   // ── Render main bracket ──
-  var html='<div style="overflow-x:auto;padding-bottom:8px"><div class="bk-bracket">';
+  var html='<div class="bk-bracket">';
   mainRounds.forEach(function(round,ri){
     var ff=mainFromFin(ri);
     html+='<div class="bk-round"><div class="bk-round-label '+lblCls(ff)+'">'+esc(round.name)+'</div><div class="bk-round-slots">';
@@ -1484,11 +1514,11 @@ function renderBracket(nd, tree, el){
     else if(ckM.teamA&&ckM.teamB){var fa=ckRes?Number(ckRes[7]||0):0,fb=ckRes?Number(ckRes[8]||0):0;if(fa>fb)champName=ckM.teamA;else if(fb>fa)champName=ckM.teamB;}
   }
   html+='<div class="bk-champ-wrap"><div class="bk-champ-box"><div class="bk-champ-icon">🏆</div><div class="bk-champ-lbl">Vô địch</div><div class="bk-champ-name">'+esc(champName||'—')+'</div></div></div>';
-  html+='</div></div>';
+  html+='</div>';
 
   // Hạng 3 riêng bên dưới
   if(h3Round&&h3Round.matches&&h3Round.matches.length){
-    html+='<div style="margin-top:10px;overflow-x:auto"><div class="bk-bracket"><div class="bk-round"><div class="bk-round-label lbl-3rd">'+esc(h3Round.name)+'</div><div class="bk-round-slots">';
+    html+='<div style="margin-top:10px"><div class="bk-bracket"><div class="bk-round"><div class="bk-round-label lbl-3rd">'+esc(h3Round.name)+'</div><div class="bk-round-slots">';
     h3Round.matches.forEach(function(m){html+='<div class="bk-slot">'+mkCard(m,-1)+'</div>';});
     html+='</div></div></div></div>';
   }
