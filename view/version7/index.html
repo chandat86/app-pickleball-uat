@@ -634,10 +634,15 @@ function _initDisplayFirebase(){
       Object.values(val).forEach(d=>{
         if(!d||!d.nd||!d.rounds)return;
         if(SESS_GIAI.length){
-          const _nrm=s=>String(s||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+          const _nrm=function(s){return String(s||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();};
           const dG=_nrm(d.giai||'');
-          const ok=SESS_GIAI.some(g=>{const gU=_nrm(g);return dG===gU||dG.includes(gU)||gU.includes(dG);});
-          if(!ok)return; // v7: normalize dấu trước khi so
+          // v7: so với cả giaiId gốc LẪN giaiName đã resolve (vì admin lưu theo giaiName)
+          const ok=SESS_GIAI.some(function(g){
+            const gU=_nrm(g);
+            const gName=_nrm(resolveGiaiName(g));
+            return dG===gU||dG===gName||dG.includes(gU)||gU.includes(dG)||dG.includes(gName)||gName.includes(dG);
+          });
+          if(!ok)return;
         }
         const tree={rounds:d.rounds,_overrides:d._overrides||{},_byeRule:d._byeRule||'bye',_meta:d._meta||{},_dkMode:!!d._dkMode};
         const prev=(_bracketCache[d.nd]||{}).version||0;
@@ -739,14 +744,28 @@ async function enterDisplay(){
   _initDisplayFirebase(); // v4: Firebase realtime
 }
 
+// v7: map giaiId → giaiName (admin lưu BracketTree theo giaiName, display nhận giaiId)
+let _giaiNameMap = {}; // giaiId (upper) → giaiName thực
+function resolveGiaiName(giaiId){
+  if(!giaiId) return '';
+  const up = String(giaiId).trim().toUpperCase();
+  return _giaiNameMap[up] || giaiId;
+}
+
 async function loadTournamentInfo(){
   try{
     const r=await fetch(`${GAS_URL}?action=tournaments&_t=${Date.now()}`,{cache:'no-store'});
     const d=await r.json();
     const rows=(d?.rows||[]).slice(1);
+    // v7: build _giaiNameMap từ tournaments (col0=giaiId, col1=giaiName)
+    rows.forEach(function(row){
+      const id   = String(row[0]||'').trim();
+      const name = String(row[1]||'').trim();
+      if(id && name) _giaiNameMap[id.toUpperCase()] = name;
+    });
     // Tìm giải đầu tiên trong danh sách được phân quyền (so khớp Mã giải hoặc Tên giải)
     const giaiKey=SESS_GIAI[0]||'';
-    let info=rows.find(r=>String(r[0]||'').trim()===giaiKey || String(r[1]||'').trim()===giaiKey);
+    let info=rows.find(function(r){return String(r[0]||'').trim()===giaiKey || String(r[1]||'').trim()===giaiKey;});
     if(!info && rows.length) info=rows[0];
     const title=(info?String(info[1]||'').trim():'')||giaiKey||'GIẢI PICKLEBALL';
     const venue=info?String(info[2]||'').trim():'';
@@ -1175,11 +1194,11 @@ function switchSubTab(safeId, which){
 
 // ── BRACKET: lấy giải đấu (tên) tương ứng với 1 nội dung từ _matches ──
 function getGiaiForNd(nd){
-  // v4: tìm từ _groups (đã có giai+nd chính xác)
-  const g=_groups.find(g=>g.nd===nd);
-  if(g&&g.giai)return g.giai;
-  const m=_matches.find(r=>String(r[1]||'')===nd);
-  return m?String(m[0]||''):'';
+  // v7: trả giaiName thực (admin lưu BracketTree theo giaiName)
+  const g=_groups.find(function(g){return g.nd===nd;});
+  if(g&&g.giai) return resolveGiaiName(g.giai); // map giaiId → giaiName nếu cần
+  const m=_matches.find(function(r){return String(r[1]||'')===nd;});
+  return m ? resolveGiaiName(String(m[0]||'')) : '';
 }
 
 let _bracketCache={}; // nd -> {tree, version}
@@ -1195,7 +1214,8 @@ async function loadBracket(nd, safeId){
   }
   // Chưa có cache → fetch GAS (cold start / Firebase chưa kịp push)
   var giai=getGiaiForNd(nd);
-  if(!giai) giai=SESS_GIAI[0]||''; // v7: fallback SESS_GIAI[0] khi _matches chưa load
+  // v7: fallback → resolveGiaiName(SESS_GIAI[0]) — map giaiId → giaiName
+  if(!giai) giai=resolveGiaiName(SESS_GIAI[0]||'');
   if(!giai){
     setTimeout(function(){loadBracket(nd,safeId);},1500);
     return;
