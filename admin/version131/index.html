@@ -8396,6 +8396,8 @@ async function _ndBkRender() {
     }
     setTimeout(_syncBkScrollbar, 80);
     _bkSaveState();
+    // v132: luôn cập nhật banner sau mỗi render (kể cả khi chưa có champ)
+    if (_bkApplied) setTimeout(() => _bkRenderResultBanner(getChampName()), 50);
   }
 
   if (ndChanged) {
@@ -13477,11 +13479,10 @@ function _bkGetPodiumRanks() {
   return { rank1, rank2, rank3a, rank3b, rank4 };
 }
 
-// v131: _bkRenderResultBanner() — render banner kết quả vô địch bên dưới cây (tab nd bracket)
+// v132: _bkRenderResultBanner() — luôn hiện banner + nút ngay khi cây Applied (không cần chờ CK xong)
 function _bkRenderResultBanner(champ) {
   const banner = document.getElementById('nd-bk-result-banner');
   if (!banner) return;
-  if (!champ) { banner.style.display = 'none'; return; }
 
   const { rank1, rank2, rank3a, rank3b, rank4 } = _bkGetPodiumRanks();
   const e = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -13498,68 +13499,76 @@ function _bkRenderResultBanner(champ) {
     </div>`;
   };
 
-  const isDongHang3 = !!(rank3a && rank3b); // cả 2 đội đồng hạng 3 (H3 không thi đấu)
+  const isDongHang3 = !!(rank3a && rank3b);
+  const hasRanks = !!(rank1 || rank2 || rank3a);
+
+  // Phần vô địch: có champ → hiện tên, chưa có → hiện "Chờ kết quả"
+  const champSection = champ
+    ? `<div class="bkrb-champ-row">
+        <div class="bkrb-crown">🏆</div>
+        <div class="bkrb-champ-label">🎉 Đội Vô Địch</div>
+        <div class="bkrb-champ-name">${e(champ)}</div>
+      </div>
+      <div class="bkrb-divider"></div>`
+    : `<div class="bkrb-champ-row">
+        <div class="bkrb-crown" style="opacity:.3;filter:grayscale(1)">🏆</div>
+        <div class="bkrb-champ-label" style="color:var(--tx3)">Chưa có kết quả Chung Kết</div>
+      </div>
+      <div class="bkrb-divider"></div>`;
 
   banner.style.display = '';
   banner.innerHTML = `
-    <div class="bkrb-champ-row">
-      <div class="bkrb-crown">🏆</div>
-      <div class="bkrb-champ-label">🎉 Đội Vô Địch</div>
-      <div class="bkrb-champ-name">${e(champ)}</div>
-    </div>
-    <div class="bkrb-divider"></div>
-    <div class="bkrb-rows">
+    ${champSection}
+    ${hasRanks ? `<div class="bkrb-rows">
       ${mkRow('rk1','🥇','Hạng Nhất', rank1, '')}
       ${mkRow('rk2','🥈','Hạng Nhì',  rank2, '')}
       ${isDongHang3
         ? mkRow('rk3','🥉','Đồng Hạng Ba', rank3a, rank3b)
         : mkRow('rk3','🥉','Hạng Ba', rank3a, '')}
       ${rank4 ? mkRow('rk4','4️⃣','Hạng Tư', rank4, '') : ''}
-    </div>
+    </div>` : ''}
     <div class="bkrb-btns">
       <button class="bkrb-btn-img" onclick="exportPodiumImage()">🏅 Tải ảnh kết quả</button>
       <button class="bkrb-btn-xl"  onclick="doExportKetQuaExcel()">📊 Xuất Excel</button>
     </div>`;
 }
 
-// v131 (nâng cấp từ v130): _bkUpdateChampBox — cập nhật champion box nhỏ trong cây + banner KQ bên dưới
+// v132: _bkUpdateChampBox — luôn hiện banner + nút dù CK chưa xong; cập nhật tên vô địch khi có
 let _champBoxRetryTimer = null;
 function _bkUpdateChampBox() {
-  // Clear retry cũ nếu có
   if (_champBoxRetryTimer) { clearInterval(_champBoxRetryTimer); _champBoxRetryTimer = null; }
   if (!_bkApplied || !_bkCurrentTree) return;
 
   const _doUpdate = () => {
     const nameTxt = document.getElementById('bk-champ-name-txt');
     const btnsEl  = document.getElementById('bk-champ-btns');
-    if (!nameTxt || !btnsEl) return false; // DOM chưa có
-    const champ = getChampName();
-    if (champ) {
-      // --- Champion box nhỏ trong cây (giữ nguyên) ---
-      nameTxt.textContent = champ;
-      btnsEl.innerHTML =
-        '<button onclick="exportPodiumImage()" style="padding:7px 14px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(245,158,11,.4)">🏅 Xuất ảnh KQ</button>' +
-        '<button onclick="doExportKetQuaExcel()" style="padding:7px 14px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(34,197,94,.4);margin-top:4px">📊 Xuất Excel</button>';
-      // --- Banner kết quả bên dưới cây (MỚI v131) ---
-      _bkRenderResultBanner(champ);
-      return true;
+    // Cập nhật champion box nhỏ trong cây (nếu DOM tồn tại)
+    if (nameTxt && btnsEl) {
+      const champ = getChampName();
+      if (champ) {
+        nameTxt.textContent = champ;
+        btnsEl.innerHTML =
+          '<button onclick="exportPodiumImage()" style="padding:7px 14px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(245,158,11,.4)">🏅 Xuất ảnh KQ</button>' +
+          '<button onclick="doExportKetQuaExcel()" style="padding:7px 14px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(34,197,94,.4);margin-top:4px">📊 Xuất Excel</button>';
+      } else {
+        nameTxt.textContent = '';
+        btnsEl.innerHTML = '';
+      }
     }
-    nameTxt.textContent = '';
-    btnsEl.innerHTML = '';
-    // Ẩn banner khi chưa có KQ
-    const banner = document.getElementById('nd-bk-result-banner');
-    if (banner) banner.style.display = 'none';
-    return false;
+    // v132: Banner luôn hiện ngay khi Applied — không cần chờ champ
+    _bkRenderResultBanner(getChampName());
+    return true; // luôn done
   };
 
-  // Thử ngay
-  if (_doUpdate()) return;
+  // Thử ngay — nếu DOM bracket chưa có thì retry
+  const hasDom = !!document.getElementById('nd-bk-result-banner');
+  if (hasDom) { _doUpdate(); return; }
 
-  // Chưa có → retry mỗi 1s tối đa 60 lần (1 phút)
   let retries = 0;
   _champBoxRetryTimer = setInterval(() => {
     retries++;
-    if (_doUpdate() || retries >= 60) {
+    if (document.getElementById('nd-bk-result-banner') || retries >= 60) {
+      _doUpdate();
       clearInterval(_champBoxRetryTimer);
       _champBoxRetryTimer = null;
     }
