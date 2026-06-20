@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TV Display v7.1 — Pickleball DA NANG</title>
+<title>TV Display v7 — Pickleball DA NANG</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -525,7 +525,7 @@ html,body{width:100%;background:var(--bg);color:var(--tx);font-family:var(--font
 // ════════════════════════════════════════════════════════
 // CẤU HÌNH CỐ ĐỊNH
 // ════════════════════════════════════════════════════════
-// TV Display v7 — 2026-06-20: FIX TRIỆT ĐỂ cây thi đấu không hiển thị: (1) version check: cho phép version=0 qua (trước đây d.version<=prev với prev=0 → skip luôn lần đầu); (2) SESS_GIAI filter bracketTree: dùng normalize NFD bỏ dấu giống các listener khác (tránh miss khi giai name có dấu); (3) Tab "Cây thi đấu" luôn hiển thị (không ẩn style=none), user thấy tab ngay; (4) loadBracket: fallback dùng SESS_GIAI[0] khi getGiaiForNd() rỗng; (5) loadBracket khi GAS không có cây: retry sau 5s thay vì ẩn tab; (6) loadBracket catch: retry sau 5s thay vì in lỗi cố định; (7) renderNdBody: render từ cache ngay khi DOM tạo nếu Firebase đã push trước đó.
+// TV Display v7 — 2026-06-20: FIX cây thi đấu không hiển thị: (1) Firebase bracketTree listener luôn lưu cache kể cả DOM chưa có bEl; (2) switchSubTab render từ cache ngay khi user click tab Cây thi đấu (reverse lookup safeId→nd); (3) loadBracket cache-first — nếu Firebase đã push thì dùng cache không fetch GAS lại; nếu getGiaiForNd() trả rỗng (data chưa load) thì retry sau 1.5s; (4) _reRenderActiveBrackets render khi stB visible (không chỉ khi đang xem bracket tab). v6 — 2026-06-19: (1) mkCard: Lucky/BYE override từ _overrides — slot Lucky hiện đội đã chọn + pill vị trí, slot chờ hiện 🍀 Lucky (tím), BYE hiện BYE (mờ); giống admin + player page v4; (2) winner propagate: bỏ guard src.teamA&&teamB, dùng _results merge Firebase realtime → winner vòng sau hiển thị < 2s (không phải 30s); (3) thêm CSS r-lucky r-bye bk-pill-lucky.
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzWasb4KravYHNR6Q9d55qevrut8O9Kep80nZKBq4Rj05TA3XhNF-fymIRtr75HRJv6/exec';
 
 // v4: Firebase realtime → GAS poll chỉ 60s (fallback sync matches)
@@ -634,13 +634,14 @@ function _initDisplayFirebase(){
       Object.values(val).forEach(d=>{
         if(!d||!d.nd||!d.rounds)return;
         if(SESS_GIAI.length){
-          const dG=String(d.giai||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-          const ok=SESS_GIAI.some(g=>{const gU=g.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');return dG===gU||dG.includes(gU)||gU.includes(dG);});
-          if(!ok)return;
+          const _nrm=s=>String(s||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+          const dG=_nrm(d.giai||'');
+          const ok=SESS_GIAI.some(g=>{const gU=_nrm(g);return dG===gU||dG.includes(gU)||gU.includes(dG);});
+          if(!ok)return; // v7: normalize dấu trước khi so
         }
         const tree={rounds:d.rounds,_overrides:d._overrides||{},_byeRule:d._byeRule||'bye',_meta:d._meta||{},_dkMode:!!d._dkMode};
         const prev=(_bracketCache[d.nd]||{}).version||0;
-        if(d.version && d.version<=prev)return; // v7: bỏ qua nếu version cũ HƠN (nhưng cho phép version=0)
+        if(d.version && d.version<=prev)return; // v7: cho phép version=0 qua
         // v6b: luôn lưu cache kể cả khi DOM chưa có bEl — user click tab sau sẽ render từ cache
         _bracketCache[d.nd]={tree,version:d.version,_dkMode:!!d._dkMode};
         const safeId=d.nd.replace(/[^a-zA-Z0-9]/g,'_');
@@ -1090,39 +1091,39 @@ function renderTabs(){
 // _ndSubTab[nd] = 'group' | 'bracket'  — nhớ sub-tab của từng nội dung
 const _ndSubTab={};
 
-function renderNdBody(nd,ndGroups){\
-  if(!ndGroups.length)return'<div class=\"empty-state\">Chưa có dữ liệu</div>';\
-  const n=ndGroups.length;\
-  const safeId=nd.replace(/[^a-zA-Z0-9]/g,'_');\
-  // v7: Tab Cây thi đấu luôn hiển thị (không ẩn) — sẽ tự hiện "Chưa có" nếu chưa có cây\
-  const subTabHtml=`<div class=\"sub-tabs\" id=\"subtabs-${safeId}\">\
-    <div class=\"sub-tab active\" id=\"st-group-${safeId}\" onclick=\"switchSubTab('${safeId}','group')\">📋 Vòng bảng</div>\
-    <div class=\"sub-tab bracket-tab\" id=\"st-bracket-${safeId}\" onclick=\"switchSubTab('${safeId}','bracket')\">🏆 Cây thi đấu <span class=\"new-badge\" id=\"st-badge-${safeId}\" style=\"display:none\">MỚI</span></div>\
-  </div>`;\
-  // Sub-body vòng bảng\
-  let colClass='', sizeClass='';\
-  if(n>=13){colClass='cols-4';sizeClass='mini';}\
-  else if(n>=7){colClass='cols-4';sizeClass='compact';}\
-  else if(n>=4){colClass='cols-4';}\
-  const groupHtml=`<div class=\"sub-body active\" id=\"sb-group-${safeId}\">\
-    <div class=\"bxh-grid ${colClass} ${sizeClass}\" id=\"bxh-grid-${safeId}\">${ndGroups.map(g=>renderBXHCard(g,n)).join('')}</div>\
-  </div>`;\
-  // Sub-body cây thi đấu\
-  const bracketHtml=`<div class=\"sub-body\" id=\"sb-bracket-${safeId}\">\
-    <div class=\"bracket-scaler\" id=\"bracket-scaler-${safeId}\">\
-      <div id=\"bracket-${safeId}\" class=\"bracket-wrap\"><div class=\"bracket-empty\">Đang tải cây thi đấu...</div></div>\
-    </div>\
-  </div>`;\
-  // v7: load từ cache ngay (nếu Firebase đã push trước khi DOM tạo), sau đó fetch GAS nếu cần\
-  if(_bracketCache[nd]&&_bracketCache[nd].tree&&_bracketCache[nd].tree.rounds?.length){\
-    setTimeout(()=>{\
-      const bEl=document.getElementById('bracket-'+safeId);\
-      if(bEl){renderBracket(nd,{..._bracketCache[nd].tree,_dkMode:!!_bracketCache[nd]._dkMode},bEl);scaleBracket(safeId);}\
-    },0);\
-  } else {\
-    loadBracket(nd, safeId);\
-  }\
-  return subTabHtml+groupHtml+bracketHtml;\
+function renderNdBody(nd,ndGroups){
+  if(!ndGroups.length)return'<div class="empty-state">Chưa có dữ liệu</div>';
+  const n=ndGroups.length;
+  const safeId=nd.replace(/[^a-zA-Z0-9]/g,'_');
+  // v7: Tab Cây thi đấu LUÔN hiện (bỏ style="display:none") — user thấy tab ngay
+  const subTabHtml=`<div class="sub-tabs" id="subtabs-${safeId}">
+    <div class="sub-tab active" id="st-group-${safeId}" onclick="switchSubTab('${safeId}','group')">📋 Vòng bảng</div>
+    <div class="sub-tab bracket-tab" id="st-bracket-${safeId}" onclick="switchSubTab('${safeId}','bracket')">🏆 Cây thi đấu <span class="new-badge" id="st-badge-${safeId}" style="display:none">MỚI</span></div>
+  </div>`;
+  // Sub-body vòng bảng
+  let colClass='', sizeClass='';
+  if(n>=13){colClass='cols-4';sizeClass='mini';}
+  else if(n>=7){colClass='cols-4';sizeClass='compact';}
+  else if(n>=4){colClass='cols-4';}
+  const groupHtml=`<div class="sub-body active" id="sb-group-${safeId}">
+    <div class="bxh-grid ${colClass} ${sizeClass}" id="bxh-grid-${safeId}">${ndGroups.map(g=>renderBXHCard(g,n)).join('')}</div>
+  </div>`;
+  // Sub-body cây thi đấu
+  const bracketHtml=`<div class="sub-body" id="sb-bracket-${safeId}">
+    <div class="bracket-scaler" id="bracket-scaler-${safeId}">
+      <div id="bracket-${safeId}" class="bracket-wrap"><div class="bracket-empty">Đang tải cây thi đấu...</div></div>
+    </div>
+  </div>`;
+  // v7: nếu Firebase đã push trước khi DOM tạo → render từ cache ngay
+  if(_bracketCache[nd]&&_bracketCache[nd].tree&&_bracketCache[nd].tree.rounds&&_bracketCache[nd].tree.rounds.length){
+    setTimeout(function(){
+      var bEl=document.getElementById('bracket-'+safeId);
+      if(bEl){renderBracket(nd,Object.assign({},_bracketCache[nd].tree,{_dkMode:!!_bracketCache[nd]._dkMode}),bEl);scaleBracket(safeId);}
+    },0);
+  } else {
+    loadBracket(nd, safeId);
+  }
+  return subTabHtml+groupHtml+bracketHtml;
 }
 
 
@@ -1193,14 +1194,10 @@ async function loadBracket(nd, safeId){
     return;
   }
   // Chưa có cache → fetch GAS (cold start / Firebase chưa kịp push)
-  let giai=getGiaiForNd(nd);
+  var giai=getGiaiForNd(nd);
+  if(!giai) giai=SESS_GIAI[0]||''; // v7: fallback SESS_GIAI[0] khi _matches chưa load
   if(!giai){
-    // v7: fallback dùng SESS_GIAI[0] nếu _matches chưa load
-    giai=SESS_GIAI[0]||'';
-  }
-  if(!giai){
-    // Vẫn chưa có → retry sau 1.5s
-    setTimeout(()=>{ loadBracket(nd,safeId); },1500);
+    setTimeout(function(){loadBracket(nd,safeId);},1500);
     return;
   }
   try{
@@ -1211,11 +1208,10 @@ async function loadBracket(nd, safeId){
     if(!el)return;
     const stB=document.getElementById('st-bracket-'+safeId);
     const badge=document.getElementById('st-badge-'+safeId);
-    if(!d.ok||!d.tree?.rounds?.length){
-      // v7: không ẩn tab — cây chưa có thì hiện "Chưa có cây", retry sau 5s qua Firebase listener
+    if(!d.ok||!d.tree||!d.tree.rounds||!d.tree.rounds.length){
+      // v7: không ẩn tab — retry sau 5s (Firebase có thể push sau)
       if(el)el.innerHTML='<div class="bracket-empty">Chưa có cây thi đấu</div>';
-      // Retry sau 5s (phòng khi Firebase chậm push)
-      setTimeout(()=>{ if(!_bracketCache[nd]?.tree?.rounds?.length) loadBracket(nd,safeId); },5000);
+      setTimeout(function(){if(!_bracketCache[nd]||!_bracketCache[nd].tree)loadBracket(nd,safeId);},5000);
       return;
     }
     if(stB)stB.style.display='';
@@ -1236,8 +1232,8 @@ async function loadBracket(nd, safeId){
     }
   }catch(e){
     console.error('loadBracket:',e);
-    // v7: retry sau 5s thay vì để lỗi cố định
-    setTimeout(()=>{ if(!_bracketCache[nd]?.tree?.rounds?.length) loadBracket(nd,safeId); },5000);
+    // v7: retry sau 5s thay vì lỗi cố định
+    setTimeout(function(){if(!_bracketCache[nd]||!_bracketCache[nd].tree)loadBracket(nd,safeId);},5000);
   }
 }
 
