@@ -814,7 +814,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .bk-conn-col.cc-final{--conn-clr:rgba(245,158,11,.8)}
 
 /* ════ CHAMPION / PODIUM BOX ════ */
-.bk-champ-wrap{display:flex;align-self:stretch;align-items:flex-start;padding:38px 10px 0;flex-shrink:0}
+.bk-champ-wrap{display:flex;align-self:center;align-items:center;padding:0 10px;flex-shrink:0;gap:0}
 @keyframes bkChampIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 /* ── PODIUM v133g: Short & wide ── */
 @keyframes podiumIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -12968,7 +12968,7 @@ function bkRender() {
   }
 
   // v127 FIX: gộp bk-champ-wrap + đóng bracket vào 1 template literal tránh syntax error
-  html += '<div class="bk-champ-wrap"><div id="bk-champ-dynamic"><div id="bk-podium-inner"></div></div></div></div></div>'; // v132
+  html += '<div class="bk-champ-wrap"><div id="bk-podium-toggle-btn" onclick="togglePodiumPanel()" style="width:18px;min-height:60px;background:linear-gradient(180deg,#fdf0d8,#f5e4c0);border:1px solid rgba(200,160,80,.35);border-radius:8px 0 0 8px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .2s;user-select:none;box-shadow:-2px 0 6px rgba(0,0,0,.08)" title="Thu gọn / Mở rộng kết quả"><span id="bk-podium-toggle-icon" style="font-size:10px;color:#b8860b;font-weight:900;display:block;transition:transform .3s;line-height:1">◀</span></div><div id="bk-champ-dynamic" style="transition:width .3s ease,opacity .3s ease;overflow:hidden"><div id="bk-podium-inner"></div></div></div></div></div>'; // v133
 
   // H3 — bên dưới riêng (giống v70)
   if (h3Round2?.matches?.length) {
@@ -13543,6 +13543,33 @@ function _bkGetAllRanks() {
 
 // v132: _bkUpdateChampBox — podium luôn hiện
 let _champBoxRetryTimer = null;
+// v133: Toggle thu gọn / mở rộng panel Kết quả
+let _podiumCollapsed = false;
+function togglePodiumPanel() {
+  _podiumCollapsed = !_podiumCollapsed;
+  const wrap = document.getElementById('bk-champ-dynamic');
+  const icon = document.getElementById('bk-podium-toggle-icon');
+  const btn  = document.getElementById('bk-podium-toggle-btn');
+  if (!wrap) return;
+  if (_podiumCollapsed) {
+    const w = wrap.scrollWidth;
+    wrap.style.width   = w + 'px';
+    wrap.offsetWidth; // force reflow
+    wrap.style.width   = '0px';
+    wrap.style.opacity = '0';
+    if (icon) icon.style.transform = 'rotate(180deg)';
+    if (btn)  { btn.title = 'Mở rộng kết quả'; btn.style.borderRadius = '8px'; }
+  } else {
+    const inner = wrap.querySelector('#bk-podium-inner');
+    const targetW = (inner ? inner.scrollWidth : 220) + 'px';
+    wrap.style.width   = targetW;
+    wrap.style.opacity = '1';
+    if (icon) icon.style.transform = 'rotate(0deg)';
+    if (btn)  { btn.title = 'Thu gọn kết quả'; btn.style.borderRadius = '8px 0 0 8px'; }
+    setTimeout(() => { if (!_podiumCollapsed) wrap.style.width = ''; }, 320);
+  }
+}
+
 function _bkUpdateChampBox() {
   if (_champBoxRetryTimer) { clearInterval(_champBoxRetryTimer); _champBoxRetryTimer = null; }
   if (!_bkApplied || !_bkCurrentTree) return;
