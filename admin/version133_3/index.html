@@ -39,7 +39,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Admin v133.2 — Referee Pickleball / DA NANG ®</title>
+<title>Admin v133 — Referee Pickleball / DA NANG ®</title>
 <style>
 /* ═══════════════════════════════════════════════════════
    Pickleball Admin — Mobile-First Professional UI
@@ -816,140 +816,79 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 /* ════ CHAMPION / PODIUM BOX ════ */
 .bk-champ-wrap{display:flex;align-self:stretch;align-items:flex-start;padding:38px 10px 0;flex-shrink:0}
 @keyframes bkChampIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-/* ── PODIUM v133e: Light cream theme ── */
-@keyframes podiumIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+/* ── PODIUM v133g: Short & wide ── */
+@keyframes podiumIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .bk-podium-panel{
-  border-radius:20px;
+  border-radius:14px;
   background:linear-gradient(160deg,#fdf8f0 0%,#f5ece0 100%);
   border:1px solid rgba(200,165,100,.25);
-  box-shadow:0 8px 32px rgba(160,120,60,.15),0 2px 8px rgba(0,0,0,.08);
-  padding:18px 14px 14px;
-  width:210px;box-sizing:border-box;
+  box-shadow:0 5px 18px rgba(160,120,60,.14);
+  padding:9px 10px 8px;
+  width:220px;box-sizing:border-box;
   display:flex;flex-direction:column;gap:0;
-  animation:podiumIn .35s cubic-bezier(.22,1,.36,1)
+  animation:podiumIn .25s ease
 }
-/* Title */
-.bk-podium-title{text-align:center;margin-bottom:2px}
-.bk-podium-title-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px}
-.bk-podium-title-icon{font-size:20px;line-height:1}
-.bk-podium-title-text{
-  font-size:18px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;
-  color:#1a2340;
-  text-shadow:none
-}
-.bk-podium-title-sub{font-size:9px;color:#888070;letter-spacing:.03em;display:block;text-align:center}
-/* Ornament line under subtitle */
-.bk-podium-title-orn{
-  display:flex;align-items:center;justify-content:center;gap:6px;margin:6px 0 10px;opacity:.5
-}
-.bk-podium-title-orn::before,.bk-podium-title-orn::after{
-  content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,#c8a050,transparent)
-}
-.bk-podium-title-orn-diamond{
-  width:6px;height:6px;background:#c8a050;transform:rotate(45deg);flex-shrink:0
-}
-/* Rows */
-.bk-podium-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+/* Title — compact 1 line */
+.bk-podium-title{text-align:center;margin-bottom:0}
+.bk-podium-title-row{display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:1px}
+.bk-podium-title-icon{font-size:13px;line-height:1}
+.bk-podium-title-text{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#1a2340}
+.bk-podium-title-sub{font-size:7px;color:#998870;letter-spacing:.02em;display:block;text-align:center}
+.bk-podium-title-orn{display:flex;align-items:center;justify-content:center;gap:5px;margin:3px 0 5px;opacity:.4}
+.bk-podium-title-orn::before,.bk-podium-title-orn::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,#c8a050,transparent)}
+.bk-podium-title-orn-diamond{width:4px;height:4px;background:#c8a050;transform:rotate(45deg);flex-shrink:0}
+/* Rows — tighter */
+.bk-podium-rows{display:flex;flex-direction:column;gap:4px;margin-bottom:5px}
 .bk-podium-row{
-  display:flex;align-items:center;gap:10px;
-  border-radius:14px;padding:10px 10px 10px 6px;
+  display:flex;align-items:center;gap:5px;
+  border-radius:9px;padding:5px 6px 5px 4px;
   position:relative;overflow:hidden;
   border:1px solid transparent
 }
-/* Gold */
-.bk-podium-row.pr1{
-  background:linear-gradient(135deg,#fffbe8 0%,#fef3c0 50%,#fef9e8 100%);
-  border-color:rgba(212,160,23,.45);
-  box-shadow:0 3px 12px rgba(212,160,23,.2),inset 0 1px 0 rgba(255,255,255,.8)
-}
-/* Silver */
-.bk-podium-row.pr2{
-  background:linear-gradient(135deg,#f8f9fa 0%,#f0f2f5 50%,#f8f9fa 100%);
-  border-color:rgba(160,175,190,.35);
-  box-shadow:0 2px 8px rgba(0,0,0,.07),inset 0 1px 0 rgba(255,255,255,.9)
-}
-/* Bronze */
-.bk-podium-row.pr3{
-  background:linear-gradient(135deg,#fff7f0 0%,#fdebd8 50%,#fff7f0 100%);
-  border-color:rgba(180,100,40,.3);
-  box-shadow:0 2px 8px rgba(180,100,40,.12),inset 0 1px 0 rgba(255,255,255,.8)
-}
-/* 4th */
-.bk-podium-row.pr4{
-  background:linear-gradient(135deg,#f5f5f5 0%,#efefef 100%);
-  border-color:rgba(0,0,0,.08);
-  box-shadow:0 2px 6px rgba(0,0,0,.05)
-}
-/* ── Medal badge (toothed circle) ── */
-.bk-podium-badge{
-  width:46px;height:54px;flex-shrink:0;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  z-index:2
-}
-.bk-podium-badge svg.medal{width:42px;height:42px}
-/* Ribbon */
-.bk-podium-badge-ribbon{
-  width:12px;height:10px;margin-top:-3px;
-  background:linear-gradient(180deg,#1e40af,#2563eb);
-  clip-path:polygon(0 0,100% 0,100% 65%,50% 100%,0 65%);
-  box-shadow:0 1px 3px rgba(0,0,0,.3)
-}
+.bk-podium-row.pr1{background:linear-gradient(135deg,#fffbe8,#fef3c0,#fef9e8);border-color:rgba(212,160,23,.4);box-shadow:0 2px 6px rgba(212,160,23,.15)}
+.bk-podium-row.pr2{background:linear-gradient(135deg,#f8f9fa,#f0f2f5,#f8f9fa);border-color:rgba(160,175,190,.28);box-shadow:0 1px 5px rgba(0,0,0,.05)}
+.bk-podium-row.pr3{background:linear-gradient(135deg,#fff7f0,#fdebd8,#fff7f0);border-color:rgba(180,100,40,.26);box-shadow:0 1px 5px rgba(180,100,40,.09)}
+.bk-podium-row.pr4{background:linear-gradient(135deg,#f5f5f5,#efefef);border-color:rgba(0,0,0,.07)}
+/* Badge — smaller */
+.bk-podium-badge{width:28px;height:33px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2}
+.bk-podium-badge svg.medal{width:25px;height:25px}
+.bk-podium-badge-ribbon{width:7px;height:6px;margin-top:-2px;background:linear-gradient(180deg,#1e40af,#2563eb);clip-path:polygon(0 0,100% 0,100% 65%,50% 100%,0 65%)}
 .pr4 .bk-podium-badge-ribbon{display:none}
 /* Trophy right */
-.bk-podium-trophy-wrap{
-  position:absolute;right:8px;top:50%;transform:translateY(-50%);
-  width:36px;height:36px;z-index:1;pointer-events:none
-}
+.bk-podium-trophy-wrap{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:22px;height:22px;z-index:1;pointer-events:none}
 .bk-podium-trophy-wrap svg{width:100%;height:100%}
 /* Text */
-.bk-podium-info{flex:1;min-width:0;z-index:2;padding-right:38px}
-.bk-podium-lbl{
-  font-size:8px;font-weight:900;letter-spacing:.1em;
-  text-transform:uppercase;line-height:1;margin-bottom:4px
-}
+.bk-podium-info{flex:1;min-width:0;z-index:2;padding-right:25px}
+.bk-podium-lbl{font-size:6.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;line-height:1;margin-bottom:2px}
 .pr1 .bk-podium-lbl{color:#b8860b}
 .pr2 .bk-podium-lbl{color:#607090}
 .pr3 .bk-podium-lbl{color:#a05020}
 .pr4 .bk-podium-lbl{color:#909090}
-.bk-podium-team{font-size:11px;font-weight:800;line-height:1.3;word-break:break-word}
+.bk-podium-team{font-size:9px;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pr1 .bk-podium-team,.pr2 .bk-podium-team,.pr3 .bk-podium-team{color:#1a2340}
 .pr4 .bk-podium-team{color:#555}
-.bk-podium-team2{font-size:9px;font-weight:600;line-height:1.25;word-break:break-word;margin-top:1px;color:#666}
-.bk-podium-empty{font-size:8px;color:#aaa;font-style:italic}
+.bk-podium-team2{font-size:7.5px;font-weight:600;line-height:1.2;color:#777;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk-podium-empty{font-size:7px;color:#bbb;font-style:italic}
 /* Divider */
-.bk-podium-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(180,140,80,.25),transparent);margin:3px 0 8px}
+.bk-podium-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(180,140,80,.18),transparent);margin:1px 0 5px}
 /* Buttons */
-.bk-podium-btns{display:flex;flex-direction:column;gap:6px}
+.bk-podium-btns{display:flex;flex-direction:column;gap:3px}
 .bk-podium-btns button{
-  width:100%;padding:10px 12px;border-radius:12px;border:none;
-  font-size:9px;font-weight:900;cursor:pointer;
-  transition:transform .15s,box-shadow .15s;letter-spacing:.1em;text-transform:uppercase;
-  display:flex;align-items:center;gap:8px
+  width:100%;padding:6px 8px;border-radius:8px;border:none;
+  font-size:7.5px;font-weight:900;cursor:pointer;
+  transition:transform .12s;letter-spacing:.07em;text-transform:uppercase;
+  display:flex;align-items:center;gap:5px;box-sizing:border-box
 }
-.bk-podium-btns button:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.12)}
-.bk-podium-btn-icon{width:26px;height:26px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px}
-.bk-podium-btn-label{flex:1;text-align:center;font-size:9px}
-.bk-podium-btn-arrow{font-size:13px;font-weight:900;opacity:.7}
-/* Download btn */
-.bk-podium-btn-img{
-  background:#fff;color:#b8860b;
-  border:1.5px solid rgba(184,134,11,.4) !important;
-  box-shadow:0 2px 8px rgba(184,134,11,.15)
-}
-.bk-podium-btn-img .bk-podium-btn-icon{background:rgba(212,160,23,.12);color:#b8860b}
-/* Excel btn */
-.bk-podium-btn-xl{
-  background:#fff;color:#15803d;
-  border:1.5px solid rgba(21,128,61,.3) !important;
-  box-shadow:0 2px 8px rgba(21,128,61,.1)
-}
-.bk-podium-btn-xl .bk-podium-btn-icon{background:transparent;padding:2px;box-sizing:border-box}
+.bk-podium-btns button:hover{transform:translateY(-1px)}
+.bk-podium-btn-icon{width:18px;height:18px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px}
+.bk-podium-btn-label{flex:1;text-align:center;font-size:7.5px;white-space:nowrap}
+.bk-podium-btn-arrow{font-size:9px;font-weight:900;opacity:.6}
+.bk-podium-btn-img{background:#fff;color:#b8860b;border:1px solid rgba(184,134,11,.35) !important;box-shadow:0 1px 5px rgba(184,134,11,.1)}
+.bk-podium-btn-img .bk-podium-btn-icon{background:rgba(212,160,23,.1);color:#b8860b}
+.bk-podium-btn-xl{background:#fff;color:#15803d;border:1px solid rgba(21,128,61,.26) !important;box-shadow:0 1px 5px rgba(21,128,61,.07)}
+.bk-podium-btn-xl .bk-podium-btn-icon{background:transparent;padding:1px;box-sizing:border-box}
 /* Footer */
-.bk-podium-footer{
-  margin-top:8px;text-align:center;font-size:7px;
-  color:#aaa;letter-spacing:.02em;
-  display:flex;align-items:center;justify-content:center;gap:4px
-}
+.bk-podium-footer{margin-top:5px;text-align:center;font-size:6px;color:#ccc;display:flex;align-items:center;justify-content:center;gap:3px}
 /* ════ GROUP CARD ════ */
 .bk-col{display:flex;flex-direction:column;flex-shrink:0;min-width:210px}
 .bk-gcards{display:flex;flex-direction:column;gap:0;flex:1;justify-content:space-around}
