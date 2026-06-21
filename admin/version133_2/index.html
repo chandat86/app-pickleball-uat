@@ -816,138 +816,165 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 /* ════ CHAMPION / PODIUM BOX ════ */
 .bk-champ-wrap{display:flex;align-self:stretch;align-items:flex-start;padding:38px 10px 0;flex-shrink:0}
 @keyframes bkChampIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-/* ── PODIUM v133: Professional 3D Dark Design ── */
-@keyframes podiumIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
-@keyframes shimmer{0%,100%{opacity:.6}50%{opacity:1}}
+/* ── PODIUM v133c: Pixel-perfect match ── */
+@keyframes podiumIn{from{opacity:0;transform:translateY(14px) scale(.95)}to{opacity:1;transform:none}}
 .bk-podium-panel{
-  border-radius:16px;
-  background:linear-gradient(160deg,#0d1b2e 0%,#081425 100%);
+  border-radius:22px;
+  background:linear-gradient(180deg,#0c1520 0%,#060d16 100%);
   border:1px solid rgba(255,255,255,.07);
-  box-shadow:0 8px 32px rgba(0,0,0,.6),0 2px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);
-  padding:14px 12px 12px;
-  min-width:176px;max-width:220px;
+  box-shadow:0 24px 80px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.06);
+  padding:22px 16px 16px;
+  width:100%;max-width:340px;box-sizing:border-box;
   display:flex;flex-direction:column;gap:0;
   animation:podiumIn .4s cubic-bezier(.22,1,.36,1)
 }
-.bk-podium-title{
-  font-size:10px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;
-  color:rgba(255,255,255,.5);text-align:center;margin-bottom:10px;
-  display:flex;align-items:center;justify-content:center;gap:6px
-}
-.bk-podium-title::before,.bk-podium-title::after{
-  content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)
-}
-.bk-podium-rows{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
-
-/* --- Rank rows --- */
+/* ── Title ── */
+.bk-podium-title{text-align:center;margin-bottom:6px}
+.bk-podium-title-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:5px}
+.bk-podium-title-icon{font-size:30px;line-height:1}
+.bk-podium-title-text{font-size:22px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#d4a017;text-shadow:0 0 30px rgba(212,160,23,.6),0 2px 6px rgba(0,0,0,.9)}
+.bk-podium-title-sub{font-size:11px;color:rgba(255,255,255,.35);letter-spacing:.04em;display:block}
+/* ── Rows ── */
+.bk-podium-rows{display:flex;flex-direction:column;gap:10px;margin:16px 0 12px}
 .bk-podium-row{
-  display:flex;align-items:center;gap:9px;
-  border-radius:10px;padding:7px 9px;
-  position:relative;overflow:hidden;
-  transition:transform .15s
+  display:flex;align-items:center;gap:12px;
+  border-radius:16px;padding:13px 14px 13px 10px;
+  position:relative;overflow:hidden;cursor:default
 }
-.bk-podium-row::before{
-  content:'';position:absolute;inset:0;border-radius:10px;opacity:.4;
-  background:linear-gradient(135deg,rgba(255,255,255,.05) 0%,transparent 60%)
-}
-
-/* Rank 1 — Gold */
+/* Gold */
 .bk-podium-row.pr1{
-  background:linear-gradient(135deg,rgba(20,14,2,.9),rgba(12,9,2,.9));
-  border:1px solid rgba(212,160,23,.5);
-  box-shadow:0 4px 16px rgba(212,160,23,.15),inset 0 1px 0 rgba(255,215,0,.12)
+  background:linear-gradient(135deg,#1f1400 0%,#2e1e00 40%,#1f1400 100%);
+  border:1.5px solid rgba(212,160,23,.6);
+  box-shadow:0 8px 24px rgba(212,160,23,.25),inset 0 1px 0 rgba(255,220,0,.18),inset 0 -1px 0 rgba(0,0,0,.5)
 }
-/* Rank 2 — Silver */
+/* Silver */
 .bk-podium-row.pr2{
-  background:linear-gradient(135deg,rgba(15,18,22,.9),rgba(10,13,17,.9));
+  background:linear-gradient(135deg,#0f1318 0%,#171c24 40%,#0f1318 100%);
   border:1px solid rgba(148,163,184,.3);
-  box-shadow:0 3px 10px rgba(0,0,0,.3),inset 0 1px 0 rgba(200,210,220,.06)
+  box-shadow:0 5px 16px rgba(0,0,0,.45),inset 0 1px 0 rgba(200,215,230,.09)
 }
-/* Rank 3 — Bronze */
+/* Bronze */
 .bk-podium-row.pr3{
-  background:linear-gradient(135deg,rgba(18,10,4,.9),rgba(12,7,2,.9));
-  border:1px solid rgba(180,100,40,.4);
-  box-shadow:0 3px 10px rgba(0,0,0,.3),inset 0 1px 0 rgba(251,146,60,.08)
+  background:linear-gradient(135deg,#1a0e04 0%,#261506 40%,#1a0e04 100%);
+  border:1.5px solid rgba(180,100,40,.42);
+  box-shadow:0 5px 16px rgba(0,0,0,.45),inset 0 1px 0 rgba(251,146,60,.12)
 }
-/* Rank 4 */
+/* 4th */
 .bk-podium-row.pr4{
-  background:rgba(255,255,255,.02);
-  border:1px solid rgba(255,255,255,.06);
-  box-shadow:0 2px 6px rgba(0,0,0,.2)
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 3px 10px rgba(0,0,0,.35)
 }
-
-/* Badge 3D medals */
+/* ── Medal badge ── */
 .bk-podium-badge{
-  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  width:56px;height:66px;flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;z-index:2
+}
+.bk-podium-badge-circle{
+  width:50px;height:50px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:16px;line-height:1;position:relative;z-index:1
+  font-size:22px;font-weight:900;font-family:var(--fn);
+  position:relative;flex-shrink:0;letter-spacing:-.5px
 }
-.pr1 .bk-podium-badge{
-  background:radial-gradient(circle at 35% 35%,#ffe566,#d4a017 55%,#8a6200);
-  box-shadow:0 3px 10px rgba(212,160,23,.5),0 1px 3px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,240,150,.4);
-  font-size:15px
+.pr1 .bk-podium-badge-circle{
+  background:radial-gradient(circle at 30% 25%,#fff5a0 0%,#f5c518 30%,#c8880a 60%,#7a5000 85%,#4a3000 100%);
+  box-shadow:0 6px 18px rgba(212,160,23,.7),0 2px 4px rgba(0,0,0,.8),inset 0 3px 5px rgba(255,245,100,.5),inset 0 -3px 5px rgba(0,0,0,.5);
+  color:#3d2200;border:2.5px solid rgba(255,200,30,.5)
 }
-.pr2 .bk-podium-badge{
-  background:radial-gradient(circle at 35% 35%,#f1f5f9,#94a3b8 55%,#475569);
-  box-shadow:0 3px 8px rgba(100,116,139,.4),0 1px 3px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.3);
-  font-size:15px
+.pr2 .bk-podium-badge-circle{
+  background:radial-gradient(circle at 30% 25%,#ffffff 0%,#dde4ea 30%,#9ab0c0 60%,#546e7a 85%,#2d3d45 100%);
+  box-shadow:0 5px 16px rgba(100,130,150,.5),0 2px 4px rgba(0,0,0,.8),inset 0 3px 5px rgba(255,255,255,.6),inset 0 -3px 5px rgba(0,0,0,.35);
+  color:#1a2a30;border:2.5px solid rgba(180,200,215,.45)
 }
-.pr3 .bk-podium-badge{
-  background:radial-gradient(circle at 35% 35%,#fed7aa,#c2692b 55%,#7c2d12);
-  box-shadow:0 3px 8px rgba(180,80,20,.4),0 1px 3px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,200,130,.3);
-  font-size:15px
+.pr3 .bk-podium-badge-circle{
+  background:radial-gradient(circle at 30% 25%,#ffe5a8 0%,#d4832a 30%,#9a4e10 60%,#5c2a08 85%,#3a1a04 100%);
+  box-shadow:0 5px 16px rgba(180,80,20,.55),0 2px 4px rgba(0,0,0,.8),inset 0 3px 5px rgba(255,210,100,.45),inset 0 -3px 5px rgba(0,0,0,.5);
+  color:#3a1a04;border:2.5px solid rgba(200,110,30,.45)
 }
-.pr4 .bk-podium-badge{
-  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
-  box-shadow:0 2px 5px rgba(0,0,0,.3);color:rgba(255,255,255,.4);font-size:12px;font-weight:800
+.pr4 .bk-podium-badge-circle{
+  background:radial-gradient(circle at 30% 25%,#4a5568,#2d3748 55%,#1a202c 100%);
+  box-shadow:0 4px 10px rgba(0,0,0,.55),inset 0 2px 3px rgba(255,255,255,.1),inset 0 -2px 3px rgba(0,0,0,.4);
+  color:rgba(255,255,255,.6);font-size:24px;border:2px solid rgba(255,255,255,.12)
 }
-
-/* Text info */
-.bk-podium-info{flex:1;min-width:0;position:relative;z-index:1}
+/* Ribbon */
+.bk-podium-badge-ribbon{
+  width:14px;height:11px;margin-top:-3px;
+  background:linear-gradient(180deg,#1a3bba,#1a56db);
+  clip-path:polygon(0 0,100% 0,100% 65%,50% 100%,0 65%);
+  flex-shrink:0
+}
+.pr4 .bk-podium-badge-ribbon{display:none}
+/* ── Info text ── */
+.bk-podium-info{flex:1;min-width:0;position:relative;z-index:2}
 .bk-podium-lbl{
-  font-size:8px;font-weight:900;letter-spacing:.12em;
-  text-transform:uppercase;line-height:1;margin-bottom:3px
+  font-size:10px;font-weight:900;letter-spacing:.1em;
+  text-transform:uppercase;line-height:1;margin-bottom:5px
 }
-.pr1 .bk-podium-lbl{color:rgba(212,160,23,.85)}
-.pr2 .bk-podium-lbl{color:rgba(148,163,184,.7)}
-.pr3 .bk-podium-lbl{color:rgba(180,100,40,.85)}
-.pr4 .bk-podium-lbl{color:rgba(255,255,255,.25)}
-.bk-podium-team{
-  font-size:11px;font-weight:700;line-height:1.3;word-break:break-word
-}
-.pr1 .bk-podium-team{color:#fef3c7}
-.pr2 .bk-podium-team{color:#e2e8f0}
-.pr3 .bk-podium-team{color:#fed7aa}
-.pr4 .bk-podium-team{color:rgba(255,255,255,.45)}
-.bk-podium-team2{font-size:10px;font-weight:500;line-height:1.2;word-break:break-word;margin-top:1px;opacity:.7}
-.pr1 .bk-podium-team2{color:#fde68a}
-.pr2 .bk-podium-team2{color:#94a3b8}
-.pr3 .bk-podium-team2{color:#fdba74}
+.pr1 .bk-podium-lbl{color:#d4a017}
+.pr2 .bk-podium-lbl{color:#8fa8be}
+.pr3 .bk-podium-lbl{color:#c2692b}
+.pr4 .bk-podium-lbl{color:rgba(255,255,255,.32)}
+.bk-podium-team{font-size:14px;font-weight:800;line-height:1.3;word-break:break-word}
+.pr1 .bk-podium-team{color:#fff9e8}
+.pr2 .bk-podium-team{color:#ecf0f1}
+.pr3 .bk-podium-team{color:#fff5e8}
+.pr4 .bk-podium-team{color:rgba(255,255,255,.52)}
+.bk-podium-team2{font-size:12px;font-weight:600;line-height:1.3;word-break:break-word;margin-top:2px}
+.pr1 .bk-podium-team2{color:rgba(255,230,100,.72)}
+.pr2 .bk-podium-team2{color:rgba(170,185,200,.62)}
+.pr3 .bk-podium-team2{color:rgba(255,185,100,.65)}
 .pr4 .bk-podium-team2{color:rgba(255,255,255,.3)}
-.bk-podium-empty{font-size:9px;color:rgba(255,255,255,.2);font-style:italic}
-
-/* Action buttons */
-.bk-podium-btns{display:flex;flex-direction:column;gap:5px}
+.bk-podium-empty{font-size:10px;color:rgba(255,255,255,.22);font-style:italic}
+/* ── Trophy SVG (right side) ── */
+.bk-podium-trophy-wrap{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  width:42px;height:42px;flex-shrink:0;z-index:1;pointer-events:none
+}
+.bk-podium-trophy-wrap svg{width:100%;height:100%}
+.pr1 .bk-podium-trophy-wrap{opacity:.32}
+.pr2 .bk-podium-trophy-wrap{opacity:.18;filter:grayscale(1) brightness(1.4)}
+.pr3 .bk-podium-trophy-wrap{opacity:.22;filter:sepia(1) saturate(1.5) hue-rotate(-10deg)}
+.pr4 .bk-podium-trophy-wrap{opacity:.1;filter:grayscale(1)}
+/* ── Divider ── */
+.bk-podium-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);margin:4px 0 10px}
+/* ── Buttons ── */
+.bk-podium-btns{display:flex;flex-direction:column;gap:8px}
 .bk-podium-btns button{
-  width:100%;padding:8px 10px;border:none;border-radius:9px;
-  font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;
-  transition:transform .15s,box-shadow .15s;letter-spacing:.02em
+  width:100%;padding:14px 16px;border-radius:14px;border:none;
+  font-size:12px;font-weight:900;cursor:pointer;
+  transition:transform .15s,opacity .15s;letter-spacing:.1em;text-transform:uppercase;
+  display:flex;align-items:center;gap:10px
 }
-.bk-podium-btns button:hover{transform:translateY(-1px)}
+.bk-podium-btns button:hover{transform:translateY(-1px);opacity:.9}
+.bk-podium-btn-icon{
+  width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:18px
+}
+.bk-podium-btn-label{flex:1;text-align:center;font-size:13px}
+.bk-podium-btn-arrow{font-size:18px;font-weight:900;opacity:.8}
+/* Download button */
 .bk-podium-btn-img{
-  background:linear-gradient(135deg,#1a1200,#2a1c00);
-  color:#fbbf24;
-  border:1px solid rgba(212,160,23,.4);
-  box-shadow:0 3px 10px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,210,0,.08)
+  background:linear-gradient(135deg,#241800,#1a1000);
+  color:#c8940a;
+  border:1.5px solid rgba(212,160,23,.45) !important;
+  box-shadow:0 4px 18px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,210,0,.08)
 }
-.bk-podium-btn-img:hover{box-shadow:0 5px 16px rgba(0,0,0,.5),0 0 12px rgba(212,160,23,.2)}
+.bk-podium-btn-img .bk-podium-btn-icon{background:rgba(212,160,23,.18);color:#d4a017}
+/* Excel button */
 .bk-podium-btn-xl{
-  background:linear-gradient(135deg,#071a0e,#0a2414);
-  color:#4ade80;
-  border:1px solid rgba(34,197,94,.25);
-  box-shadow:0 3px 10px rgba(0,0,0,.4),inset 0 1px 0 rgba(34,197,94,.06)
+  background:linear-gradient(135deg,#051409,#091e0e);
+  color:#1eb854;
+  border:1.5px solid rgba(34,197,94,.32) !important;
+  box-shadow:0 4px 18px rgba(0,0,0,.6),inset 0 1px 0 rgba(34,197,94,.07)
 }
-.bk-podium-btn-xl:hover{box-shadow:0 5px 16px rgba(0,0,0,.5),0 0 12px rgba(34,197,94,.15)}
+.bk-podium-btn-xl .bk-podium-btn-icon{background:rgba(34,197,94,.15)}
+/* Footer */
+.bk-podium-footer{
+  margin-top:10px;text-align:center;font-size:9px;
+  color:rgba(255,255,255,.22);letter-spacing:.03em;
+  display:flex;align-items:center;justify-content:center;gap:5px
+}
 /* ════ GROUP CARD ════ */
 .bk-col{display:flex;flex-direction:column;flex-shrink:0;min-width:210px}
 .bk-gcards{display:flex;flex-direction:column;gap:0;flex:1;justify-content:space-around}
@@ -13612,25 +13639,55 @@ function _bkUpdateChampBox() {
     const { rank1, rank2, rank3a, rank3b, rank4 } = _bkGetAllRanks();
     const champ = getChampName() || rank1;
     const isDong3 = !!(rank3a && rank3b && !rank4);
-    const title = '<div class="bk-podium-title">KẾT QUẢ</div>';
-    const mkRow = (cls, icon, lbl, t1, t2, ph) => {
+    // Trophy SVG inline
+    const _trophySvg = '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path d="M28 6H12v14c0 5.5 3.6 10.2 8 11.5V34H16v2h8v-2h-4v-2.5C24.4 30.2 28 25.5 28 20V6z" fill="rgba(255,215,0,.9)"/><path d="M12 10H6v4c0 3.3 2.7 6 6 6V10z" fill="rgba(255,215,0,.7)"/><path d="M28 10h6v4c0 3.3-2.7 6-6 6V10z" fill="rgba(255,215,0,.7)"/><rect x="14" y="34" width="12" height="2" rx="1" fill="rgba(255,215,0,.8)"/></svg>';
+    const _excelSvg = '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" rx="6" fill="#217346"/><rect x="2" y="2" width="28" height="28" rx="5" fill="#1e6a3d"/><path d="M8 8l5 8-5 8h3.5l3.5-5.5L18.5 24H22l-5-8 5-8h-3.5L15 13.5 11.5 8z" fill="white"/></svg>';
+    const title =
+      '<div class="bk-podium-title">'
+      +'<div class="bk-podium-title-row">'
+        +'<span class="bk-podium-title-icon">🏆</span>'
+        +'<span class="bk-podium-title-text">KẾT QUẢ</span>'
+      +'</div>'
+      +'<span class="bk-podium-title-sub">Top kết quả xuất sắc nhất</span>'
+      +'</div>';
+    const mkBadge = (num, cls) =>
+      '<div class="bk-podium-badge">'
+      +'<div class="bk-podium-badge-circle">'+num+'</div>'
+      +(cls!=='pr4'?'<div class="bk-podium-badge-ribbon"></div>':'')
+      +'</div>';
+    const mkTrophy = () => '<div class="bk-podium-trophy-wrap">'+_trophySvg+'</div>';
+    const mkRow = (cls, num, lbl, t1, t2, ph) => {
       const body = (!t1&&!t2)
         ? '<div class="bk-podium-empty">'+ph+'</div>'
         : '<div class="bk-podium-team">'+e(t1)+'</div>'+(t2?'<div class="bk-podium-team2">'+e(t2)+'</div>':'');
-      return '<div class="bk-podium-row '+cls+'"><div class="bk-podium-badge">'+icon+'</div>'
-           + '<div class="bk-podium-info"><div class="bk-podium-lbl">'+lbl+'</div>'+body+'</div></div>';
+      return '<div class="bk-podium-row '+cls+'">'
+        + mkBadge(num, cls)
+        + '<div class="bk-podium-info"><div class="bk-podium-lbl">'+lbl+'</div>'+body+'</div>'
+        + mkTrophy()
+        + '</div>';
     };
-    const rows = mkRow('pr1','🥇','Hạng nhất',rank1,'','Chờ CK')
-               + mkRow('pr2','🥈','Hạng nhì', rank2,'','Chờ CK')
-               + (isDong3 ? mkRow('pr3','🥉','Đồng hạng ba',rank3a,rank3b,'Chờ BK')
-                          : mkRow('pr3','🥉','Hạng ba',rank3a,'','Chờ H3'))
-               + (!isDong3&&(rank4||rank3a) ? mkRow('pr4','4','Hạng tư',rank4,'','Chờ H3') : '');
+    const rows = mkRow('pr1','1','Hạng Nhất',rank1,'','Chờ CK')
+               + mkRow('pr2','2','Hạng Nhì', rank2,'','Chờ CK')
+               + (isDong3 ? mkRow('pr3','3','Đồng Hạng Ba',rank3a,rank3b,'Chờ BK')
+                          : mkRow('pr3','3','Hạng Ba',rank3a,'','Chờ H3'))
+               + (!isDong3&&(rank4||rank3a) ? mkRow('pr4','4','Hạng Tư',rank4,'','Chờ H3') : '');
     panel.innerHTML = '<div class="bk-podium-panel">'+title
       +'<div class="bk-podium-rows">'+rows+'</div>'
+      +'<div class="bk-podium-divider"></div>'
       +'<div class="bk-podium-btns">'
-      +'<button class="bk-podium-btn-img" onclick="exportPodiumImage()">↓ Tải ảnh kết quả</button>'
-      +'<button class="bk-podium-btn-xl" onclick="doExportKetQuaExcel()">↓ Xuất Excel</button>'
-      +'</div></div>';
+        +'<button class="bk-podium-btn-img" onclick="exportPodiumImage()">'
+          +'<span class="bk-podium-btn-icon">⬇</span>'
+          +'<span class="bk-podium-btn-label">Tải Ảnh Kết Quả</span>'
+          +'<span class="bk-podium-btn-arrow">›</span>'
+        +'</button>'
+        +'<button class="bk-podium-btn-xl" onclick="doExportKetQuaExcel()">'
+          +'<span class="bk-podium-btn-icon" style="padding:3px">'+_excelSvg+'</span>'
+          +'<span class="bk-podium-btn-label">Xuất Excel</span>'
+          +'<span class="bk-podium-btn-arrow">›</span>'
+        +'</button>'
+      +'</div>'
+      +'<div class="bk-podium-footer">🛡 Cảm ơn bạn đã tham gia và tạo nên những khoảnh khắc đáng nhớ!</div>'
+      +'</div>';
     return true;
   };
   if (_doRender()) return;
