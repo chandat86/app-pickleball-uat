@@ -816,30 +816,138 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 /* ════ CHAMPION / PODIUM BOX ════ */
 .bk-champ-wrap{display:flex;align-self:stretch;align-items:flex-start;padding:38px 10px 0;flex-shrink:0}
 @keyframes bkChampIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-.bk-podium-panel{border:2px solid rgba(245,158,11,.5);border-radius:14px;background:linear-gradient(160deg,rgba(245,158,11,.08) 0%,var(--bg2) 60%);padding:12px 10px 10px;min-width:176px;max-width:210px;display:flex;flex-direction:column;gap:0;animation:bkChampIn .35s ease}
-.bk-podium-title{font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#f59e0b;text-align:center;margin-bottom:8px}
-.bk-podium-rows{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
-.bk-podium-row{display:flex;align-items:center;gap:7px;border-radius:8px;padding:5px 8px;background:rgba(255,255,255,.03);border:1px solid var(--bdr)}
-.bk-podium-row.pr1{border-color:rgba(251,191,36,.45);background:linear-gradient(90deg,rgba(251,191,36,.12),rgba(251,191,36,.02))}
-.bk-podium-row.pr2{border-color:rgba(148,163,184,.35);background:linear-gradient(90deg,rgba(148,163,184,.08),transparent)}
-.bk-podium-row.pr3{border-color:rgba(251,146,60,.35);background:linear-gradient(90deg,rgba(251,146,60,.1),transparent)}
-.bk-podium-row.pr4{border-color:rgba(99,102,241,.2);background:rgba(99,102,241,.04)}
-.bk-podium-badge{width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
-.pr1 .bk-podium-badge{background:linear-gradient(145deg,#fde68a,#f59e0b);color:#78350f}
-.pr2 .bk-podium-badge{background:linear-gradient(145deg,#e2e8f0,#94a3b8);color:#1e293b}
-.pr3 .bk-podium-badge{background:linear-gradient(145deg,#fed7aa,#f97316);color:#fff}
-.pr4 .bk-podium-badge{background:rgba(99,102,241,.18);color:#818cf8}
-.bk-podium-info{flex:1;min-width:0}
-.bk-podium-lbl{font-size:8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;line-height:1;margin-bottom:2px}
-.pr1 .bk-podium-lbl{color:#92400e}.pr2 .bk-podium-lbl{color:#64748b}.pr3 .bk-podium-lbl{color:#9a3412}.pr4 .bk-podium-lbl{color:#6366f1}
-.bk-podium-team{font-size:10px;font-weight:700;color:var(--tx);line-height:1.25;word-break:break-word}
-.bk-podium-team2{font-size:9px;font-weight:600;color:var(--tx2);line-height:1.2;word-break:break-word;margin-top:1px}
-.bk-podium-empty{font-size:9px;color:var(--tx4);font-style:italic}
+/* ── PODIUM v133: Professional 3D Dark Design ── */
+@keyframes podiumIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes shimmer{0%,100%{opacity:.6}50%{opacity:1}}
+.bk-podium-panel{
+  border-radius:16px;
+  background:linear-gradient(160deg,#0d1b2e 0%,#081425 100%);
+  border:1px solid rgba(255,255,255,.07);
+  box-shadow:0 8px 32px rgba(0,0,0,.6),0 2px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);
+  padding:14px 12px 12px;
+  min-width:176px;max-width:220px;
+  display:flex;flex-direction:column;gap:0;
+  animation:podiumIn .4s cubic-bezier(.22,1,.36,1)
+}
+.bk-podium-title{
+  font-size:10px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(255,255,255,.5);text-align:center;margin-bottom:10px;
+  display:flex;align-items:center;justify-content:center;gap:6px
+}
+.bk-podium-title::before,.bk-podium-title::after{
+  content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)
+}
+.bk-podium-rows{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+
+/* --- Rank rows --- */
+.bk-podium-row{
+  display:flex;align-items:center;gap:9px;
+  border-radius:10px;padding:7px 9px;
+  position:relative;overflow:hidden;
+  transition:transform .15s
+}
+.bk-podium-row::before{
+  content:'';position:absolute;inset:0;border-radius:10px;opacity:.4;
+  background:linear-gradient(135deg,rgba(255,255,255,.05) 0%,transparent 60%)
+}
+
+/* Rank 1 — Gold */
+.bk-podium-row.pr1{
+  background:linear-gradient(135deg,rgba(20,14,2,.9),rgba(12,9,2,.9));
+  border:1px solid rgba(212,160,23,.5);
+  box-shadow:0 4px 16px rgba(212,160,23,.15),inset 0 1px 0 rgba(255,215,0,.12)
+}
+/* Rank 2 — Silver */
+.bk-podium-row.pr2{
+  background:linear-gradient(135deg,rgba(15,18,22,.9),rgba(10,13,17,.9));
+  border:1px solid rgba(148,163,184,.3);
+  box-shadow:0 3px 10px rgba(0,0,0,.3),inset 0 1px 0 rgba(200,210,220,.06)
+}
+/* Rank 3 — Bronze */
+.bk-podium-row.pr3{
+  background:linear-gradient(135deg,rgba(18,10,4,.9),rgba(12,7,2,.9));
+  border:1px solid rgba(180,100,40,.4);
+  box-shadow:0 3px 10px rgba(0,0,0,.3),inset 0 1px 0 rgba(251,146,60,.08)
+}
+/* Rank 4 */
+.bk-podium-row.pr4{
+  background:rgba(255,255,255,.02);
+  border:1px solid rgba(255,255,255,.06);
+  box-shadow:0 2px 6px rgba(0,0,0,.2)
+}
+
+/* Badge 3D medals */
+.bk-podium-badge{
+  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;line-height:1;position:relative;z-index:1
+}
+.pr1 .bk-podium-badge{
+  background:radial-gradient(circle at 35% 35%,#ffe566,#d4a017 55%,#8a6200);
+  box-shadow:0 3px 10px rgba(212,160,23,.5),0 1px 3px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,240,150,.4);
+  font-size:15px
+}
+.pr2 .bk-podium-badge{
+  background:radial-gradient(circle at 35% 35%,#f1f5f9,#94a3b8 55%,#475569);
+  box-shadow:0 3px 8px rgba(100,116,139,.4),0 1px 3px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.3);
+  font-size:15px
+}
+.pr3 .bk-podium-badge{
+  background:radial-gradient(circle at 35% 35%,#fed7aa,#c2692b 55%,#7c2d12);
+  box-shadow:0 3px 8px rgba(180,80,20,.4),0 1px 3px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,200,130,.3);
+  font-size:15px
+}
+.pr4 .bk-podium-badge{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 2px 5px rgba(0,0,0,.3);color:rgba(255,255,255,.4);font-size:12px;font-weight:800
+}
+
+/* Text info */
+.bk-podium-info{flex:1;min-width:0;position:relative;z-index:1}
+.bk-podium-lbl{
+  font-size:8px;font-weight:900;letter-spacing:.12em;
+  text-transform:uppercase;line-height:1;margin-bottom:3px
+}
+.pr1 .bk-podium-lbl{color:rgba(212,160,23,.85)}
+.pr2 .bk-podium-lbl{color:rgba(148,163,184,.7)}
+.pr3 .bk-podium-lbl{color:rgba(180,100,40,.85)}
+.pr4 .bk-podium-lbl{color:rgba(255,255,255,.25)}
+.bk-podium-team{
+  font-size:11px;font-weight:700;line-height:1.3;word-break:break-word
+}
+.pr1 .bk-podium-team{color:#fef3c7}
+.pr2 .bk-podium-team{color:#e2e8f0}
+.pr3 .bk-podium-team{color:#fed7aa}
+.pr4 .bk-podium-team{color:rgba(255,255,255,.45)}
+.bk-podium-team2{font-size:10px;font-weight:500;line-height:1.2;word-break:break-word;margin-top:1px;opacity:.7}
+.pr1 .bk-podium-team2{color:#fde68a}
+.pr2 .bk-podium-team2{color:#94a3b8}
+.pr3 .bk-podium-team2{color:#fdba74}
+.pr4 .bk-podium-team2{color:rgba(255,255,255,.3)}
+.bk-podium-empty{font-size:9px;color:rgba(255,255,255,.2);font-style:italic}
+
+/* Action buttons */
 .bk-podium-btns{display:flex;flex-direction:column;gap:5px}
-.bk-podium-btns button{width:100%;padding:7px 10px;border:none;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;transition:transform .15s,opacity .15s}
-.bk-podium-btns button:hover{transform:translateY(-1px);opacity:.9}
-.bk-podium-btn-img{background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;box-shadow:0 2px 8px rgba(245,158,11,.4)}
-.bk-podium-btn-xl{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;box-shadow:0 2px 8px rgba(34,197,94,.35)}
+.bk-podium-btns button{
+  width:100%;padding:8px 10px;border:none;border-radius:9px;
+  font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;
+  transition:transform .15s,box-shadow .15s;letter-spacing:.02em
+}
+.bk-podium-btns button:hover{transform:translateY(-1px)}
+.bk-podium-btn-img{
+  background:linear-gradient(135deg,#1a1200,#2a1c00);
+  color:#fbbf24;
+  border:1px solid rgba(212,160,23,.4);
+  box-shadow:0 3px 10px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,210,0,.08)
+}
+.bk-podium-btn-img:hover{box-shadow:0 5px 16px rgba(0,0,0,.5),0 0 12px rgba(212,160,23,.2)}
+.bk-podium-btn-xl{
+  background:linear-gradient(135deg,#071a0e,#0a2414);
+  color:#4ade80;
+  border:1px solid rgba(34,197,94,.25);
+  box-shadow:0 3px 10px rgba(0,0,0,.4),inset 0 1px 0 rgba(34,197,94,.06)
+}
+.bk-podium-btn-xl:hover{box-shadow:0 5px 16px rgba(0,0,0,.5),0 0 12px rgba(34,197,94,.15)}
 /* ════ GROUP CARD ════ */
 .bk-col{display:flex;flex-direction:column;flex-shrink:0;min-width:210px}
 .bk-gcards{display:flex;flex-direction:column;gap:0;flex:1;justify-content:space-around}
@@ -13504,7 +13612,7 @@ function _bkUpdateChampBox() {
     const { rank1, rank2, rank3a, rank3b, rank4 } = _bkGetAllRanks();
     const champ = getChampName() || rank1;
     const isDong3 = !!(rank3a && rank3b && !rank4);
-    const title = '<div class="bk-podium-title">' + (champ ? '🏆 Kết quả' : '🏆 Xếp hạng') + '</div>';
+    const title = '<div class="bk-podium-title">KẾT QUẢ</div>';
     const mkRow = (cls, icon, lbl, t1, t2, ph) => {
       const body = (!t1&&!t2)
         ? '<div class="bk-podium-empty">'+ph+'</div>'
@@ -13516,12 +13624,12 @@ function _bkUpdateChampBox() {
                + mkRow('pr2','🥈','Hạng nhì', rank2,'','Chờ CK')
                + (isDong3 ? mkRow('pr3','🥉','Đồng hạng ba',rank3a,rank3b,'Chờ BK')
                           : mkRow('pr3','🥉','Hạng ba',rank3a,'','Chờ H3'))
-               + (!isDong3&&(rank4||rank3a) ? mkRow('pr4','4️⃣','Hạng tư',rank4,'','Chờ H3') : '');
+               + (!isDong3&&(rank4||rank3a) ? mkRow('pr4','4','Hạng tư',rank4,'','Chờ H3') : '');
     panel.innerHTML = '<div class="bk-podium-panel">'+title
       +'<div class="bk-podium-rows">'+rows+'</div>'
       +'<div class="bk-podium-btns">'
-      +'<button class="bk-podium-btn-img" onclick="exportPodiumImage()">🏅 Tải ảnh kết quả</button>'
-      +'<button class="bk-podium-btn-xl" onclick="doExportKetQuaExcel()">📊 Xuất Excel</button>'
+      +'<button class="bk-podium-btn-img" onclick="exportPodiumImage()">↓ Tải ảnh kết quả</button>'
+      +'<button class="bk-podium-btn-xl" onclick="doExportKetQuaExcel()">↓ Xuất Excel</button>'
       +'</div></div>';
     return true;
   };
