@@ -816,164 +816,139 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 /* ════ CHAMPION / PODIUM BOX ════ */
 .bk-champ-wrap{display:flex;align-self:stretch;align-items:flex-start;padding:38px 10px 0;flex-shrink:0}
 @keyframes bkChampIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
-/* ── PODIUM v133c: Pixel-perfect match ── */
-@keyframes podiumIn{from{opacity:0;transform:translateY(14px) scale(.95)}to{opacity:1;transform:none}}
+/* ── PODIUM v133e: Light cream theme ── */
+@keyframes podiumIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
 .bk-podium-panel{
-  border-radius:22px;
-  background:linear-gradient(180deg,#0c1520 0%,#060d16 100%);
-  border:1px solid rgba(255,255,255,.07);
-  box-shadow:0 24px 80px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.06);
-  padding:22px 16px 16px;
-  width:100%;max-width:340px;box-sizing:border-box;
+  border-radius:20px;
+  background:linear-gradient(160deg,#fdf8f0 0%,#f5ece0 100%);
+  border:1px solid rgba(200,165,100,.25);
+  box-shadow:0 8px 32px rgba(160,120,60,.15),0 2px 8px rgba(0,0,0,.08);
+  padding:18px 14px 14px;
+  width:210px;box-sizing:border-box;
   display:flex;flex-direction:column;gap:0;
-  animation:podiumIn .4s cubic-bezier(.22,1,.36,1)
+  animation:podiumIn .35s cubic-bezier(.22,1,.36,1)
 }
-/* ── Title ── */
-.bk-podium-title{text-align:center;margin-bottom:6px}
-.bk-podium-title-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:5px}
-.bk-podium-title-icon{font-size:30px;line-height:1}
-.bk-podium-title-text{font-size:22px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#d4a017;text-shadow:0 0 30px rgba(212,160,23,.6),0 2px 6px rgba(0,0,0,.9)}
-.bk-podium-title-sub{font-size:11px;color:rgba(255,255,255,.35);letter-spacing:.04em;display:block}
-/* ── Rows ── */
-.bk-podium-rows{display:flex;flex-direction:column;gap:10px;margin:16px 0 12px}
+/* Title */
+.bk-podium-title{text-align:center;margin-bottom:2px}
+.bk-podium-title-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px}
+.bk-podium-title-icon{font-size:20px;line-height:1}
+.bk-podium-title-text{
+  font-size:18px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;
+  color:#1a2340;
+  text-shadow:none
+}
+.bk-podium-title-sub{font-size:9px;color:#888070;letter-spacing:.03em;display:block;text-align:center}
+/* Ornament line under subtitle */
+.bk-podium-title-orn{
+  display:flex;align-items:center;justify-content:center;gap:6px;margin:6px 0 10px;opacity:.5
+}
+.bk-podium-title-orn::before,.bk-podium-title-orn::after{
+  content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,#c8a050,transparent)
+}
+.bk-podium-title-orn-diamond{
+  width:6px;height:6px;background:#c8a050;transform:rotate(45deg);flex-shrink:0
+}
+/* Rows */
+.bk-podium-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
 .bk-podium-row{
-  display:flex;align-items:center;gap:12px;
-  border-radius:16px;padding:13px 14px 13px 10px;
-  position:relative;overflow:hidden;cursor:default
+  display:flex;align-items:center;gap:10px;
+  border-radius:14px;padding:10px 10px 10px 6px;
+  position:relative;overflow:hidden;
+  border:1px solid transparent
 }
 /* Gold */
 .bk-podium-row.pr1{
-  background:linear-gradient(135deg,#1f1400 0%,#2e1e00 40%,#1f1400 100%);
-  border:1.5px solid rgba(212,160,23,.6);
-  box-shadow:0 8px 24px rgba(212,160,23,.25),inset 0 1px 0 rgba(255,220,0,.18),inset 0 -1px 0 rgba(0,0,0,.5)
+  background:linear-gradient(135deg,#fffbe8 0%,#fef3c0 50%,#fef9e8 100%);
+  border-color:rgba(212,160,23,.45);
+  box-shadow:0 3px 12px rgba(212,160,23,.2),inset 0 1px 0 rgba(255,255,255,.8)
 }
 /* Silver */
 .bk-podium-row.pr2{
-  background:linear-gradient(135deg,#0f1318 0%,#171c24 40%,#0f1318 100%);
-  border:1px solid rgba(148,163,184,.3);
-  box-shadow:0 5px 16px rgba(0,0,0,.45),inset 0 1px 0 rgba(200,215,230,.09)
+  background:linear-gradient(135deg,#f8f9fa 0%,#f0f2f5 50%,#f8f9fa 100%);
+  border-color:rgba(160,175,190,.35);
+  box-shadow:0 2px 8px rgba(0,0,0,.07),inset 0 1px 0 rgba(255,255,255,.9)
 }
 /* Bronze */
 .bk-podium-row.pr3{
-  background:linear-gradient(135deg,#1a0e04 0%,#261506 40%,#1a0e04 100%);
-  border:1.5px solid rgba(180,100,40,.42);
-  box-shadow:0 5px 16px rgba(0,0,0,.45),inset 0 1px 0 rgba(251,146,60,.12)
+  background:linear-gradient(135deg,#fff7f0 0%,#fdebd8 50%,#fff7f0 100%);
+  border-color:rgba(180,100,40,.3);
+  box-shadow:0 2px 8px rgba(180,100,40,.12),inset 0 1px 0 rgba(255,255,255,.8)
 }
 /* 4th */
 .bk-podium-row.pr4{
-  background:rgba(255,255,255,.025);
-  border:1px solid rgba(255,255,255,.08);
-  box-shadow:0 3px 10px rgba(0,0,0,.35)
+  background:linear-gradient(135deg,#f5f5f5 0%,#efefef 100%);
+  border-color:rgba(0,0,0,.08);
+  box-shadow:0 2px 6px rgba(0,0,0,.05)
 }
-/* ── Medal badge ── */
+/* ── Medal badge (toothed circle) ── */
 .bk-podium-badge{
-  width:56px;height:66px;flex-shrink:0;
+  width:46px;height:54px;flex-shrink:0;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  position:relative;z-index:2
+  z-index:2
 }
-.bk-podium-badge-circle{
-  width:50px;height:50px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:22px;font-weight:900;font-family:var(--fn);
-  position:relative;flex-shrink:0;letter-spacing:-.5px
-}
-.pr1 .bk-podium-badge-circle{
-  background:radial-gradient(circle at 30% 25%,#fff5a0 0%,#f5c518 30%,#c8880a 60%,#7a5000 85%,#4a3000 100%);
-  box-shadow:0 6px 18px rgba(212,160,23,.7),0 2px 4px rgba(0,0,0,.8),inset 0 3px 5px rgba(255,245,100,.5),inset 0 -3px 5px rgba(0,0,0,.5);
-  color:#3d2200;border:2.5px solid rgba(255,200,30,.5)
-}
-.pr2 .bk-podium-badge-circle{
-  background:radial-gradient(circle at 30% 25%,#ffffff 0%,#dde4ea 30%,#9ab0c0 60%,#546e7a 85%,#2d3d45 100%);
-  box-shadow:0 5px 16px rgba(100,130,150,.5),0 2px 4px rgba(0,0,0,.8),inset 0 3px 5px rgba(255,255,255,.6),inset 0 -3px 5px rgba(0,0,0,.35);
-  color:#1a2a30;border:2.5px solid rgba(180,200,215,.45)
-}
-.pr3 .bk-podium-badge-circle{
-  background:radial-gradient(circle at 30% 25%,#ffe5a8 0%,#d4832a 30%,#9a4e10 60%,#5c2a08 85%,#3a1a04 100%);
-  box-shadow:0 5px 16px rgba(180,80,20,.55),0 2px 4px rgba(0,0,0,.8),inset 0 3px 5px rgba(255,210,100,.45),inset 0 -3px 5px rgba(0,0,0,.5);
-  color:#3a1a04;border:2.5px solid rgba(200,110,30,.45)
-}
-.pr4 .bk-podium-badge-circle{
-  background:radial-gradient(circle at 30% 25%,#4a5568,#2d3748 55%,#1a202c 100%);
-  box-shadow:0 4px 10px rgba(0,0,0,.55),inset 0 2px 3px rgba(255,255,255,.1),inset 0 -2px 3px rgba(0,0,0,.4);
-  color:rgba(255,255,255,.6);font-size:24px;border:2px solid rgba(255,255,255,.12)
-}
+.bk-podium-badge svg.medal{width:42px;height:42px}
 /* Ribbon */
 .bk-podium-badge-ribbon{
-  width:14px;height:11px;margin-top:-3px;
-  background:linear-gradient(180deg,#1a3bba,#1a56db);
+  width:12px;height:10px;margin-top:-3px;
+  background:linear-gradient(180deg,#1e40af,#2563eb);
   clip-path:polygon(0 0,100% 0,100% 65%,50% 100%,0 65%);
-  flex-shrink:0
+  box-shadow:0 1px 3px rgba(0,0,0,.3)
 }
 .pr4 .bk-podium-badge-ribbon{display:none}
-/* ── Info text ── */
-.bk-podium-info{flex:1;min-width:0;position:relative;z-index:2}
-.bk-podium-lbl{
-  font-size:10px;font-weight:900;letter-spacing:.1em;
-  text-transform:uppercase;line-height:1;margin-bottom:5px
-}
-.pr1 .bk-podium-lbl{color:#d4a017}
-.pr2 .bk-podium-lbl{color:#8fa8be}
-.pr3 .bk-podium-lbl{color:#c2692b}
-.pr4 .bk-podium-lbl{color:rgba(255,255,255,.32)}
-.bk-podium-team{font-size:14px;font-weight:800;line-height:1.3;word-break:break-word}
-.pr1 .bk-podium-team{color:#fff9e8}
-.pr2 .bk-podium-team{color:#ecf0f1}
-.pr3 .bk-podium-team{color:#fff5e8}
-.pr4 .bk-podium-team{color:rgba(255,255,255,.52)}
-.bk-podium-team2{font-size:12px;font-weight:600;line-height:1.3;word-break:break-word;margin-top:2px}
-.pr1 .bk-podium-team2{color:rgba(255,230,100,.72)}
-.pr2 .bk-podium-team2{color:rgba(170,185,200,.62)}
-.pr3 .bk-podium-team2{color:rgba(255,185,100,.65)}
-.pr4 .bk-podium-team2{color:rgba(255,255,255,.3)}
-.bk-podium-empty{font-size:10px;color:rgba(255,255,255,.22);font-style:italic}
-/* ── Trophy SVG (right side) ── */
+/* Trophy right */
 .bk-podium-trophy-wrap{
-  position:absolute;right:12px;top:50%;transform:translateY(-50%);
-  width:42px;height:42px;flex-shrink:0;z-index:1;pointer-events:none
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  width:36px;height:36px;z-index:1;pointer-events:none
 }
 .bk-podium-trophy-wrap svg{width:100%;height:100%}
-.pr1 .bk-podium-trophy-wrap{opacity:.32}
-.pr2 .bk-podium-trophy-wrap{opacity:.18;filter:grayscale(1) brightness(1.4)}
-.pr3 .bk-podium-trophy-wrap{opacity:.22;filter:sepia(1) saturate(1.5) hue-rotate(-10deg)}
-.pr4 .bk-podium-trophy-wrap{opacity:.1;filter:grayscale(1)}
-/* ── Divider ── */
-.bk-podium-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);margin:4px 0 10px}
-/* ── Buttons ── */
-.bk-podium-btns{display:flex;flex-direction:column;gap:8px}
+/* Text */
+.bk-podium-info{flex:1;min-width:0;z-index:2;padding-right:38px}
+.bk-podium-lbl{
+  font-size:8px;font-weight:900;letter-spacing:.1em;
+  text-transform:uppercase;line-height:1;margin-bottom:4px
+}
+.pr1 .bk-podium-lbl{color:#b8860b}
+.pr2 .bk-podium-lbl{color:#607090}
+.pr3 .bk-podium-lbl{color:#a05020}
+.pr4 .bk-podium-lbl{color:#909090}
+.bk-podium-team{font-size:11px;font-weight:800;line-height:1.3;word-break:break-word}
+.pr1 .bk-podium-team,.pr2 .bk-podium-team,.pr3 .bk-podium-team{color:#1a2340}
+.pr4 .bk-podium-team{color:#555}
+.bk-podium-team2{font-size:9px;font-weight:600;line-height:1.25;word-break:break-word;margin-top:1px;color:#666}
+.bk-podium-empty{font-size:8px;color:#aaa;font-style:italic}
+/* Divider */
+.bk-podium-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(180,140,80,.25),transparent);margin:3px 0 8px}
+/* Buttons */
+.bk-podium-btns{display:flex;flex-direction:column;gap:6px}
 .bk-podium-btns button{
-  width:100%;padding:14px 16px;border-radius:14px;border:none;
-  font-size:12px;font-weight:900;cursor:pointer;
-  transition:transform .15s,opacity .15s;letter-spacing:.1em;text-transform:uppercase;
-  display:flex;align-items:center;gap:10px
+  width:100%;padding:10px 12px;border-radius:12px;border:none;
+  font-size:9px;font-weight:900;cursor:pointer;
+  transition:transform .15s,box-shadow .15s;letter-spacing:.1em;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px
 }
-.bk-podium-btns button:hover{transform:translateY(-1px);opacity:.9}
-.bk-podium-btn-icon{
-  width:34px;height:34px;border-radius:9px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;font-size:18px
-}
-.bk-podium-btn-label{flex:1;text-align:center;font-size:13px}
-.bk-podium-btn-arrow{font-size:18px;font-weight:900;opacity:.8}
-/* Download button */
+.bk-podium-btns button:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.bk-podium-btn-icon{width:26px;height:26px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px}
+.bk-podium-btn-label{flex:1;text-align:center;font-size:9px}
+.bk-podium-btn-arrow{font-size:13px;font-weight:900;opacity:.7}
+/* Download btn */
 .bk-podium-btn-img{
-  background:linear-gradient(135deg,#241800,#1a1000);
-  color:#c8940a;
-  border:1.5px solid rgba(212,160,23,.45) !important;
-  box-shadow:0 4px 18px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,210,0,.08)
+  background:#fff;color:#b8860b;
+  border:1.5px solid rgba(184,134,11,.4) !important;
+  box-shadow:0 2px 8px rgba(184,134,11,.15)
 }
-.bk-podium-btn-img .bk-podium-btn-icon{background:rgba(212,160,23,.18);color:#d4a017}
-/* Excel button */
+.bk-podium-btn-img .bk-podium-btn-icon{background:rgba(212,160,23,.12);color:#b8860b}
+/* Excel btn */
 .bk-podium-btn-xl{
-  background:linear-gradient(135deg,#051409,#091e0e);
-  color:#1eb854;
-  border:1.5px solid rgba(34,197,94,.32) !important;
-  box-shadow:0 4px 18px rgba(0,0,0,.6),inset 0 1px 0 rgba(34,197,94,.07)
+  background:#fff;color:#15803d;
+  border:1.5px solid rgba(21,128,61,.3) !important;
+  box-shadow:0 2px 8px rgba(21,128,61,.1)
 }
-.bk-podium-btn-xl .bk-podium-btn-icon{background:rgba(34,197,94,.15)}
+.bk-podium-btn-xl .bk-podium-btn-icon{background:transparent;padding:2px;box-sizing:border-box}
 /* Footer */
 .bk-podium-footer{
-  margin-top:10px;text-align:center;font-size:9px;
-  color:rgba(255,255,255,.22);letter-spacing:.03em;
-  display:flex;align-items:center;justify-content:center;gap:5px
+  margin-top:8px;text-align:center;font-size:7px;
+  color:#aaa;letter-spacing:.02em;
+  display:flex;align-items:center;justify-content:center;gap:4px
 }
 /* ════ GROUP CARD ════ */
 .bk-col{display:flex;flex-direction:column;flex-shrink:0;min-width:210px}
@@ -13639,53 +13614,39 @@ function _bkUpdateChampBox() {
     const { rank1, rank2, rank3a, rank3b, rank4 } = _bkGetAllRanks();
     const champ = getChampName() || rank1;
     const isDong3 = !!(rank3a && rank3b && !rank4);
-    // ── Trophy SVG: cup + laurel wreath, per rank ──
-    const _mkCupSvg = (cupGrad, leafCol, op) =>
-      '<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" opacity="'+op+'">'
-      // Laurel left
-      +'<ellipse cx="10" cy="22" rx="4.5" ry="2.5" fill="'+leafCol+'" transform="rotate(-40 10 22)"/>'
-      +'<ellipse cx="8"  cy="28" rx="4.5" ry="2.5" fill="'+leafCol+'" transform="rotate(-30 8 28)" opacity=".8"/>'
-      +'<ellipse cx="8"  cy="34" rx="4.5" ry="2.5" fill="'+leafCol+'" transform="rotate(-20 8 34)"/>'
-      +'<ellipse cx="9"  cy="40" rx="4.5" ry="2.5" fill="'+leafCol+'" transform="rotate(-10 9 40)" opacity=".8"/>'
-      +'<ellipse cx="12" cy="46" rx="4.5" ry="2.5" fill="'+leafCol+'" transform="rotate(5 12 46)"/>'
-      // Laurel right
-      +'<ellipse cx="50" cy="22" rx="4.5" ry="2.5" fill="'+leafCol+'" transform="rotate(40 50 22)"/>'
-      +'<ellipse cx="52" cy="28" rx="4.5" ry="2.5" fill="'+leafCol+'" transform="rotate(30 52 28)" opacity=".8"/>'
-      +'<ellipse cx="52" cy="34" rx="4.5" ry="2.5" fill="'+leafCol+'" transform="rotate(20 52 34)"/>'
-      +'<ellipse cx="51" cy="40" rx="4.5" ry="2.5" fill="'+leafCol+'" transform="rotate(10 51 40)" opacity=".8"/>'
-      +'<ellipse cx="48" cy="46" rx="4.5" ry="2.5" fill="'+leafCol+'" transform="rotate(-5 48 46)"/>'
-      +'<path d="M14 50 Q30 54 46 50" stroke="'+leafCol+'" stroke-width="1.5" fill="none" opacity=".6"/>'
-      // Cup body
-      +'<defs><linearGradient id="cg_'+op.replace(".","")+'" x1="0" y1="0" x2="1" y2="1">'+cupGrad+'</linearGradient></defs>'
-      +'<path d="M21 10 h18 v14 c0 7-4.5 12-9 13.5V42h3v3H27v-3h3V37.5C25.5 36 21 31 21 24z" fill="url(#cg_'+op.replace(".","")+')"/>'
-      // Handles
-      +'<path d="M21 14 h-4 c0 0-3 0-3 5 c0 4 3 5 3 5 h4" fill="none" stroke="url(#cg_'+op.replace(".","")+')" stroke-width="2.5" stroke-linecap="round"/>'
-      +'<path d="M39 14 h4 c0 0 3 0 3 5 c0 4-3 5-3 5 h-4" fill="none" stroke="url(#cg_'+op.replace(".","")+')" stroke-width="2.5" stroke-linecap="round"/>'
-      // Base
-      +'<rect x="24" y="42" width="12" height="3" rx="1" fill="url(#cg_'+op.replace(".","")+')"/>'
-      +'<rect x="21" y="45" width="18" height="2.5" rx="1.2" fill="url(#cg_'+op.replace(".","")+')"/>'
-      // Shine
-      +'<ellipse cx="26" cy="18" rx="3" ry="5" fill="rgba(255,255,255,.18)" transform="rotate(-10 26 18)"/>'
-      +'</svg>';
-    const _tR = {
-      pr1: _mkCupSvg('<stop offset="0%" stop-color="#ffe566"/><stop offset="40%" stop-color="#d4a017"/><stop offset="100%" stop-color="#7a5000"/>','#c8880a','1'),
-      pr2: _mkCupSvg('<stop offset="0%" stop-color="#f0f4f8"/><stop offset="40%" stop-color="#94a3b8"/><stop offset="100%" stop-color="#37474f"/>','#8090a0','1'),
-      pr3: _mkCupSvg('<stop offset="0%" stop-color="#ffd090"/><stop offset="40%" stop-color="#c2692b"/><stop offset="100%" stop-color="#4a1a08"/>','#8a5020','1'),
-      pr4: _mkCupSvg('<stop offset="0%" stop-color="#7a8898"/><stop offset="50%" stop-color="#4a5568"/><stop offset="100%" stop-color="#1e2530"/>','#505868','1')
+    // ── PODIUM LIGHT THEME: toothed medal + trophy SVG ──
+    const _M = {
+      pr1: '<svg class=\"medal\" viewBox=\"0 0 80 80\" xmlns=\"http://www.w3.org/2000/svg\"><polygon points=\"40.0,2.0 45.9,10.6 54.5,4.9 56.7,15.1 66.9,13.1 64.9,23.3 75.1,25.5 69.4,34.1 78.0,40.0 69.4,45.9 75.1,54.5 64.9,56.7 66.9,66.9 56.7,64.9 54.5,75.1 45.9,69.4 40.0,78.0 34.1,69.4 25.5,75.1 23.3,64.9 13.1,66.9 15.1,56.7 4.9,54.5 10.6,45.9 2.0,40.0 10.6,34.1 4.9,25.5 15.1,23.3 13.1,13.1 23.3,15.1 25.5,4.9 34.1,10.6\" fill=\"#d4a017\"/><defs><radialGradient id=\"mg1\" cx=\"35%\" cy=\"28%\" r=\"70%\"><stop offset=\"0%\" stop-color=\"#fff3a0\"/><stop offset=\"40%\" stop-color=\"#f5c518\"/><stop offset=\"75%\" stop-color=\"#d4920a\"/><stop offset=\"100%\" stop-color=\"#a06500\"/></radialGradient></defs><circle cx=\"40\" cy=\"40\" r=\"28\" fill=\"url(#mg1)\"/><circle cx=\"40\" cy=\"40\" r=\"24\" fill=\"none\" stroke=\"rgba(255,255,255,.4)\" stroke-width=\"1.5\"/><ellipse cx=\"32\" cy=\"30\" rx=\"7\" ry=\"5\" fill=\"rgba(255,255,255,.4)\" transform=\"rotate(-20 32 30)\"/><text x=\"40\" y=\"48\" text-anchor=\"middle\" font-family=\"-apple-system,sans-serif\" font-size=\"26\" font-weight=\"900\" fill=\"#5a3500\">1</text></svg>',
+      pr2: '<svg class=\"medal\" viewBox=\"0 0 80 80\" xmlns=\"http://www.w3.org/2000/svg\"><polygon points=\"40.0,2.0 45.9,10.6 54.5,4.9 56.7,15.1 66.9,13.1 64.9,23.3 75.1,25.5 69.4,34.1 78.0,40.0 69.4,45.9 75.1,54.5 64.9,56.7 66.9,66.9 56.7,64.9 54.5,75.1 45.9,69.4 40.0,78.0 34.1,69.4 25.5,75.1 23.3,64.9 13.1,66.9 15.1,56.7 4.9,54.5 10.6,45.9 2.0,40.0 10.6,34.1 4.9,25.5 15.1,23.3 13.1,13.1 23.3,15.1 25.5,4.9 34.1,10.6\" fill=\"#909aaa\"/><defs><radialGradient id=\"mg2\" cx=\"35%\" cy=\"28%\" r=\"70%\"><stop offset=\"0%\" stop-color=\"#ffffff\"/><stop offset=\"40%\" stop-color=\"#d0d8e0\"/><stop offset=\"75%\" stop-color=\"#90a0b0\"/><stop offset=\"100%\" stop-color=\"#506070\"/></radialGradient></defs><circle cx=\"40\" cy=\"40\" r=\"28\" fill=\"url(#mg2)\"/><circle cx=\"40\" cy=\"40\" r=\"24\" fill=\"none\" stroke=\"rgba(255,255,255,.45)\" stroke-width=\"1.5\"/><ellipse cx=\"32\" cy=\"30\" rx=\"7\" ry=\"5\" fill=\"rgba(255,255,255,.5)\" transform=\"rotate(-20 32 30)\"/><text x=\"40\" y=\"48\" text-anchor=\"middle\" font-family=\"-apple-system,sans-serif\" font-size=\"26\" font-weight=\"900\" fill=\"#2d4050\">2</text></svg>',
+      pr3: '<svg class=\"medal\" viewBox=\"0 0 80 80\" xmlns=\"http://www.w3.org/2000/svg\"><polygon points=\"40.0,2.0 45.9,10.6 54.5,4.9 56.7,15.1 66.9,13.1 64.9,23.3 75.1,25.5 69.4,34.1 78.0,40.0 69.4,45.9 75.1,54.5 64.9,56.7 66.9,66.9 56.7,64.9 54.5,75.1 45.9,69.4 40.0,78.0 34.1,69.4 25.5,75.1 23.3,64.9 13.1,66.9 15.1,56.7 4.9,54.5 10.6,45.9 2.0,40.0 10.6,34.1 4.9,25.5 15.1,23.3 13.1,13.1 23.3,15.1 25.5,4.9 34.1,10.6\" fill=\"#b06020\"/><defs><radialGradient id=\"mg3\" cx=\"35%\" cy=\"28%\" r=\"70%\"><stop offset=\"0%\" stop-color=\"#ffe0a0\"/><stop offset=\"40%\" stop-color=\"#d4832a\"/><stop offset=\"75%\" stop-color=\"#9a4e10\"/><stop offset=\"100%\" stop-color=\"#5c2a08\"/></radialGradient></defs><circle cx=\"40\" cy=\"40\" r=\"28\" fill=\"url(#mg3)\"/><circle cx=\"40\" cy=\"40\" r=\"24\" fill=\"none\" stroke=\"rgba(255,255,255,.35)\" stroke-width=\"1.5\"/><ellipse cx=\"32\" cy=\"30\" rx=\"7\" ry=\"5\" fill=\"rgba(255,255,255,.35)\" transform=\"rotate(-20 32 30)\"/><text x=\"40\" y=\"48\" text-anchor=\"middle\" font-family=\"-apple-system,sans-serif\" font-size=\"26\" font-weight=\"900\" fill=\"#3a1a04\">3</text></svg>',
+      pr4: '<svg class=\"medal\" viewBox=\"0 0 80 80\" xmlns=\"http://www.w3.org/2000/svg\"><polygon points=\"40.0,2.0 45.9,10.6 54.5,4.9 56.7,15.1 66.9,13.1 64.9,23.3 75.1,25.5 69.4,34.1 78.0,40.0 69.4,45.9 75.1,54.5 64.9,56.7 66.9,66.9 56.7,64.9 54.5,75.1 45.9,69.4 40.0,78.0 34.1,69.4 25.5,75.1 23.3,64.9 13.1,66.9 15.1,56.7 4.9,54.5 10.6,45.9 2.0,40.0 10.6,34.1 4.9,25.5 15.1,23.3 13.1,13.1 23.3,15.1 25.5,4.9 34.1,10.6\" fill=\"#c0c0c0\"/><defs><radialGradient id=\"mg4\" cx=\"35%\" cy=\"28%\" r=\"70%\"><stop offset=\"0%\" stop-color=\"#e8e8e8\"/><stop offset=\"50%\" stop-color=\"#b0b8c0\"/><stop offset=\"100%\" stop-color=\"#708090\"/></radialGradient></defs><circle cx=\"40\" cy=\"40\" r=\"28\" fill=\"url(#mg4)\"/><circle cx=\"40\" cy=\"40\" r=\"24\" fill=\"none\" stroke=\"rgba(255,255,255,.3)\" stroke-width=\"1.5\"/><text x=\"40\" y=\"48\" text-anchor=\"middle\" font-family=\"-apple-system,sans-serif\" font-size=\"26\" font-weight=\"900\" fill=\"#505868\">4</text></svg>'
     };
-    const mkBadge = (cls) =>
-      '<div class="bk-podium-badge">'
-      + _tR[cls]
-      +(cls!=='pr4'?'<div class="bk-podium-badge-ribbon"></div>':'')
+    const _T = {
+      pr1: '<svg viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"><ellipse cx=\"9\" cy=\"21\" rx=\"5\" ry=\"2.5\" fill=\"#c8a050\" transform=\"rotate(-45 9 21)\"/><ellipse cx=\"7\" cy=\"28\" rx=\"5\" ry=\"2.5\" fill=\"#b8902a\" transform=\"rotate(-30 7 28)\"/><ellipse cx=\"7\" cy=\"35\" rx=\"5\" ry=\"2.5\" fill=\"#c8a050\" transform=\"rotate(-15 7 35)\"/><ellipse cx=\"9\" cy=\"42\" rx=\"5\" ry=\"2.5\" fill=\"#b8902a\" transform=\"rotate(0 9 42)\"/><ellipse cx=\"13\" cy=\"48\" rx=\"5\" ry=\"2.5\" fill=\"#c8a050\" transform=\"rotate(15 13 48)\"/><ellipse cx=\"51\" cy=\"21\" rx=\"5\" ry=\"2.5\" fill=\"#c8a050\" transform=\"rotate(45 51 21)\"/><ellipse cx=\"53\" cy=\"28\" rx=\"5\" ry=\"2.5\" fill=\"#b8902a\" transform=\"rotate(30 53 28)\"/><ellipse cx=\"53\" cy=\"35\" rx=\"5\" ry=\"2.5\" fill=\"#c8a050\" transform=\"rotate(15 53 35)\"/><ellipse cx=\"51\" cy=\"42\" rx=\"5\" ry=\"2.5\" fill=\"#b8902a\" transform=\"rotate(0 51 42)\"/><ellipse cx=\"47\" cy=\"48\" rx=\"5\" ry=\"2.5\" fill=\"#c8a050\" transform=\"rotate(-15 47 48)\"/><path d=\"M14 52 Q30 56 46 52\" stroke=\"#c8a050\" stroke-width=\"1.5\" fill=\"none\"/><defs><linearGradient id=\"t1\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0%\" stop-color=\"#fff5a0\"/><stop offset=\"45%\" stop-color=\"#f5c518\"/><stop offset=\"100%\" stop-color=\"#a06500\"/></linearGradient></defs><path d=\"M20 8 h20 v15 c0 7-5 12-10 13.5V42h3v3H27v-3h3V36.5C25 35 20 30 20 23z\" fill=\"url(#t1)\"/><path d=\"M20 13 h-5 c0 0-3 0-3 5 c0 4 3 5 3 5 h5\" fill=\"none\" stroke=\"url(#t1)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M40 13 h5 c0 0 3 0 3 5 c0 4-3 5-3 5 h-5\" fill=\"none\" stroke=\"url(#t1)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><rect x=\"23\" y=\"42\" width=\"14\" height=\"3\" rx=\"1\" fill=\"url(#t1)\"/><rect x=\"20\" y=\"45\" width=\"20\" height=\"3\" rx=\"1.5\" fill=\"url(#t1)\"/><ellipse cx=\"27\" cy=\"17\" rx=\"3.5\" ry=\"5\" fill=\"rgba(255,255,255,.35)\" transform=\"rotate(-12 27 17)\"/></svg>',
+      pr2: '<svg viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"><ellipse cx=\"9\" cy=\"21\" rx=\"5\" ry=\"2.5\" fill=\"#909aaa\" transform=\"rotate(-45 9 21)\"/><ellipse cx=\"7\" cy=\"28\" rx=\"5\" ry=\"2.5\" fill=\"#7080a0\" transform=\"rotate(-30 7 28)\"/><ellipse cx=\"7\" cy=\"35\" rx=\"5\" ry=\"2.5\" fill=\"#909aaa\" transform=\"rotate(-15 7 35)\"/><ellipse cx=\"9\" cy=\"42\" rx=\"5\" ry=\"2.5\" fill=\"#7080a0\" transform=\"rotate(0 9 42)\"/><ellipse cx=\"13\" cy=\"48\" rx=\"5\" ry=\"2.5\" fill=\"#909aaa\" transform=\"rotate(15 13 48)\"/><ellipse cx=\"51\" cy=\"21\" rx=\"5\" ry=\"2.5\" fill=\"#909aaa\" transform=\"rotate(45 51 21)\"/><ellipse cx=\"53\" cy=\"28\" rx=\"5\" ry=\"2.5\" fill=\"#7080a0\" transform=\"rotate(30 53 28)\"/><ellipse cx=\"53\" cy=\"35\" rx=\"5\" ry=\"2.5\" fill=\"#909aaa\" transform=\"rotate(15 53 35)\"/><ellipse cx=\"51\" cy=\"42\" rx=\"5\" ry=\"2.5\" fill=\"#7080a0\" transform=\"rotate(0 51 42)\"/><ellipse cx=\"47\" cy=\"48\" rx=\"5\" ry=\"2.5\" fill=\"#909aaa\" transform=\"rotate(-15 47 48)\"/><path d=\"M14 52 Q30 56 46 52\" stroke=\"#909aaa\" stroke-width=\"1.5\" fill=\"none\"/><defs><linearGradient id=\"t2\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0%\" stop-color=\"#f0f4f8\"/><stop offset=\"45%\" stop-color=\"#94a3b8\"/><stop offset=\"100%\" stop-color=\"#37474f\"/></linearGradient></defs><path d=\"M20 8 h20 v15 c0 7-5 12-10 13.5V42h3v3H27v-3h3V36.5C25 35 20 30 20 23z\" fill=\"url(#t2)\"/><path d=\"M20 13 h-5 c0 0-3 0-3 5 c0 4 3 5 3 5 h5\" fill=\"none\" stroke=\"url(#t2)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M40 13 h5 c0 0 3 0 3 5 c0 4-3 5-3 5 h-5\" fill=\"none\" stroke=\"url(#t2)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><rect x=\"23\" y=\"42\" width=\"14\" height=\"3\" rx=\"1\" fill=\"url(#t2)\"/><rect x=\"20\" y=\"45\" width=\"20\" height=\"3\" rx=\"1.5\" fill=\"url(#t2)\"/><ellipse cx=\"27\" cy=\"17\" rx=\"3.5\" ry=\"5\" fill=\"rgba(255,255,255,.35)\" transform=\"rotate(-12 27 17)\"/></svg>',
+      pr3: '<svg viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"><ellipse cx=\"9\" cy=\"21\" rx=\"5\" ry=\"2.5\" fill=\"#b06020\" transform=\"rotate(-45 9 21)\"/><ellipse cx=\"7\" cy=\"28\" rx=\"5\" ry=\"2.5\" fill=\"#904010\" transform=\"rotate(-30 7 28)\"/><ellipse cx=\"7\" cy=\"35\" rx=\"5\" ry=\"2.5\" fill=\"#b06020\" transform=\"rotate(-15 7 35)\"/><ellipse cx=\"9\" cy=\"42\" rx=\"5\" ry=\"2.5\" fill=\"#904010\" transform=\"rotate(0 9 42)\"/><ellipse cx=\"13\" cy=\"48\" rx=\"5\" ry=\"2.5\" fill=\"#b06020\" transform=\"rotate(15 13 48)\"/><ellipse cx=\"51\" cy=\"21\" rx=\"5\" ry=\"2.5\" fill=\"#b06020\" transform=\"rotate(45 51 21)\"/><ellipse cx=\"53\" cy=\"28\" rx=\"5\" ry=\"2.5\" fill=\"#904010\" transform=\"rotate(30 53 28)\"/><ellipse cx=\"53\" cy=\"35\" rx=\"5\" ry=\"2.5\" fill=\"#b06020\" transform=\"rotate(15 53 35)\"/><ellipse cx=\"51\" cy=\"42\" rx=\"5\" ry=\"2.5\" fill=\"#904010\" transform=\"rotate(0 51 42)\"/><ellipse cx=\"47\" cy=\"48\" rx=\"5\" ry=\"2.5\" fill=\"#b06020\" transform=\"rotate(-15 47 48)\"/><path d=\"M14 52 Q30 56 46 52\" stroke=\"#b06020\" stroke-width=\"1.5\" fill=\"none\"/><defs><linearGradient id=\"t3\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0%\" stop-color=\"#ffe0a0\"/><stop offset=\"45%\" stop-color=\"#c2692b\"/><stop offset=\"100%\" stop-color=\"#4a1a08\"/></linearGradient></defs><path d=\"M20 8 h20 v15 c0 7-5 12-10 13.5V42h3v3H27v-3h3V36.5C25 35 20 30 20 23z\" fill=\"url(#t3)\"/><path d=\"M20 13 h-5 c0 0-3 0-3 5 c0 4 3 5 3 5 h5\" fill=\"none\" stroke=\"url(#t3)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M40 13 h5 c0 0 3 0 3 5 c0 4-3 5-3 5 h-5\" fill=\"none\" stroke=\"url(#t3)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><rect x=\"23\" y=\"42\" width=\"14\" height=\"3\" rx=\"1\" fill=\"url(#t3)\"/><rect x=\"20\" y=\"45\" width=\"20\" height=\"3\" rx=\"1.5\" fill=\"url(#t3)\"/><ellipse cx=\"27\" cy=\"17\" rx=\"3.5\" ry=\"5\" fill=\"rgba(255,255,255,.35)\" transform=\"rotate(-12 27 17)\"/></svg>',
+      pr4: '<svg viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"><ellipse cx=\"9\" cy=\"21\" rx=\"5\" ry=\"2.5\" fill=\"#c0c0c0\" transform=\"rotate(-45 9 21)\"/><ellipse cx=\"7\" cy=\"28\" rx=\"5\" ry=\"2.5\" fill=\"#a0a8b0\" transform=\"rotate(-30 7 28)\"/><ellipse cx=\"7\" cy=\"35\" rx=\"5\" ry=\"2.5\" fill=\"#c0c0c0\" transform=\"rotate(-15 7 35)\"/><ellipse cx=\"9\" cy=\"42\" rx=\"5\" ry=\"2.5\" fill=\"#a0a8b0\" transform=\"rotate(0 9 42)\"/><ellipse cx=\"13\" cy=\"48\" rx=\"5\" ry=\"2.5\" fill=\"#c0c0c0\" transform=\"rotate(15 13 48)\"/><ellipse cx=\"51\" cy=\"21\" rx=\"5\" ry=\"2.5\" fill=\"#c0c0c0\" transform=\"rotate(45 51 21)\"/><ellipse cx=\"53\" cy=\"28\" rx=\"5\" ry=\"2.5\" fill=\"#a0a8b0\" transform=\"rotate(30 53 28)\"/><ellipse cx=\"53\" cy=\"35\" rx=\"5\" ry=\"2.5\" fill=\"#c0c0c0\" transform=\"rotate(15 53 35)\"/><ellipse cx=\"51\" cy=\"42\" rx=\"5\" ry=\"2.5\" fill=\"#a0a8b0\" transform=\"rotate(0 51 42)\"/><ellipse cx=\"47\" cy=\"48\" rx=\"5\" ry=\"2.5\" fill=\"#c0c0c0\" transform=\"rotate(-15 47 48)\"/><path d=\"M14 52 Q30 56 46 52\" stroke=\"#c0c0c0\" stroke-width=\"1.5\" fill=\"none\"/><defs><linearGradient id=\"t4\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0%\" stop-color=\"#e8e8e8\"/><stop offset=\"45%\" stop-color=\"#b0b8c0\"/><stop offset=\"100%\" stop-color=\"#708090\"/></linearGradient></defs><path d=\"M20 8 h20 v15 c0 7-5 12-10 13.5V42h3v3H27v-3h3V36.5C25 35 20 30 20 23z\" fill=\"url(#t4)\"/><path d=\"M20 13 h-5 c0 0-3 0-3 5 c0 4 3 5 3 5 h5\" fill=\"none\" stroke=\"url(#t4)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><path d=\"M40 13 h5 c0 0 3 0 3 5 c0 4-3 5-3 5 h-5\" fill=\"none\" stroke=\"url(#t4)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/><rect x=\"23\" y=\"42\" width=\"14\" height=\"3\" rx=\"1\" fill=\"url(#t4)\"/><rect x=\"20\" y=\"45\" width=\"20\" height=\"3\" rx=\"1.5\" fill=\"url(#t4)\"/><ellipse cx=\"27\" cy=\"17\" rx=\"3.5\" ry=\"5\" fill=\"rgba(255,255,255,.35)\" transform=\"rotate(-12 27 17)\"/></svg>'
+    };
+    const _excelSvg = '<svg viewBox=\"0 0 32 32\" xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"32\" height=\"32\" rx=\"6\" fill=\"#217346\"/><rect x=\"2\" y=\"2\" width=\"28\" height=\"28\" rx=\"5\" fill=\"#1e6a3d\"/><path d=\"M8 8l5 8-5 8h3.5l3.5-5.5L18.5 24H22l-5-8 5-8h-3.5L15 13.5 11.5 8z\" fill=\"white\"/></svg>';
+    const title =
+      '<div class=\"bk-podium-title\">'
+      +'<div class=\"bk-podium-title-row\"><span class=\"bk-podium-title-icon\">🏆</span><span class=\"bk-podium-title-text\">KẾT QUẢ</span></div>'
+      +'<span class=\"bk-podium-title-sub\">Top kết quả xuất sắc nhất</span>'
+      +'<div class=\"bk-podium-title-orn\"><div class=\"bk-podium-title-orn-diamond\"></div></div>'
       +'</div>';
-    const mkTrophy = (cls) => '<div class="bk-podium-trophy-wrap">'+_tR[cls]+'</div>';
+    const mkBadge = (cls) =>
+      '<div class=\"bk-podium-badge\">'
+      + _M[cls]
+      +(cls!=='pr4'?'<div class=\"bk-podium-badge-ribbon\"></div>':'')
+      +'</div>';
+    const mkTrophy = (cls) => '<div class=\"bk-podium-trophy-wrap\">'+ _T[cls] +'</div>';
     const mkRow = (cls, lbl, t1, t2, ph) => {
       const body = (!t1&&!t2)
-        ? '<div class="bk-podium-empty">'+ph+'</div>'
-        : '<div class="bk-podium-team">'+e(t1)+'</div>'+(t2?'<div class="bk-podium-team2">'+e(t2)+'</div>':'');
-      return '<div class="bk-podium-row '+cls+'">'
+        ? '<div class=\"bk-podium-empty\">'+ph+'</div>'
+        : '<div class=\"bk-podium-team\">'+e(t1)+'</div>'+(t2?'<div class=\"bk-podium-team2\">'+e(t2)+'</div>':'');
+      return '<div class=\"bk-podium-row '+cls+'\">'
         + mkBadge(cls)
-        + '<div class="bk-podium-info"><div class="bk-podium-lbl">'+lbl+'</div>'+body+'</div>'
+        + '<div class=\"bk-podium-info\"><div class=\"bk-podium-lbl\">'+lbl+'</div>'+body+'</div>'
         + mkTrophy(cls)
         + '</div>';
     };
@@ -13694,24 +13655,25 @@ function _bkUpdateChampBox() {
                + (isDong3 ? mkRow('pr3','Đồng Hạng Ba',rank3a,rank3b,'Chờ BK')
                           : mkRow('pr3','Hạng Ba',rank3a,'','Chờ H3'))
                + (!isDong3&&(rank4||rank3a) ? mkRow('pr4','Hạng Tư',rank4,'','Chờ H3') : '');
-    panel.innerHTML = '<div class="bk-podium-panel">'+title
-      +'<div class="bk-podium-rows">'+rows+'</div>'
-      +'<div class="bk-podium-divider"></div>'
-      +'<div class="bk-podium-btns">'
-        +'<button class="bk-podium-btn-img" onclick="exportPodiumImage()">'
-          +'<span class="bk-podium-btn-icon">⬇</span>'
-          +'<span class="bk-podium-btn-label">Tải Ảnh Kết Quả</span>'
-          +'<span class="bk-podium-btn-arrow">›</span>'
+    panel.innerHTML = '<div class=\"bk-podium-panel\">'+title
+      +'<div class=\"bk-podium-rows\">'+rows+'</div>'
+      +'<div class=\"bk-podium-divider\"></div>'
+      +'<div class=\"bk-podium-btns\">'
+        +'<button class=\"bk-podium-btn-img\" onclick=\"exportPodiumImage()\">'
+          +'<span class=\"bk-podium-btn-icon\">⬇</span>'
+          +'<span class=\"bk-podium-btn-label\">Tải Ảnh Kết Quả</span>'
+          +'<span class=\"bk-podium-btn-arrow\">›</span>'
         +'</button>'
-        +'<button class="bk-podium-btn-xl" onclick="doExportKetQuaExcel()">'
-          +'<span class="bk-podium-btn-icon" style="padding:3px">'+_excelSvg+'</span>'
-          +'<span class="bk-podium-btn-label">Xuất Excel</span>'
-          +'<span class="bk-podium-btn-arrow">›</span>'
+        +'<button class=\"bk-podium-btn-xl\" onclick=\"doExportKetQuaExcel()\">'
+          +'<span class=\"bk-podium-btn-icon\" style=\"padding:2px\">'+_excelSvg+'</span>'
+          +'<span class=\"bk-podium-btn-label\">Xuất Excel</span>'
+          +'<span class=\"bk-podium-btn-arrow\">›</span>'
         +'</button>'
       +'</div>'
-      +'<div class="bk-podium-footer">🛡 Cảm ơn bạn đã tham gia và tạo nên những khoảnh khắc đáng nhớ!</div>'
+      +'<div class=\"bk-podium-footer\">🛡 Cảm ơn bạn đã tham gia và tạo nên những khoảnh khắc đáng nhớ!</div>'
       +'</div>';
-    return true;
+
+        return true;
   };
   if (_doRender()) return;
   let retries = 0;
