@@ -39,7 +39,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Admin v133.2 — Referee Pickleball / DA NANG ®</title>
+<title>Admin v133 — Referee Pickleball / DA NANG ®</title>
 <style>
 /* ═══════════════════════════════════════════════════════
    Pickleball Admin — Mobile-First Professional UI
@@ -16291,62 +16291,77 @@ function exportPodiumImage() {
 
   var css = [
     '*{box-sizing:border-box;margin:0;padding:0}',
-    'html,body{margin:0;padding:0;background:#cfc6b6;display:flex;flex-direction:column;align-items:center;font-family:Arial,sans-serif}',
+    'html,body{margin:0;padding:0;background:#cfc6b6;display:flex;flex-direction:column;align-items:center}',
+    /* === POSTER 560x747 === */
     '.poster{position:relative;width:560px;height:747px;flex-shrink:0;overflow:hidden}',
     '.poster img.bg{position:absolute;inset:0;width:560px;height:747px;object-fit:fill}',
-    '.ov{position:absolute;inset:0;pointer-events:none}',
-    '.tw{position:absolute;left:0;right:0;top:248px;text-align:center;padding:0 55px}',
-    '.gn{font-size:21px;font-weight:900;font-style:italic;color:#18100a;letter-spacing:.02em;line-height:1.1;text-transform:uppercase;text-shadow:0 1px 2px rgba(255,255,255,.6)}',
-    '.sr{display:flex;align-items:center;justify-content:center;gap:5px;margin:4px 0 2px}',
-    '.sl{height:1px;width:22px;background:linear-gradient(90deg,transparent,#b8901c)}',
-    '.slr{height:1px;width:22px;background:linear-gradient(90deg,#b8901c,transparent)}',
-    '.sd{color:#b8901c;font-size:9px;letter-spacing:3px}',
-    '.nl{font-size:10px;font-weight:800;color:#241808;letter-spacing:.07em;text-transform:uppercase}',
-    '.dl{font-size:9.5px;color:#5a4220;margin-top:1px}',
-    /* Card rows - measured from 560x747 scaled image */
-    '.rr{position:absolute;left:128px;right:44px;display:flex;flex-direction:column;justify-content:center}',
+    '.ov{position:absolute;inset:0}',
+
+    /* === TITLE: fits in 196-277px (81px space after trophy) === */
+    '.tw{position:absolute;left:0;right:0;top:196px;text-align:center;padding:0 40px}',
+    '.gn{font-size:19px;font-weight:900;font-style:italic;color:#18100a;letter-spacing:.02em;line-height:1.15;text-transform:uppercase;text-shadow:0 1px 2px rgba(255,255,255,.6)}',
+    '.sr{display:flex;align-items:center;justify-content:center;gap:4px;margin:3px 0 2px}',
+    '.sl{height:1px;width:20px;background:linear-gradient(90deg,transparent,#b8901c)}',
+    '.slr{height:1px;width:20px;background:linear-gradient(90deg,#b8901c,transparent)}',
+    '.sd{color:#b8901c;font-size:8px;letter-spacing:3px}',
+    '.nl{font-size:9.5px;font-weight:800;color:#241808;letter-spacing:.06em;text-transform:uppercase;margin-top:1px}',
+    '.dl{font-size:9px;color:#5a4220;margin-top:1px}',
+
+    /* === CARD ROWS: pixel-perfect from image analysis ===
+       Gold   top=277 h=98  center=326
+       Silver top=389 h=100 center=439
+       Bronze top=504 h=100 center=554
+       Dark   top=618 h=97  center=667  */
+    '.rr{position:absolute;left:132px;right:42px;display:flex;flex-direction:column;justify-content:center}',
     '.r1{top:277px;height:98px}',
     '.r2{top:389px;height:100px}',
-    '.r3{top:505px;height:99px}',
+    '.r3{top:504px;height:100px}',
     '.r4{top:618px;height:97px}',
-    /* Number badge over medal */
-    '.rn{position:absolute;width:62px;display:flex;align-items:center;justify-content:center;font-weight:900;font-style:italic;pointer-events:none}',
-    '.rn1{left:49px;top:277px;height:98px;font-size:28px;color:#5a3200;text-shadow:0 1px 3px rgba(255,190,40,.6)}',
-    '.rn2{left:49px;top:389px;height:100px;font-size:28px;color:#26364a;text-shadow:0 1px 2px rgba(200,220,240,.4)}',
-    '.rn3{left:49px;top:505px;height:99px;font-size:28px;color:#fff;text-shadow:0 2px 4px rgba(80,30,0,.6)}',
-    '.rn4{left:49px;top:618px;height:97px;font-size:28px;color:#b8ccd8;text-shadow:0 1px 3px rgba(0,0,0,.5)}',
-    '.rl{font-size:8.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;margin-bottom:3px;display:flex;align-items:center;gap:3px}',
-    '.r1 .rl{color:#7a4800}','.r2 .rl{color:#2e4050}','.r3 .rl{color:#7a3000}','.r4 .rl{color:#404058}',
-    '.tn{font-size:18px;font-weight:800;line-height:1.25;word-break:break-word}',
-    '.r1 .tn{color:#100800}','.r2 .tn{color:#071420}','.r3 .tn{color:#120600}','.r4 .tn{color:#131820}',
-    '.rb{position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:46px;font-weight:900;opacity:.09;line-height:1;font-style:italic;user-select:none}',
+
+    /* === RANK NUMBER: centered over medal circle (x=39-129, center=84) === */
+    '.rn{position:absolute;width:90px;display:flex;align-items:center;justify-content:center;font-weight:900;font-style:italic;pointer-events:none}',
+    '.rn1{left:39px;top:277px;height:98px;font-size:26px;color:#5a3200;text-shadow:0 1px 3px rgba(255,200,50,.5)}',
+    '.rn2{left:39px;top:389px;height:100px;font-size:26px;color:#263646;text-shadow:0 1px 2px rgba(200,220,240,.5)}',
+    '.rn3{left:39px;top:504px;height:100px;font-size:26px;color:#fff;text-shadow:0 2px 4px rgba(70,25,0,.7)}',
+    '.rn4{left:39px;top:618px;height:97px;font-size:26px;color:#b8ccd8;text-shadow:0 1px 3px rgba(0,0,0,.55)}',
+
+    /* === LABEL + TEAM NAME === */
+    '.rl{font-size:8px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;margin-bottom:3px;display:flex;align-items:center;gap:3px}',
+    '.r1 .rl{color:#7a4800}','.r2 .rl{color:#2e4050}','.r3 .rl{color:#7a3000}','.r4 .rl{color:#3c3c58}',
+    '.tn{font-size:17px;font-weight:800;line-height:1.2;word-break:break-word}',
+    '.r1 .tn{color:#100800}','.r2 .tn{color:#071420}','.r3 .tn{color:#120600}','.r4 .tn{color:#10141e}',
+
+    /* === GHOST NUMBER right === */
+    '.rb{position:absolute;right:2px;top:50%;transform:translateY(-50%);font-size:44px;font-weight:900;opacity:.08;line-height:1;font-style:italic;user-select:none}',
     '.r1 .rb{color:#7a4800}','.r2 .rb{color:#283848}','.r3 .rb{color:#7a3000}','.r4 .rb{color:#383850}',
-    '.fw{position:absolute;left:0;right:0;bottom:22px;display:flex;align-items:center;gap:6px;padding:0 48px}',
+
+    /* === FOOTER === */
+    '.fw{position:absolute;left:0;right:0;bottom:21px;display:flex;align-items:center;gap:6px;padding:0 46px}',
     '.fl{flex:1;height:1px;background:linear-gradient(90deg,transparent,#b8901c 25%,#b8901c 75%,transparent)}',
-    '.fm{white-space:nowrap;font-size:8px;font-weight:700;color:#6a5028;letter-spacing:.09em;text-transform:uppercase;display:flex;align-items:center;gap:4px}',
+    '.fm{white-space:nowrap;font-size:7.5px;font-weight:700;color:#6a5028;letter-spacing:.09em;text-transform:uppercase;display:flex;align-items:center;gap:4px}',
     '.fd{color:#b8901c}',
-    '.ac{text-align:center;padding:8px 16px 16px}',
+    '.ac{text-align:center;padding:8px 16px 14px}',
     '.ac p{font-size:11px;color:#4a3c1a}',
     '@media print{.ac{display:none!important}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}'
   ].join('');
 
-  var ri = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" style="width:10px;height:10px;flex-shrink:0"><path d="M4 2h8l-.8 5C11 9 9.6 10 8 10S5 9 4.8 7L4 2z" fill="currentColor"/><rect x="6.5" y="10" width="3" height="2" fill="currentColor"/><rect x="4.5" y="12" width="7" height="2.5" rx="1" fill="currentColor"/></svg>';
+  var ri = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" style="width:9px;height:9px;flex-shrink:0"><path d="M4 2h8l-.8 5C11 9 9.6 10 8 10S5 9 4.8 7L4 2z" fill="currentColor"/><rect x="6.5" y="10" width="3" height="2" fill="currentColor"/><rect x="4.5" y="12" width="7" height="2.5" rx="1" fill="currentColor"/></svg>';
 
-  function rRow(rcls, rnumcls, label, a, b, num) {
-    var nm = (a && b) ? '<div class="tn">' + eh(a) + ' - ' + eh(b) + '</div>'
-           : a ? '<div class="tn">' + eh(a) + '</div>'
-           : '<div class="tn" style="opacity:.25;font-style:italic">Chua xac dinh</div>';
-    return '<div class="rr ' + rcls + '">'
-         +   '<div class="rl">' + ri + ' ' + label + '</div>'
-         +   nm
-         +   '<div class="rb">' + num + '</div>'
+  function rRow(rcls,rnumcls,label,a,b,num) {
+    var nm = (a&&b) ? '<div class="tn">'+eh(a)+' - '+eh(b)+'</div>'
+           : a ? '<div class="tn">'+eh(a)+'</div>'
+           : '<div class="tn" style="opacity:.22;font-style:italic">Chua xac dinh</div>';
+    return '<div class="rr '+rcls+'">'
+         + '<div class="rl">'+ri+' '+label+'</div>'
+         + nm
+         + '<div class="rb">'+num+'</div>'
          + '</div>'
-         + '<div class="rn ' + rnumcls + '">' + num + '</div>';
+         + '<div class="rn '+rnumcls+'">'+num+'</div>';
   }
 
   var r3lbl = rank3b ? 'DONG HANG BA' : 'HANG BA';
-  var rowsHtml = rRow('r1','rn1','HANG NHAT', rank1,'','1')
-    + rRow('r2','rn2','HANG NHI', rank2,'','2')
+  var rowsHtml = rRow('r1','rn1','HANG NHAT',rank1,'','1')
+    + rRow('r2','rn2','HANG NHI',rank2,'','2')
     + (rank3b ? rRow('r3','rn3',r3lbl,rank3a,rank3b,'3')
               : rRow('r3','rn3',r3lbl,rank3a,'','3'))
     + (rank4 ? rRow('r4','rn4','HANG TU',rank4,'','4') : '');
@@ -16354,25 +16369,29 @@ function exportPodiumImage() {
   var html = '<!DOCTYPE html><html lang="vi"><head>'
     + '<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<title>Ket qua giai</title>'
-    + '<style>' + css + '</style></head><body>'
+    + '<style>'+css+'</style></head><body>'
     + '<div class="poster">'
-    +   '<img class="bg" src="data:image/jpeg;base64,' + BG_B64 + '" alt="">'
-    +   '<div class="ov">'
-    +     '<div class="tw">'
-    +       '<div class="gn">' + eh(giai) + '</div>'
-    +       '<div class="sr"><span class="sl"></span><span class="sd">&#9733; &#9733; &#9733;</span><span class="slr"></span></div>'
-    +       (nd ? '<div class="nl">NOI DUNG: ' + eh(nd) + '</div>' : '')
-    +       '<div class="dl">Ket qua chung cuoc &nbsp;&bull;&nbsp; ' + dateStr + '</div>'
-    +     '</div>'
-    +     rowsHtml
-    +     '<div class="fw"><span class="fl"></span><span class="fm"><span class="fd">&#8212;</span><span>' + eh(giai) + ' &bull; ' + dateStr + '</span><span class="fd">&#8212;</span></span><span class="fl"></span></div>'
-    +   '</div>'
+    + '<img class="bg" src="data:image/jpeg;base64,'+BG_B64+'" alt="">'
+    + '<div class="ov">'
+    + '<div class="tw">'
+    + '<div class="gn">'+eh(giai)+'</div>'
+    + '<div class="sr"><span class="sl"></span><span class="sd">&#9733; &#9733; &#9733;</span><span class="slr"></span></div>'
+    + (nd ? '<div class="nl">NOI DUNG: '+eh(nd)+'</div>' : '')
+    + '<div class="dl">Ket qua chung cuoc &nbsp;&bull;&nbsp; '+dateStr+'</div>'
+    + '</div>'
+    + rowsHtml
+    + '<div class="fw"><span class="fl"></span>'
+    + '<span class="fm"><span class="fd">&#8212;</span>'
+    + '<span>'+eh(giai)+' &bull; '+dateStr+'</span>'
+    + '<span class="fd">&#8212;</span></span>'
+    + '<span class="fl"></span></div>'
+    + '</div>'
     + '</div>'
     + '<div class="ac"><p>&#128247; Nhan chuot phai &rarr; <b>Save as image</b> hoac chup man hinh de luu anh</p></div>'
     + '</body></html>';
 
   var popup = window.open('','_blank','width=620,height=820,scrollbars=yes');
-  if (!popup) { toast('Pop-up bi chan -- cho phep pop-up', 'er'); return; }
+  if (!popup) { toast('Pop-up bi chan -- vui long cho phep pop-up', 'er'); return; }
   popup.document.write(html);
   popup.document.close();
   toast('Da mo cua so ket qua', 'ok');
