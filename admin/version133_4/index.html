@@ -16293,59 +16293,71 @@ function exportPodiumImage() {
   var css = [
     '*{box-sizing:border-box;margin:0;padding:0}',
     '@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,600;0,700;0,800;0,900;1,900&display=swap");',
-    'html,body{margin:0;padding:0;background:#f0ebe0;font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif;display:flex;flex-direction:column;align-items:center}',
-    '.poster{position:relative;width:780px;height:1040px;display:block;flex-shrink:0}',
-    '.poster img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:0}',
-    '.overlay{position:absolute;inset:0;pointer-events:none}',
+    'html,body{margin:0;padding:0;background:#e8e0d0;font-family:"Be Vietnam Pro","Segoe UI",Arial,sans-serif;display:flex;flex-direction:column;align-items:center}',
 
-    /* ── TITLE AREA — centered over trophy, y~250-340 ── */
-    '.title-wrap{position:absolute;left:0;right:0;top:230px;text-align:center;padding:0 60px}',
-    '.giai-name{font-size:34px;font-weight:900;font-style:italic;color:#1a0e00;letter-spacing:.03em;text-transform:uppercase;line-height:1.1;text-shadow:0 1px 3px rgba(255,255,255,.6)}',
-    '.star-row{display:flex;align-items:center;justify-content:center;gap:8px;margin:6px 0 4px}',
-    '.star-line{height:1.5px;width:36px;background:linear-gradient(90deg,transparent,#c9a030)}',
+    /* ── POSTER: fixed 780x1040, bg image fills it ── */
+    '.poster{position:relative;width:780px;height:1040px;display:block;flex-shrink:0;overflow:hidden}',
+    '.poster img.bg{position:absolute;inset:0;width:780px;height:1040px;object-fit:fill}',
+    '.overlay{position:absolute;inset:0}',
+
+    /* ── TITLE — sits below trophy, above cards ── */
+    '.title-wrap{position:absolute;left:0;right:0;top:290px;text-align:center;padding:0 80px}',
+    '.giai-name{font-size:30px;font-weight:900;font-style:italic;color:#1a1005;letter-spacing:.03em;line-height:1.1;text-transform:uppercase;text-shadow:0 1px 3px rgba(255,255,255,.7)}',
+    '.star-row{display:flex;align-items:center;justify-content:center;gap:6px;margin:5px 0 3px}',
+    '.star-line{height:1px;width:32px;background:linear-gradient(90deg,transparent,#c9a030)}',
     '.star-line.r{background:linear-gradient(90deg,#c9a030,transparent)}',
-    '.star-dots{color:#c9a030;font-size:13px;letter-spacing:5px}',
-    '.nd-label{font-size:14px;font-weight:700;color:#1a0e00;letter-spacing:.06em;text-shadow:0 1px 2px rgba(255,255,255,.5)}',
-    '.date-label{font-size:12px;color:#5a4820;margin-top:2px;letter-spacing:.03em}',
+    '.star-dots{color:#c9a030;font-size:10px;letter-spacing:4px}',
+    '.nd-label{font-size:12px;font-weight:700;color:#2a1e08;letter-spacing:.08em;text-transform:uppercase}',
+    '.date-label{font-size:11px;color:#6a5428;margin-top:1px;letter-spacing:.03em}',
 
-    /* ── RANK ROWS — positioned over each medal card ── */
-    /* Box heights in 780x1040 image:
-       box1 gold:   y=352..449  h=97
-       box2 silver: y=463..560  h=97
-       box3 bronze: y=571..668  h=97
-       box4 dark:   y=679..776  h=97
-       text x start after medal: ~185px, end ~720px */
-    '.rank-row{position:absolute;left:185px;right:55px;display:flex;flex-direction:column;justify-content:center;gap:0}',
-    '.r1-row{top:352px;height:97px}',
-    '.r2-row{top:463px;height:97px}',
-    '.r3-row{top:571px;height:97px}',
-    '.r4-row{top:679px;height:97px}',
-    '.rl{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;display:flex;align-items:center;gap:5px;margin-bottom:4px}',
-    '.rl svg{flex-shrink:0}',
-    '.r1-row .rl{color:#7a5000}',
-    '.r2-row .rl{color:#384858}',
-    '.r3-row .rl{color:#7a3808}',
-    '.r4-row .rl{color:#485060}',
-    '.tn{font-size:22px;font-weight:800;line-height:1.2;word-break:break-word}',
-    '.r1-row .tn{color:#1a0a00}',
-    '.r2-row .tn{color:#0c1824}',
-    '.r3-row .tn{color:#1a0800}',
-    '.r4-row .tn{color:#181e28}',
-    '.rb{position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:62px;font-weight:900;opacity:.10;line-height:1;font-style:italic;user-select:none}',
+    /* ── RANK ROWS — absolute positioned over each card ──
+       Card positions (scaled 780×1040):
+       Gold:   top=384 h=138  center=453
+       Silver: top=522 h=159  center=602
+       Bronze: top=681 h=159  center=761
+       Dark:   top=840 h=156  center=918  */
+    '.rank-row{position:absolute;left:175px;right:50px;display:flex;flex-direction:column;justify-content:center}',
+    '.r1-row{top:384px;height:138px}',
+    '.r2-row{top:522px;height:159px}',
+    '.r3-row{top:681px;height:159px}',
+    '.r4-row{top:840px;height:156px}',
+
+    /* ── RANK NUMBER over medal ── */
+    '.rank-num{position:absolute;font-weight:900;font-style:italic;text-align:center}',
+    /* Gold medal center ~x=119, adjust per card top */
+    '.n1-num{left:83px;width:72px;top:384px;height:138px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#5c3500;text-shadow:0 1px 3px rgba(255,200,0,.6)}',
+    '.n2-num{left:83px;width:72px;top:522px;height:159px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#2a3848;text-shadow:0 1px 3px rgba(200,220,240,.5)}',
+    '.n3-num{left:83px;width:72px;top:681px;height:159px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;text-shadow:0 1px 4px rgba(100,50,0,.6)}',
+    '.n4-num{left:83px;width:72px;top:840px;height:156px;display:flex;align-items:center;justify-content:center;font-size:32px;color:#c0d0e0;text-shadow:0 1px 3px rgba(0,0,0,.5)}',
+
+    /* ── LABEL & TEAM NAME ── */
+    '.rl{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:4px}',
+    '.r1-row .rl{color:#7a4e00}',
+    '.r2-row .rl{color:#354555}',
+    '.r3-row .rl{color:#7a3500}',
+    '.r4-row .rl{color:#454060}',
+    '.tn{font-size:22px;font-weight:800;line-height:1.2;word-break:break-word;white-space:normal}',
+    '.r1-row .tn{color:#140c00}',
+    '.r2-row .tn{color:#0a1820}',
+    '.r3-row .tn{color:#160800}',
+    '.r4-row .tn{color:#18202c}',
+
+    /* ── GHOST NUMBER right side ── */
+    '.rb{position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:60px;font-weight:900;opacity:.09;line-height:1;font-style:italic;user-select:none}',
     '.r1-row .rb{color:#8a5800}',
-    '.r2-row .rb{color:#384858}',
-    '.r3-row .rb{color:#7a3808}',
-    '.r4-row .rb{color:#485060}',
+    '.r2-row .rb{color:#2a3a50}',
+    '.r3-row .rb{color:#7a3508}',
+    '.r4-row .rb{color:#404060}',
 
-    /* ── FOOTER text ── */
-    '.footer-wrap{position:absolute;left:0;right:0;bottom:32px;display:flex;align-items:center;gap:8px;padding:0 50px}',
-    '.ft-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,#c9a030 30%,#c9a030 70%,transparent)}',
-    '.ft-text{font-size:10px;font-weight:700;color:#8a7040;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}',
-    '.ft-dash{font-size:9px;color:#c9a030;letter-spacing:2px}',
+    /* ── FOOTER ── */
+    '.ft-wrap{position:absolute;left:0;right:0;bottom:36px;display:flex;align-items:center;gap:8px;padding:0 70px}',
+    '.ft-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,#c9a030 25%,#c9a030 75%,transparent)}',
+    '.ft-mid{white-space:nowrap;font-size:9.5px;font-weight:700;color:#7a6030;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:6px}',
+    '.ft-dash{color:#c9a030;font-size:10px}',
 
     /* ── ACTIONS outside poster ── */
-    '.actions{text-align:center;padding:12px 20px 20px;font-family:"Be Vietnam Pro",Arial,sans-serif}',
-    '.actions p{font-size:12px;color:#6a5830}',
+    '.actions{text-align:center;padding:10px 20px 20px;font-family:"Be Vietnam Pro",Arial,sans-serif}',
+    '.actions p{font-size:12px;color:#5a4820}',
     '@media print{.actions{display:none!important}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}'
   ].join('');
 
@@ -16372,6 +16384,30 @@ function exportPodiumImage() {
         : rankRow('r3-row', 'HẠNG BA', rank3a, '', '3'))
     + (rank4 ? rankRow('r4-row', 'HẠNG TƯ', rank4, '', '4') : '');
 
+  /* small trophy icon for rank label */
+  var rankIcon = '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" style="width:11px;height:11px;flex-shrink:0"><path d="M4 2h8l-.8 5C11 9 9.7 10 8 10S5 9 4.8 7L4 2z" fill="currentColor"/><path d="M2 2h2v4c0 .55-.45 1-1 1s-1-.45-1-1V2z" fill="currentColor"/><path d="M12 2h2v4c0 .55-.45 1-1 1s-1-.45-1-1V2z" fill="currentColor"/><rect x="6.5" y="10" width="3" height="2" fill="currentColor"/><rect x="4.5" y="12" width="7" height="2.5" rx="1" fill="currentColor"/></svg>';
+
+  function rankRow(cls, numCls, rankLabel, teamA, teamB, rankNum) {
+    var nameHtml = (teamA && teamB)
+      ? '<div class="tn">' + eh(teamA) + ' - ' + eh(teamB) + '</div>'
+      : teamA
+        ? '<div class="tn">' + eh(teamA) + '</div>'
+        : '<div class="tn" style="opacity:.25;font-style:italic">Chưa xác định</div>';
+    return '<div class="rank-row ' + cls + '">'
+      + '<div class="rl">' + rankIcon + ' ' + rankLabel + '</div>'
+      + nameHtml
+      + '<div class="rb">' + rankNum + '</div>'
+      + '</div>'
+      + '<div class="rank-num ' + numCls + '">' + rankNum + '</div>';
+  }
+
+  var rowsHtml = rankRow('r1-row','n1-num','HẠNG NHẤT', rank1, '', '1')
+    + rankRow('r2-row','n2-num','HẠNG NHÌ', rank2, '', '2')
+    + (rank3b
+        ? rankRow('r3-row','n3-num','HẠNG BA', rank3a, rank3b, '3')
+        : rankRow('r3-row','n3-num','HẠNG BA', rank3a, '', '3'))
+    + (rank4 ? rankRow('r4-row','n4-num','HẠNG TƯ', rank4, '', '4') : '');
+
   var html = '<!DOCTYPE html><html lang="vi"><head>'
     + '<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<title>Kết quả giải</title>'
@@ -16386,14 +16422,12 @@ function exportPodiumImage() {
     +       (nd ? '<div class="nd-label">NỘI DUNG: ' + eh(nd) + '</div>' : '')
     +       '<div class="date-label">Kết quả chung cuộc &nbsp;&bull;&nbsp; ' + dateStr + '</div>'
     +     '</div>'
-    /* rank rows */
+    /* rank rows + numbers */
     +     rowsHtml
     /* footer */
-    +     '<div class="footer-wrap">'
+    +     '<div class="ft-wrap">'
     +       '<span class="ft-line"></span>'
-    +       '<span class="ft-dash">—</span>'
-    +       '<span class="ft-text">' + eh(giai) + ' &nbsp;&bull;&nbsp; ' + dateStr + '</span>'
-    +       '<span class="ft-dash">—</span>'
+    +       '<span class="ft-mid"><span class="ft-dash">—</span><span>' + eh(giai) + ' &nbsp;&bull;&nbsp; ' + dateStr + '</span><span class="ft-dash">—</span></span>'
     +       '<span class="ft-line"></span>'
     +     '</div>'
     +   '</div>'
