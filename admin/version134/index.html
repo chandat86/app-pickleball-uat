@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<!-- v134 2026-06-23: FIX KHÔNG ĐĂNG NHẬP LẠI KHI CLEAR CACHE — (1) _silentClearCache: thêm pb_adm3 vào object keep → session không bị xóa khi build_changed/permission_changed/manual_clear; (2) Background watcher session_invalid: thay _silentClearCache bằng xóa thẳng pb_adm3 + data cache → reload sạch về login đúng cách khi session thật sự hết hạn; trước đây _silentClearCache xóa pb_adm3 → reload → onload không thấy session → bắt đăng nhập lại dù vẫn đang dùng bình thường.
+<!-- v134 2026-06-23: FIX KHÔNG ĐĂNG NHẬP LẠI KHI CLEAR CACHE — (1) _silentClearCache: thêm pb_adm3 vào object keep → session không bị xóa khi build_changed/permission_changed/manual_clear; (2) Background watcher session_invalid: thay _silentClearCache bằng xóa thẳng pb_adm3 + data cache → reload sạch về login đúng cách khi session thật sự hết hạn; trước đây _silentClearCache xóa pb_adm3 → reload → onload không thấy session → bắt đăng nhập lại dù vẫn đang dùng bình thường. -->
 <!-- v107 2026-06-16: MODE DIRECTKO — Knockout trực tiếp không vòng bảng.
   (1) Form tạo giải: thêm radio "Loại thi đấu" cho từng nội dung (Vòng bảng / Knockout trực tiếp).
   (2) State mới: _dkMode, _dkSeeds[], _dkSeedsSaved — riêng biệt với _players/_bocThamGroups.
@@ -4643,11 +4643,13 @@ function stopLivePolling() {
 function _silentClearCache(reason) {
   console.log('[CACHE] Silent clear:', reason || 'no reason');
   try {
-    // Xóa tất cả localStorage data (giữ URL + code + build key)
+    // FIX v134: chỉ giữ pb_adm3 (session) khi clear do build mới / đổi quyền
+    // KHÔNG giữ khi user chủ động xóa (manual_user_clear) hoặc đăng xuất (logout)
+    const keepSession = !['manual_user_clear', 'logout'].includes(reason);
     const keep = {
       'pb_gs_url':    localStorage.getItem('pb_gs_url'),
       'pb_adm_code':  localStorage.getItem('pb_adm_code'),
-      'pb_adm3':      localStorage.getItem('pb_adm3'),      // FIX v134: giữ session — không bắt đăng nhập lại khi clear cache
+      ...(keepSession ? { 'pb_adm3': localStorage.getItem('pb_adm3') } : {}),
       [LS_BUILD_KEY]: APP_BUILD, // Cập nhật build key sau khi clear
     };
     const toClear = [];
