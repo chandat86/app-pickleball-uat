@@ -3571,6 +3571,12 @@ function getFinalScore(m) {
 // ════════════════════════════════════════════════════════════════
 //  INIT
 // ════════════════════════════════════════════════════════════════
+// ── KHAI BÁO SỚM — phải đứng TRƯỚC window.onload vì const không hoisting ──
+const CACHE_TTL       = 60000;   // 60s
+const CACHE_LS_TTL    = 300000;  // 5p — localStorage cache expire
+const APP_BUILD       = 'v134_' + '20260623'; // v134: FIX const hoisting + session giữ qua build_changed
+const LS_BUILD_KEY    = 'pb_adm_build';
+
 window.onload = () => {
   // ── Gắn event nav TRƯỚC TIÊN (trước mọi thứ) ──
   document.querySelectorAll('.ni[data-p]').forEach(b =>
@@ -4788,10 +4794,7 @@ function clearAllAdminCache() {
 const _cache = {}; // { key: { ts, data, ver } }
 let   _cacheVer = 0; // Tăng mỗi khi invalidate matches → cache cũ tự vô hiệu
 // v37: Cache thông minh — tự expire, tự clear khi stale
-const CACHE_TTL       = 60000;  // 60s — giảm từ 5p xuống 1p, stale data ít hơn
-const CACHE_LS_TTL    = 300000; // 5p — localStorage cache expire (matches, tournaments)
-const APP_BUILD       = 'v134_' + '20260623'; // v134: FIX không đăng nhập lại khi clear cache — giữ pb_adm3 trong _silentClearCache // Tăng mỗi lần deploy Máy chủ mới → tự clear cache cũ
-const LS_BUILD_KEY    = 'pb_adm_build';
+// CACHE_TTL, CACHE_LS_TTL, APP_BUILD, LS_BUILD_KEY — declared before window.onload (v134)
 
 function cacheGet(key) {
   const c = _cache[key];
