@@ -20501,6 +20501,80 @@ setTimeout(_syncBkScrollbar, 800);
 }
 #mbe-overlay.show { display: flex; }
 
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 9998;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.show {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--bg);
+  border-radius: 12px;
+  border: 1px solid var(--bdr);
+  max-width: 1000px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid var(--bdr);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 1;
+}
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 15px 20px;
+  border-top: 1px solid var(--bdr);
+  background: var(--bg);
+  position: sticky;
+  bottom: 0;
+}
+
+.btn-close {
+  background: rgba(0,0,0,.05);
+  border: 1px solid rgba(0,0,0,.1);
+  color: var(--tx);
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.btn-close:hover {
+  background: rgba(0,0,0,.08);
+  color: var(--ac);
+}
+
+
 .mbe-section { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(0,0,0,.06); }
 .mbe-section:last-child { border-bottom: none; }
 
@@ -21222,18 +21296,32 @@ let _mbeState = {byeMode:'bye',teamCount:16,bracketType:'single',rounds:[],slotT
 let _mbeTeams = [], _mbeFilteredTeams = [], _mbeDraggedTeam = null, _mbeDraggedSeedInfo = null;
 
 function openMBE() {
-  _mbeTeams = (_players || []).map(p => ({name:p.name,code:p.code,ranking:p.ranking||null}));
+  if (!_players || _players.length === 0) {
+    toast('❌ Chưa load danh sách đội! Refresh page (F5) và thử lại.', 'err');
+    console.error('[MBE] _players undefined or empty:', _players);
+    return;
+  }
+  _mbeTeams = _players.map(p => ({name:p.name,code:p.code,ranking:p.ranking||null}));
   _mbeFilteredTeams = [..._mbeTeams];
   _mbeState = {byeMode:'bye',teamCount:16,bracketType:'single',rounds:[],slotTeams:{},selectedSlot:null};
   const modal = document.getElementById('mbe-overlay');
-  if (modal) modal.classList.add('show');
+  if (!modal) {
+    console.error('[MBE] Modal element not found!');
+    toast('❌ Lỗi: Modal không tìm thấy', 'err');
+    return;
+  }
+  modal.classList.add('show');
   renderMbeTeamList();
   mbeRebuildScaffold();
+  console.log('[MBE] Modal opened successfully');
 }
 
 function closeMBE() {
   const modal = document.getElementById('mbe-overlay');
-  if (modal) modal.classList.remove('show');
+  if (modal) {
+    modal.classList.remove('show');
+    console.log('[MBE] Modal closed');
+  }
 }
 
 function mbeRebuildScaffold() {
