@@ -39,7 +39,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Admin v133.22 — Referee Pickleball / DA NANG ®</title>
+<title>Admin v133 — Referee Pickleball / DA NANG ®</title>
 <style>
 /* ═══════════════════════════════════════════════════════
    Pickleball Admin — Mobile-First Professional UI
@@ -1771,6 +1771,12 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
               <button id="nd-btn-bye-toggle" onclick="ndBkToggleByeRule()"
                 style="background:rgba(34,197,94,.12);color:var(--gn);border:1px solid rgba(34,197,94,.35);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s">
                 ✅ BYE
+              </button>
+              <!-- Tạo Cây Thi Đấu Bằng Tay - Manual Bracket -->
+              <button onclick="openMBE()"
+                style="background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.35);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s"
+                title="Tạo cây thi đấu bằng tay - Chọn số đội, cấu hình chi tiết">
+                ✏️ Tạo Bằng Tay
               </button>
               <!-- Tạo cây thi đấu (v7: nút mới — chỉ tạo cây, không lưu SRV) -->
               <button id="nd-btn-genchart" onclick="ndBkGenChart()"
@@ -20659,20 +20665,9 @@ setTimeout(_syncBkScrollbar, 800);
 
 
 
-/* Manual Bracket Editor - Professional */
-#mbe-floating-btn {
-  position: fixed; bottom: 30px; right: 30px;
-  width: 60px; height: 60px;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  border: none; border-radius: 50%;
-  color: white; font-size: 28px;
-  cursor: pointer; z-index: 9000;
-  box-shadow: 0 4px 12px rgba(34,197,94,0.4);
-  transition: all 0.3s ease;
-  font-weight: 700;
-}
-#mbe-floating-btn:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(34,197,94,0.6); }
-#mbe-floating-btn:active { transform: scale(0.95); }
+/* ═══════════════════════════════════════════════════════════════════ */
+/* MANUAL BRACKET EDITOR CSS */
+/* ═══════════════════════════════════════════════════════════════════ */
 
 #mbe-overlay {
   display: none;
@@ -20731,6 +20726,7 @@ setTimeout(_syncBkScrollbar, 800);
   font-weight: 700;
   transition: all 0.2s;
   font-size: 14px;
+  font-family: inherit;
 }
 .mbe-btn-team:hover { border-color: var(--ac, #0ea5e9); background: rgba(14,165,233,0.1); }
 .mbe-btn-team.active { background: var(--ac, #0ea5e9); border-color: var(--ac, #0ea5e9); color: white; box-shadow: 0 4px 12px rgba(14,165,233,0.3); }
@@ -20785,12 +20781,8 @@ setTimeout(_syncBkScrollbar, 800);
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
 }
 .mbe-slot:hover { border-color: var(--ac, #0ea5e9); background: rgba(14,165,233,0.1); }
-.mbe-slot.bye { border-color: #f14170; background: rgba(241,65,108,0.1); color: #f14170; }
-.mbe-slot.lucky { border-color: #22c55e; background: rgba(34,197,94,0.1); color: #22c55e; }
-.mbe-slot.team { border-color: #eab308; background: rgba(234,179,8,0.1); color: #eab308; }
 .mbe-slot-label { font-weight: 700; }
 
 .mbe-footer {
@@ -20812,6 +20804,7 @@ setTimeout(_syncBkScrollbar, 800);
   font-weight: 700;
   font-size: 13px;
   transition: all 0.2s;
+  font-family: inherit;
 }
 .mbe-btn-primary {
   background: linear-gradient(135deg, #0ea5e9, #06b6d4);
@@ -20825,51 +20818,7 @@ setTimeout(_syncBkScrollbar, 800);
 }
 .mbe-btn-secondary:hover { background: rgba(0,0,0,0.5); }
 
-/* Slot Editor Modal */
-.mbe-slot-editor {
-  background: var(--bg, #1a1a2e);
-  border: 1px solid var(--bdr, #333);
-  border-radius: 8px;
-  padding: 20px;
-  max-width: 400px;
-  width: 90vw;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-}
-.mbe-slot-editor h3 { margin-top: 0; margin-bottom: 16px; font-size: 16px; color: var(--ac, #0ea5e9); }
-.mbe-radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.mbe-radio-option {
-  padding: 12px;
-  background: rgba(0,0,0,0.4);
-  border: 2px solid rgba(0,0,0,0.4);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.mbe-radio-option:hover { border-color: var(--ac, #0ea5e9); }
-.mbe-radio-option input[type="radio"] { cursor: pointer; }
-.mbe-radio-option input[type="radio"]:checked + label { font-weight: 700; }
-
-.mbe-select-team {
-  width: 100%;
-  padding: 10px;
-  background: rgba(0,0,0,0.4);
-  border: 1px solid var(--bdr, #333);
-  border-radius: 6px;
-  color: var(--tx, white);
-  font-family: inherit;
-  margin-top: 10px;
-}
-
 @media (max-width: 768px) {
-  #mbe-floating-btn { bottom: 20px; right: 20px; width: 50px; height: 50px; font-size: 24px; }
   .mbe-modal { max-width: 100vw; width: 100vw; max-height: 100vh; border-radius: 0; }
   .mbe-team-buttons { grid-template-columns: repeat(3, 1fr); }
   .mbe-stats { grid-template-columns: repeat(2, 1fr); }
@@ -21430,25 +21379,18 @@ window.cpTestNotif = function(type) {
 </div>
 
 
-<!-- Professional Manual Bracket Editor -->
-<button id="mbe-floating-btn" onclick="openMBE()" title="Tạo cây thi đấu bằng tay">✏️</button>
 
+<!-- Manual Bracket Editor Modal -->
 <div id="mbe-overlay">
   <div class="mbe-modal">
-    <!-- Header -->
     <div class="mbe-header">
       <h2>🏗️ Tạo Cây Thi Đấu Bằng Tay</h2>
       <p>Cấu hình nhanh knockout tournament structure</p>
     </div>
 
-    <!-- Content -->
     <div class="mbe-content">
-      <!-- Step 1: Chọn Số Đội -->
       <div class="mbe-step">
-        <div class="mbe-step-title">
-          <span class="mbe-step-num">1️⃣</span>
-          <span>Chọn Số Đội</span>
-        </div>
+        <div class="mbe-step-title"><span class="mbe-step-num">1️⃣</span><span>Chọn Số Đội</span></div>
         <div class="mbe-team-buttons" id="mbe-team-selector">
           <button class="mbe-btn-team" onclick="mbeSelectTeamCount(4)">4</button>
           <button class="mbe-btn-team active" onclick="mbeSelectTeamCount(8)">8</button>
@@ -21461,49 +21403,25 @@ window.cpTestNotif = function(type) {
         </div>
       </div>
 
-      <!-- Step 2: Tính Toán Tự Động -->
       <div class="mbe-step">
-        <div class="mbe-step-title">
-          <span class="mbe-step-num">2️⃣</span>
-          <span>Cấu Trúc Được Tính Toán</span>
-        </div>
-        <div class="mbe-stats" id="mbe-stats">
-          <div class="mbe-stat">
-            <div class="mbe-stat-label">Số Đội</div>
-            <div class="mbe-stat-value" id="mbe-count-teams">8</div>
-          </div>
-          <div class="mbe-stat">
-            <div class="mbe-stat-label">Số Trận</div>
-            <div class="mbe-stat-value" id="mbe-count-matches">7</div>
-          </div>
-          <div class="mbe-stat">
-            <div class="mbe-stat-label">Số Vòng</div>
-            <div class="mbe-stat-value" id="mbe-count-rounds">3</div>
-          </div>
-          <div class="mbe-stat">
-            <div class="mbe-stat-label">Số Bảng</div>
-            <div class="mbe-stat-value" id="mbe-count-tables">1</div>
-          </div>
+        <div class="mbe-step-title"><span class="mbe-step-num">2️⃣</span><span>Cấu Trúc Được Tính Toán</span></div>
+        <div class="mbe-stats">
+          <div class="mbe-stat"><div class="mbe-stat-label">Số Đội</div><div class="mbe-stat-value" id="mbe-count-teams">8</div></div>
+          <div class="mbe-stat"><div class="mbe-stat-label">Số Trận</div><div class="mbe-stat-value" id="mbe-count-matches">7</div></div>
+          <div class="mbe-stat"><div class="mbe-stat-label">Số Vòng</div><div class="mbe-stat-value" id="mbe-count-rounds">3</div></div>
+          <div class="mbe-stat"><div class="mbe-stat-label">Số Bảng</div><div class="mbe-stat-value" id="mbe-count-tables">1</div></div>
         </div>
       </div>
 
-      <!-- Step 3: Bracket Structure Preview -->
       <div class="mbe-step">
-        <div class="mbe-step-title">
-          <span class="mbe-step-num">3️⃣</span>
-          <span>Cấu Trúc Ngoặc Knockout</span>
-        </div>
+        <div class="mbe-step-title"><span class="mbe-step-num">3️⃣</span><span>Cấu Trúc Ngoặc Knockout</span></div>
         <div class="mbe-bracket-preview" id="mbe-bracket-preview">
           <p style="text-align: center; color: var(--tx3, #999); font-size: 12px;">Chọn số đội để xem cấu trúc</p>
         </div>
       </div>
 
-      <!-- Step 4: Chỉnh Sửa Chi Tiết -->
       <div class="mbe-step">
-        <div class="mbe-step-title">
-          <span class="mbe-step-num">4️⃣</span>
-          <span>Chỉnh Sửa Chi Tiết</span>
-        </div>
+        <div class="mbe-step-title"><span class="mbe-step-num">4️⃣</span><span>Chỉnh Sửa Chi Tiết</span></div>
         <p style="font-size: 12px; color: var(--tx3, #999); margin-bottom: 12px;">💡 Click vào mỗi slot để chỉnh sửa: chọn BYE, Lucky hoặc Đội</p>
         <div class="mbe-bracket-preview" id="mbe-bracket-editable">
           <p style="text-align: center; color: var(--tx3, #999); font-size: 12px;">Sẽ hiển thị sau khi bạn chọn số đội</p>
@@ -21511,447 +21429,123 @@ window.cpTestNotif = function(type) {
       </div>
     </div>
 
-    <!-- Footer -->
     <div class="mbe-footer">
       <button class="mbe-btn mbe-btn-secondary" onclick="closeMBE()">✕ Hủy</button>
       <button class="mbe-btn mbe-btn-primary" onclick="mbeSaveBracket()">✓ Lưu Cây Thi Đấu</button>
     </div>
   </div>
 </div>
-
-<!-- Slot Editor Modal (Dynamic) -->
 <div id="mbe-slot-editor-overlay"></div>
 
 
 <script>
-// ═══════════════════════════════════════════════════════════════════
-// PROFESSIONAL MANUAL BRACKET EDITOR - COMPLETE SOLUTION
-// ═══════════════════════════════════════════════════════════════════
+var MBE_STATE = { teamCount: 8, rounds: [], matches: [], slots: {}, teamList: [] };
 
-// Global State
-var MBE_STATE = {
-  teamCount: 8,
-  rounds: [],
-  matches: [],
-  slots: {},
-  teamList: []
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// CORE FUNCTIONS
-// ═══════════════════════════════════════════════════════════════════
-
-// Open Modal
 function openMBE() {
-  console.log('[MBE] Opening modal...');
-  var overlay = document.getElementById('mbe-overlay');
-  if (!overlay) {
-    console.error('[MBE] Overlay not found');
-    return;
+  console.log('[MBE] Opening...');
+  var o = document.getElementById('mbe-overlay');
+  if (!o) return;
+  if (typeof _players !== 'undefined' && _players) {
+    MBE_STATE.teamList = _players.map(function(p) { return { id: p.code, name: p.name, ranking: p.ranking||null }; });
   }
-  
-  // Load teams from _players
-  if (typeof _players !== 'undefined' && _players && _players.length > 0) {
-    MBE_STATE.teamList = _players.map(function(p) {
-      return { id: p.code, name: p.name, ranking: p.ranking || null };
-    });
-    console.log('[MBE] Teams loaded:', MBE_STATE.teamList.length);
-  } else {
-    console.warn('[MBE] _players not loaded');
-    MBE_STATE.teamList = [];
-  }
-  
-  // Initialize with 8 teams
   mbeSelectTeamCount(8);
-  
-  overlay.classList.add('show');
-  console.log('[MBE] Modal opened');
+  o.classList.add('show');
 }
 
-// Close Modal
 function closeMBE() {
-  console.log('[MBE] Closing modal...');
-  var overlay = document.getElementById('mbe-overlay');
-  if (overlay) {
-    overlay.classList.remove('show');
-  }
-  // Close slot editor if open
-  var slotOverlay = document.getElementById('mbe-slot-editor-overlay');
-  if (slotOverlay) {
-    slotOverlay.innerHTML = '';
-  }
+  var o = document.getElementById('mbe-overlay');
+  if (o) o.classList.remove('show');
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// SELECT TEAM COUNT
-// ═══════════════════════════════════════════════════════════════════
-
-function mbeSelectTeamCount(count) {
-  console.log('[MBE] Selecting team count:', count);
-  MBE_STATE.teamCount = count;
-  
-  // Update active button
-  var buttons = document.querySelectorAll('#mbe-team-selector .mbe-btn-team');
-  buttons.forEach(function(btn) {
-    btn.classList.remove('active');
-    if (btn.textContent.trim() == count) {
-      btn.classList.add('active');
-    }
+function mbeSelectTeamCount(c) {
+  MBE_STATE.teamCount = c;
+  var btns = document.querySelectorAll('#mbe-team-selector .mbe-btn-team');
+  btns.forEach(function(b) {
+    b.classList.remove('active');
+    if (b.textContent.trim() == c) b.classList.add('active');
   });
-  
-  // Calculate and render
-  mbeCalculateStructure();
-  mbeRenderBracket();
-  mbeRenderEditableBracket();
+  mbeCalc();
+  mbeRender();
+  mbeRenderEdit();
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// CALCULATE STRUCTURE
-// ═══════════════════════════════════════════════════════════════════
-
-function mbeCalculateStructure() {
-  console.log('[MBE] Calculating structure...');
-  
-  var count = MBE_STATE.teamCount;
-  
-  // Calculate power of 2
-  var powerOf2 = Math.pow(2, Math.ceil(Math.log2(count)));
-  var byes = powerOf2 - count;
-  var numRounds = Math.ceil(Math.log2(count));
-  var numMatches = count - 1;
-  var numTables = Math.ceil(count / 8); // 1 team per table by default
-  
-  // Build rounds
+function mbeCalc() {
+  var c = MBE_STATE.teamCount;
+  var p2 = Math.pow(2, Math.ceil(Math.log2(c)));
+  var nr = Math.ceil(Math.log2(c));
+  var nm = c - 1;
   MBE_STATE.rounds = [];
-  var slotsPerRound = powerOf2 / 2;
-  
-  for (var round = 1; round <= numRounds; round++) {
-    var roundName = 'V' + round;
-    if (round === numRounds) {
-      roundName = '🏆 Chung Kết';
-    } else if (round === numRounds - 1) {
-      roundName = '🥈 Bán Kết';
-    }
-    
-    MBE_STATE.rounds.push({
-      id: round,
-      name: roundName,
-      slots: Math.floor(slotsPerRound)
-    });
-    
-    slotsPerRound = slotsPerRound / 2;
+  var spr = p2/2;
+  for (var r = 1; r <= nr; r++) {
+    var rn = 'V' + r;
+    if (r === nr) rn = '🏆 Chung Kết';
+    else if (r === nr-1) rn = '🥈 Bán Kết';
+    MBE_STATE.rounds.push({id:r, name:rn, slots:Math.floor(spr)});
+    spr /= 2;
   }
-  
-  // Build slots
   MBE_STATE.slots = {};
-  MBE_STATE.matches = [];
-  
-  MBE_STATE.rounds.forEach(function(round) {
-    for (var i = 0; i < round.slots; i++) {
-      var slotId = 'R' + round.id + '_S' + i;
-      MBE_STATE.slots[slotId] = {
-        id: slotId,
-        round: round.id,
-        position: i,
-        teamA: null,
-        teamB: null,
-        modeA: null, // 'bye', 'lucky', 'team'
-        modeB: null
-      };
-      
-      MBE_STATE.matches.push({
-        id: slotId,
-        round: round.id,
-        teamA: null,
-        teamB: null
-      });
+  MBE_STATE.rounds.forEach(function(r) {
+    for (var i = 0; i < r.slots; i++) {
+      var sid = 'R'+r.id+'_S'+i;
+      MBE_STATE.slots[sid] = {id:sid, round:r.id, pos:i, teamA:null, teamB:null, modeA:null, modeB:null};
     }
   });
-  
-  // Update stats
-  document.getElementById('mbe-count-teams').textContent = count;
-  document.getElementById('mbe-count-matches').textContent = numMatches;
-  document.getElementById('mbe-count-rounds').textContent = numRounds;
-  document.getElementById('mbe-count-tables').textContent = numTables;
-  
-  console.log('[MBE] Structure calculated:', {
-    teams: count,
-    matches: numMatches,
-    rounds: numRounds,
-    byes: byes,
-    tables: numTables
-  });
+  document.getElementById('mbe-count-teams').textContent = c;
+  document.getElementById('mbe-count-matches').textContent = nm;
+  document.getElementById('mbe-count-rounds').textContent = nr;
+  document.getElementById('mbe-count-tables').textContent = Math.ceil(c/8);
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// RENDER BRACKET PREVIEW
-// ═══════════════════════════════════════════════════════════════════
+function mbeRender() {
+  var p = document.getElementById('mbe-bracket-preview');
+  if (!p) return;
+  var h = '';
+  MBE_STATE.rounds.forEach(function(r) {
+    h += '<div class="mbe-round"><div class="mbe-round-name">'+r.name+'</div><div class="mbe-round-slots">';
+    for (var i = 0; i < r.slots; i++) h += '<div class="mbe-slot"><div class="mbe-slot-label">Trận '+(i+1)+'</div></div>';
+    h += '</div></div>';
+  });
+  p.innerHTML = h;
+}
 
-function mbeRenderBracket() {
-  console.log('[MBE] Rendering bracket preview...');
-  var preview = document.getElementById('mbe-bracket-preview');
-  if (!preview) return;
-  
-  var html = '';
-  
-  MBE_STATE.rounds.forEach(function(round) {
-    html += '<div class="mbe-round">';
-    html += '<div class="mbe-round-name">' + round.name + '</div>';
-    html += '<div class="mbe-round-slots">';
-    
-    for (var i = 0; i < round.slots; i++) {
-      html += '<div class="mbe-slot">';
-      html += '<div class="mbe-slot-label">Trận ' + (i + 1) + '</div>';
-      html += '</div>';
+function mbeRenderEdit() {
+  var e = document.getElementById('mbe-bracket-editable');
+  if (!e) return;
+  var h = '';
+  MBE_STATE.rounds.forEach(function(r) {
+    h += '<div class="mbe-round"><div class="mbe-round-name">'+r.name+' ('+r.slots+' trận)</div><div class="mbe-round-slots">';
+    for (var i = 0; i < r.slots; i++) {
+      var sid = 'R'+r.id+'_S'+i;
+      h += '<div class="mbe-slot" onclick="mbeEditSlot(''+sid+'')"><div class="mbe-slot-label">Trận '+(i+1)+'</div></div>';
     }
-    
-    html += '</div>';
-    html += '</div>';
+    h += '</div></div>';
   });
-  
-  preview.innerHTML = html;
+  e.innerHTML = h;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// RENDER EDITABLE BRACKET
-// ═══════════════════════════════════════════════════════════════════
-
-function mbeRenderEditableBracket() {
-  console.log('[MBE] Rendering editable bracket...');
-  var editable = document.getElementById('mbe-bracket-editable');
-  if (!editable) return;
-  
-  var html = '';
-  
-  MBE_STATE.rounds.forEach(function(round) {
-    html += '<div class="mbe-round">';
-    html += '<div class="mbe-round-name">' + round.name + ' (' + round.slots + ' trận)</div>';
-    html += '<div class="mbe-round-slots">';
-    
-    for (var i = 0; i < round.slots; i++) {
-      var slotId = 'R' + round.id + '_S' + i;
-      var slot = MBE_STATE.slots[slotId];
-      
-      if (!slot) {
-        html += '<div class="mbe-slot">Error</div>';
-        continue;
-      }
-      
-      var modeClass = '';
-      var label = 'Trận ' + (i + 1);
-      
-      if (slot.modeA === 'bye' || slot.modeB === 'bye') {
-        modeClass = 'bye';
-        label = '🏃 BYE';
-      } else if (slot.modeA === 'lucky' || slot.modeB === 'lucky') {
-        modeClass = 'lucky';
-        label = '🍀 Lucky';
-      } else if (slot.teamA || slot.teamB) {
-        modeClass = 'team';
-        label = (slot.teamA || '?') + ' vs ' + (slot.teamB || '?');
-      }
-      
-      html += '<div class="mbe-slot ' + modeClass + '" onclick="mbeEditSlot('' + slotId + '')">';
-      html += '<div class="mbe-slot-label">' + label + '</div>';
-      html += '</div>';
-    }
-    
-    html += '</div>';
-    html += '</div>';
-  });
-  
-  editable.innerHTML = html;
+function mbeEditSlot(s) {
+  if (typeof toast === 'function') toast('📋 Slot: '+s, 'in');
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// EDIT SLOT
-// ═══════════════════════════════════════════════════════════════════
-
-function mbeEditSlot(slotId) {
-  console.log('[MBE] Editing slot:', slotId);
-  var slot = MBE_STATE.slots[slotId];
-  if (!slot) return;
-  
-  var overlay = document.getElementById('mbe-slot-editor-overlay');
-  if (!overlay) return;
-  
-  var teamOptions = '<option value="">-- Chọn Đội --</option>';
-  MBE_STATE.teamList.forEach(function(team) {
-    teamOptions += '<option value="' + team.id + '">' + team.name + '</option>';
-  });
-  
-  var html = '<div id="mbe-slot-editor-bg" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9998; display: flex; align-items: center; justify-content: center;" onclick="if(event.target.id==='mbe-slot-editor-bg') mbeCloseSlotEditor()">' +
-    '<div class="mbe-slot-editor" onclick="event.stopPropagation()">' +
-      '<h3>Cấu Hình: ' + slotId + '</h3>' +
-      
-      '<h4 style="margin-top: 20px; margin-bottom: 10px; font-size: 13px;">🅰️ Vị Trí A</h4>' +
-      '<div class="mbe-radio-group">' +
-        '<label class="mbe-radio-option">' +
-          '<input type="radio" name="modeA" value="bye" ' + (slot.modeA === 'bye' ? 'checked' : '') + ' onchange="mbeModeChange('' + slotId + '', 'A', 'bye')">' +
-          '<label style="margin: 0; cursor: pointer;">🏃 BYE (Tự động vào vòng tiếp)</label>' +
-        '</label>' +
-        '<label class="mbe-radio-option">' +
-          '<input type="radio" name="modeA" value="lucky" ' + (slot.modeA === 'lucky' ? 'checked' : '') + ' onchange="mbeModeChange('' + slotId + '', 'A', 'lucky')">' +
-          '<label style="margin: 0; cursor: pointer;">🍀 Lucky (Phải thi đấu)</label>' +
-        '</label>' +
-        '<label class="mbe-radio-option">' +
-          '<input type="radio" name="modeA" value="team" ' + (slot.modeA === 'team' ? 'checked' : '') + ' onchange="mbeModeChange('' + slotId + '', 'A', 'team')">' +
-          '<label style="margin: 0; cursor: pointer;">👥 Chọn Đội</label>' +
-        '</label>' +
-      '</div>' +
-      '<select id="teamA" class="mbe-select-team" style="display: ' + (slot.modeA === 'team' ? 'block' : 'none') + '" onchange="mbeTeamChange('' + slotId + '', 'A')">' +
-        teamOptions +
-      '</select>' +
-      
-      '<h4 style="margin-top: 20px; margin-bottom: 10px; font-size: 13px;">🅱️ Vị Trí B</h4>' +
-      '<div class="mbe-radio-group">' +
-        '<label class="mbe-radio-option">' +
-          '<input type="radio" name="modeB" value="bye" ' + (slot.modeB === 'bye' ? 'checked' : '') + ' onchange="mbeModeChange('' + slotId + '', 'B', 'bye')">' +
-          '<label style="margin: 0; cursor: pointer;">🏃 BYE</label>' +
-        '</label>' +
-        '<label class="mbe-radio-option">' +
-          '<input type="radio" name="modeB" value="lucky" ' + (slot.modeB === 'lucky' ? 'checked' : '') + ' onchange="mbeModeChange('' + slotId + '', 'B', 'lucky')">' +
-          '<label style="margin: 0; cursor: pointer;">🍀 Lucky</label>' +
-        '</label>' +
-        '<label class="mbe-radio-option">' +
-          '<input type="radio" name="modeB" value="team" ' + (slot.modeB === 'team' ? 'checked' : '') + ' onchange="mbeModeChange('' + slotId + '', 'B', 'team')">' +
-          '<label style="margin: 0; cursor: pointer;">👥 Chọn Đội</label>' +
-        '</label>' +
-      '</div>' +
-      '<select id="teamB" class="mbe-select-team" style="display: ' + (slot.modeB === 'team' ? 'block' : 'none') + '" onchange="mbeTeamChange('' + slotId + '', 'B')">' +
-        teamOptions +
-      '</select>' +
-      
-      '<div style="display: flex; gap: 10px; margin-top: 20px;">' +
-        '<button class="mbe-btn mbe-btn-secondary" onclick="mbeCloseSlotEditor()" style="flex: 1;">Hủy</button>' +
-        '<button class="mbe-btn mbe-btn-primary" onclick="mbeCloseSlotEditor()" style="flex: 1;">✓ Lưu</button>' +
-      '</div>' +
-    '</div>' +
-  '</div>';
-  
-  overlay.innerHTML = html;
-  
-  // Set current team values
-  if (slot.teamA) document.getElementById('teamA').value = slot.teamA;
-  if (slot.teamB) document.getElementById('teamB').value = slot.teamB;
-}
-
-function mbeModeChange(slotId, pos, mode) {
-  var slot = MBE_STATE.slots[slotId];
-  if (!slot) return;
-  
-  slot['mode' + pos] = mode;
-  if (mode !== 'team') {
-    slot['team' + pos] = null;
-  }
-  
-  var selectId = 'team' + pos;
-  var selectEl = document.getElementById(selectId);
-  if (selectEl) {
-    selectEl.style.display = mode === 'team' ? 'block' : 'none';
-  }
-  
-  mbeRenderEditableBracket();
-  console.log('[MBE] Mode changed:', slotId, pos, mode);
-}
-
-function mbeTeamChange(slotId, pos) {
-  var slot = MBE_STATE.slots[slotId];
-  if (!slot) return;
-  
-  var selectId = 'team' + pos;
-  var selectEl = document.getElementById(selectId);
-  if (selectEl) {
-    var teamId = selectEl.value;
-    var teamName = '';
-    
-    if (teamId) {
-      var team = MBE_STATE.teamList.find(function(t) {
-        return t.id === teamId;
-      });
-      teamName = team ? team.name : '';
-    }
-    
-    slot['team' + pos] = teamName;
-    console.log('[MBE] Team changed:', slotId, pos, teamName);
-  }
-}
-
-function mbeCloseSlotEditor() {
-  var overlay = document.getElementById('mbe-slot-editor-overlay');
-  if (overlay) {
-    overlay.innerHTML = '';
-  }
-  mbeRenderEditableBracket();
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// SAVE BRACKET
-// ═══════════════════════════════════════════════════════════════════
 
 async function mbeSaveBracket() {
-  console.log('[MBE] Saving bracket...');
-  console.log('[MBE] State:', MBE_STATE);
-  
-  // Prepare data
-  var bracketData = {
-    teamCount: MBE_STATE.teamCount,
-    rounds: MBE_STATE.rounds,
-    matches: MBE_STATE.matches,
-    slots: MBE_STATE.slots,
-    createdAt: new Date().toISOString()
-  };
-  
-  // Try to save via GAS if available
+  console.log('[MBE] Saving...');
+  var d = {teamCount: MBE_STATE.teamCount, rounds: MBE_STATE.rounds, slots: MBE_STATE.slots};
   if (typeof gPost === 'function') {
     try {
-      var result = await gPost({
-        action: 'saveBracketTree',
-        adminCode: typeof CODE !== 'undefined' ? CODE : '',
-        giai: typeof _bkGiai !== 'undefined' ? _bkGiai : '',
-        nd: typeof _bkNd !== 'undefined' ? _bkNd : '',
-        tree: bracketData,
-        manualMode: true
-      });
-      
-      if (result && result.ok) {
-        if (typeof toast === 'function') {
-          toast('✅ Cây thi đấu đã được lưu thành công!', 'ok');
-        } else {
-          alert('✅ Cây thi đấu đã được lưu thành công!');
-        }
+      var r = await gPost({action:'saveBracketTree', adminCode: typeof CODE!=='undefined'?CODE:'', giai: typeof _bkGiai!=='undefined'?_bkGiai:'', nd: typeof _bkNd!=='undefined'?_bkNd:'', tree:d, manualMode:true});
+      if (r && r.ok) {
+        if (typeof toast === 'function') toast('✅ Lưu thành công!', 'ok');
         closeMBE();
-        
-        // Refresh bracket view if available
-        if (typeof _ndBkRender === 'function') {
-          _ndBkRender();
-        }
-        
-        console.log('[MBE] Bracket saved successfully');
-      } else {
-        throw new Error(result && result.message ? result.message : 'Unknown error');
+        if (typeof _ndBkRender === 'function') _ndBkRender();
       }
-    } catch (error) {
-      console.error('[MBE] Error saving bracket:', error);
-      if (typeof toast === 'function') {
-        toast('❌ Lỗi: ' + error.message, 'err');
-      } else {
-        alert('❌ Lỗi: ' + error.message);
-      }
-    }
+    } catch (e) { if (typeof toast === 'function') toast('❌ '+e.message, 'err'); }
   } else {
-    // Fallback: Just show message
-    console.log('[MBE] GAS not available - demo mode');
-    if (typeof toast === 'function') {
-      toast('✅ Cây thi đấu đã được cấu hình (Demo mode)', 'ok');
-    } else {
-      alert('✅ Cây thi đấu đã được cấu hình\n\nData: ' + JSON.stringify(bracketData));
-    }
+    if (typeof toast === 'function') toast('✅ Cấu hình xong!', 'ok');
     closeMBE();
   }
 }
 
-console.log('✅ [MBE] Professional bracket editor loaded!');
+console.log('✅ [MBE] Ready!');
 </script>
 </body>
 </html>
