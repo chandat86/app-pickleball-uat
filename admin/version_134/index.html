@@ -16406,372 +16406,7 @@ function exportPodiumImage() {
     +   '<p>Nhấn chuột phải &rarr; <b>Save as image</b> hoặc chụp màn hình để lưu ảnh</p>'
     +   '<button class="btn-print" onclick="window.print()">\uD83D\uDDA8\uFE0F In / Lưu PDF</button>'
     + '</div>'
-    + '
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<!-- MANUAL BRACKET EDITOR v1.0 - Tạo Cây Thi Đấu Bằng Tay -->
-<!-- Support Bye, Lucky, Seeding đồng thời -->
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-
-<style id="mbe-styles">
-/* Manual Bracket Editor Styles */
-#mbe-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,.4);
-  z-index: 9999;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(4px);
-}
-
-#mbe-overlay.show {
-  display: flex;
-}
-
-#manual-bracket-editor {
-  display: none;
-}
-
-#manual-bracket-editor .modal-overlay {
-  display: flex !important;
-}
-
-.mbe-section {
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid rgba(0,0,0,.06);
-}
-
-.mbe-section:last-child {
-  border-bottom: none;
-}
-
-.mbe-mode-selector label {
-  display: block;
-  padding: 10px 12px;
-  background: rgba(0,0,0,.02);
-  border-radius: 6px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.mbe-mode-selector label:hover {
-  background: rgba(0,0,0,.04);
-}
-
-.mbe-mode-selector input:checked + span {
-  font-weight: 700;
-  color: var(--ac);
-}
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
-
-.mbe-grid-layout {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 20px;
-  margin-top: 15px;
-}
-
-.mbe-panel {
-  background: rgba(0,0,0,.02);
-  border-radius: 8px;
-  padding: 15px;
-  border: 1px solid rgba(0,0,0,.06);
-}
-
-.mbe-panel h4 {
-  margin: 0 0 12px 0;
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--tx2);
-}
-
-.mbe-team-list {
-  max-height: 400px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.mbe-team-item {
-  padding: 8px 10px;
-  background: #fff;
-  border: 1.5px solid rgba(0,0,0,.08);
-  border-radius: 6px;
-  cursor: move;
-  user-select: none;
-  font-size: 13px;
-  transition: all 0.2s;
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.mbe-team-item:hover {
-  border-color: var(--ac);
-  box-shadow: 0 2px 8px rgba(14,165,233,.15);
-  background: rgba(14,165,233,.02);
-}
-
-.mbe-team-item.dragging {
-  opacity: 0.5;
-  background: rgba(14,165,233,.08);
-}
-
-.mbe-bracket-canvas {
-  min-height: 500px;
-  overflow: auto;
-  padding: 20px;
-  background: #fff;
-  border-radius: 6px;
-  border: 1px solid rgba(0,0,0,.08);
-}
-
-.mbe-bracket-round {
-  margin-right: 50px;
-  display: inline-block;
-  vertical-align: top;
-}
-
-.mbe-bracket-round h5 {
-  margin: 0 0 12px 0;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--tx2);
-}
-
-.mbe-bracket-slot {
-  width: 200px;
-  margin-bottom: 60px;
-  padding: 12px;
-  border: 1.5px solid rgba(0,0,0,.12);
-  border-radius: 6px;
-  background: #fff;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-height: 80px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-}
-
-.mbe-bracket-slot:hover {
-  border-color: var(--ac);
-  box-shadow: 0 2px 8px rgba(14,165,233,.15);
-}
-
-.mbe-bracket-slot.has-team {
-  background: rgba(14,165,233,.05);
-  border-color: var(--ac);
-}
-
-.mbe-bracket-slot.bye-mode {
-  background: rgba(241,65,108,.05);
-  border-color: rgba(241,65,108,.3);
-}
-
-.mbe-bracket-slot.lucky-mode {
-  background: rgba(34,197,94,.05);
-  border-color: rgba(34,197,94,.3);
-}
-
-.mbe-team-slot {
-  padding: 8px;
-  margin-bottom: 4px;
-  background: rgba(0,0,0,.05);
-  border-radius: 4px;
-  font-size: 12px;
-  text-align: center;
-}
-
-.mbe-team-slot.bye {
-  background: rgba(241,65,108,.1);
-  color: #f14170;
-  font-weight: 700;
-}
-
-.mbe-team-slot.lucky {
-  background: rgba(34,197,94,.1);
-  color: #22c55e;
-  font-weight: 700;
-}
-
-.mbe-slot-mode-badge {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  font-size: 10px;
-  padding: 2px 6px;
-  background: var(--ac);
-  color: #fff;
-  border-radius: 3px;
-  font-weight: 700;
-}
-
-.mbe-summary {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 15px;
-}
-
-.mbe-stat-card {
-  padding: 12px;
-  background: #fff;
-  border: 1.5px solid rgba(0,0,0,.08);
-  border-radius: 6px;
-  text-align: center;
-}
-
-.mbe-stat-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--tx3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-}
-
-.mbe-stat-value {
-  display: block;
-  font-size: 24px;
-  font-weight: 900;
-  color: var(--ac);
-}
-
-@media (max-width: 768px) {
-  .mbe-grid-layout {
-    grid-template-columns: 1fr;
-  }
-  
-  .mbe-summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .mbe-bracket-slot {
-    width: 150px;
-  }
-}
-</style>
-
-<div id="manual-bracket-editor">
-  <div class="modal-overlay" id="mbe-overlay">
-    <div class="modal-content" style="max-width:1000px; max-height:85vh; overflow-y:auto">
-      
-      <div class="modal-header">
-        <h2>🏗️ Tạo Cây Thi Đấu Bằng Tay</h2>
-        <button onclick="closeManualBracketEditor()" class="btn-close">×</button>
-      </div>
-
-      <div style="padding:20px">
-        <!-- STEP 1 -->
-        <div class="mbe-section">
-          <h3>Bước 1️⃣: Chọn Chế độ BYE</h3>
-          <div class="mbe-mode-selector">
-            <label>
-              <input type="radio" name="bye-mode" value="bye" checked onchange="updateMbeByeMode('bye')">
-              <span>🏃 Auto Bye — Đội trong slot BYE tự động vào vòng tiếp theo</span>
-            </label>
-            <label>
-              <input type="radio" name="bye-mode" value="lucky" onchange="updateMbeByeMode('lucky')">
-              <span>🍀 Lucky — Tất cả đội phải thi đấu thực sự (BYE chọn lucky loser)</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- STEP 2 -->
-        <div class="mbe-section">
-          <h3>Bước 2️⃣: Cấu Hình Cây</h3>
-          <div class="grid-2">
-            <div>
-              <label class="lbl">Số đội tham gia</label>
-              <input type="number" id="mbe-team-count" min="2" max="64" value="16" onchange="mbeRebuildScaffold()" class="fi">
-            </div>
-            <div>
-              <label class="lbl">Loại cây</label>
-              <select id="mbe-bracket-type" class="fi" onchange="mbeRebuildScaffold()">
-                <option value="single">Single Elimination (Loại trực tiếp)</option>
-                <option value="double">Double Elimination (Vòng loại)</option>
-              </select>
-            </div>
-          </div>
-          <button onclick="mbeRebuildScaffold()" class="btn" style="margin-top:12px">🔄 Tạo Cây Scaffold</button>
-        </div>
-
-        <!-- STEP 3 -->
-        <div class="mbe-section">
-          <h3>Bước 3️⃣: Đặt Đội & Chọn Chế Độ</h3>
-          <div class="mbe-grid-layout">
-            <div class="mbe-panel mbe-teams-panel">
-              <h4>📋 Danh Sách Đội</h4>
-              <input type="text" id="mbe-search-teams" placeholder="🔍 Tìm đội..." oninput="mbeFilterTeams(this.value)" class="fi">
-              <div id="mbe-team-list" class="mbe-team-list"></div>
-            </div>
-            <div class="mbe-panel mbe-bracket-preview">
-              <h4>🌳 Cây Thi Đấu</h4>
-              <div id="mbe-bracket-canvas" class="mbe-bracket-canvas"></div>
-            </div>
-          </div>
-          <p style="font-size:12px; color:var(--tx3); margin-top:10px">
-            💡 <strong>Hướng dẫn:</strong> Kéo đội từ danh sách sang slot trống. Click vào slot để chỉnh sửa mode.
-          </p>
-        </div>
-
-        <!-- STEP 4 -->
-        <div class="mbe-section">
-          <h3>Bước 4️⃣: Xem Lại & Áp Dụng</h3>
-          <div class="mbe-summary">
-            <div class="mbe-stat-card">
-              <span class="mbe-stat-label">Tổng đội</span>
-              <span class="mbe-stat-value" id="mbe-stat-teams">0</span>
-            </div>
-            <div class="mbe-stat-card">
-              <span class="mbe-stat-label">Slot BYE</span>
-              <span class="mbe-stat-value" id="mbe-stat-byes">0</span>
-            </div>
-            <div class="mbe-stat-card">
-              <span class="mbe-stat-label">Lucky Loser</span>
-              <span class="mbe-stat-value" id="mbe-stat-lucky">0</span>
-            </div>
-            <div class="mbe-stat-card">
-              <span class="mbe-stat-label">Seeding</span>
-              <span class="mbe-stat-value" id="mbe-stat-seeding">0</span>
-            </div>
-          </div>
-          <div style="padding:12px; background:rgba(59,130,246,.08); border-radius:6px; border-left:3px solid var(--ac)">
-            <p style="font-size:13px; color:var(--tx); line-height:1.6; margin:0" id="mbe-review-text">
-              Chưa có cây nào được tạo
-            </p>
-          </div>
-        </div>
-
-        <!-- FOOTER -->
-        <div class="modal-footer" style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end">
-          <button onclick="closeManualBracketEditor()" class="btn" style="background:rgba(0,0,0,.05)">✕ Hủy</button>
-          <button onclick="mbeApplyAndSave()" class="btn" style="background:var(--ac); color:#fff; font-weight:700">✓ Áp Dụng & Lưu</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-</body></html>';
+    + '</body></html>';
 
   var popup = window.open('','_blank','width=660,height=820,scrollbars=yes');
   if (!popup) { toast('Pop-up bị chặn — vui lòng cho phép pop-up', 'er'); return; }
@@ -20848,6 +20483,180 @@ setTimeout(_syncBkScrollbar, 800);
 .cp-hist-detail {
   font-size: 10.5px; color: #4d7c0f; margin-top: 5px; line-height: 1.4;
 }
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/* MANUAL BRACKET EDITOR - Styles */
+/* ═══════════════════════════════════════════════════════════════════ */
+#mbe-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+#mbe-overlay.show { display: flex; }
+
+.mbe-section { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(0,0,0,.06); }
+.mbe-section:last-child { border-bottom: none; }
+
+.mbe-mode-selector label {
+  display: block;
+  padding: 10px 12px;
+  background: rgba(0,0,0,.02);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mbe-mode-selector label:hover { background: rgba(0,0,0,.04); }
+.mbe-mode-selector input:checked + span { font-weight: 700; color: var(--ac); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+.mbe-grid-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.mbe-panel {
+  background: rgba(0,0,0,.02);
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid rgba(0,0,0,.06);
+}
+.mbe-panel h4 { margin: 0 0 12px 0; font-size: 13px; font-weight: 700; text-transform: uppercase; }
+
+.mbe-team-list {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mbe-team-item {
+  padding: 8px 10px;
+  background: #fff;
+  border: 1.5px solid rgba(0,0,0,.08);
+  border-radius: 6px;
+  cursor: move;
+  user-select: none;
+  font-size: 13px;
+  transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mbe-team-item:hover {
+  border-color: var(--ac);
+  box-shadow: 0 2px 8px rgba(14,165,233,.15);
+  background: rgba(14,165,233,.02);
+}
+.mbe-team-item.dragging { opacity: 0.5; background: rgba(14,165,233,.08); }
+
+.mbe-bracket-canvas {
+  min-height: 500px;
+  overflow: auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,.08);
+}
+
+.mbe-bracket-round { margin-right: 50px; display: inline-block; vertical-align: top; }
+.mbe-bracket-round h5 { margin: 0 0 12px 0; font-size: 12px; font-weight: 700; }
+
+.mbe-bracket-slot {
+  width: 200px;
+  margin-bottom: 60px;
+  padding: 12px;
+  border: 1.5px solid rgba(0,0,0,.12);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+.mbe-bracket-slot:hover {
+  border-color: var(--ac);
+  box-shadow: 0 2px 8px rgba(14,165,233,.15);
+}
+.mbe-bracket-slot.has-team {
+  background: rgba(14,165,233,.05);
+  border-color: var(--ac);
+}
+.mbe-bracket-slot.bye-mode {
+  background: rgba(241,65,108,.05);
+  border-color: rgba(241,65,108,.3);
+}
+.mbe-bracket-slot.lucky-mode {
+  background: rgba(34,197,94,.05);
+  border-color: rgba(34,197,94,.3);
+}
+
+.mbe-team-slot {
+  padding: 8px;
+  margin-bottom: 4px;
+  background: rgba(0,0,0,.05);
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+}
+.mbe-team-slot.bye {
+  background: rgba(241,65,108,.1);
+  color: #f14170;
+  font-weight: 700;
+}
+.mbe-team-slot.lucky {
+  background: rgba(34,197,94,.1);
+  color: #22c55e;
+  font-weight: 700;
+}
+
+.mbe-slot-mode-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--ac);
+  color: #fff;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+.mbe-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.mbe-stat-card {
+  padding: 12px;
+  background: #fff;
+  border: 1.5px solid rgba(0,0,0,.08);
+  border-radius: 6px;
+  text-align: center;
+}
+.mbe-stat-label { display: block; font-size: 11px; font-weight: 700; color: var(--tx3); text-transform: uppercase; margin-bottom: 6px; }
+.mbe-stat-value { display: block; font-size: 24px; font-weight: 900; color: var(--ac); }
+
+@media (max-width: 768px) {
+  .mbe-grid-layout { grid-template-columns: 1fr; }
+  .mbe-summary { grid-template-columns: repeat(2, 1fr); }
+  .mbe-bracket-slot { width: 150px; }
+}
+
 </style>
 
 <!-- Bell button -->
@@ -21346,909 +21155,56 @@ window.cpTestNotif = function(type) {
   _cpShowNotif(testData);
   console.log('[CP] Test notification shown:', type);
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MANUAL BRACKET EDITOR - JavaScript Code
-// ═══════════════════════════════════════════════════════════════════════════
-
-let _mbeState = {
-  byeMode: 'bye',
-  teamCount: 16,
-  bracketType: 'single',
-  rounds: [],
-  slotTeams: {},
-  selectedSlot: null
-};
-
-let _mbeTeams = [];
-let _mbeFilteredTeams = [];
-let _mbeDraggedTeam = null;
-let _mbeDraggedSeedInfo = null;
-
-function openManualBracketEditor() {
-  _mbeTeams = (_players || []).map(p => ({
-    name: p.name,
-    code: p.code,
-    ranking: p.ranking || null
-  }));
-  _mbeFilteredTeams = [..._mbeTeams];
-  
-  _mbeState = {
-    byeMode: 'bye',
-    teamCount: 16,
-    bracketType: 'single',
-    rounds: [],
-    slotTeams: {},
-    selectedSlot: null
-  };
-  
-  const modal = document.getElementById('manual-bracket-editor');
-  if (modal) modal.style.display = 'flex';
-  
-  renderMbeTeamList();
-  mbeRebuildScaffold();
-}
-
-function closeManualBracketEditor() {
-  const modal = document.getElementById('manual-bracket-editor');
-  if (modal) modal.style.display = 'none';
-}
-
-function mbeRebuildScaffold() {
-  const teamCount = parseInt(document.getElementById('mbe-team-count')?.value || 16);
-  const bracketType = document.getElementById('mbe-bracket-type')?.value || 'single';
-  
-  _mbeState.teamCount = teamCount;
-  _mbeState.bracketType = bracketType;
-  
-  const { rounds, byes } = _mbeCalcBracketRounds(teamCount);
-  _mbeState.rounds = rounds;
-  
-  _mbeState.slotTeams = {};
-  
-  rounds.forEach((round) => {
-    for (let i = 0; i < round.slotCount; i++) {
-      const slotId = `R${round.roundId}_S${i}`;
-      _mbeState.slotTeams[slotId] = {
-        teamA: '',
-        teamB: '',
-        modeA: 'seeding',
-        modeB: 'seeding',
-        seedA: null,
-        seedB: null,
-        isByeA: false,
-        isByeB: false
-      };
-    }
-  });
-  
-  renderMbeBracketCanvas();
-  updateMbeSummary();
-}
-
-function _mbeCalcBracketRounds(teamCount) {
-  const realCount = Math.pow(2, Math.ceil(Math.log2(teamCount)));
-  const byes = realCount - teamCount;
-  const rounds = [];
-  
-  let slotCount = realCount / 2;
-  let roundNum = 1;
-  
-  while (slotCount >= 1) {
-    rounds.push({
-      roundId: roundNum,
-      name: _getMbeRoundName(roundNum, realCount),
-      slotCount: Math.floor(slotCount),
-      slots: []
-    });
-    
-    slotCount /= 2;
-    roundNum++;
-  }
-  
-  return { rounds, byes, realCount };
-}
-
-function _getMbeRoundName(roundNum, totalTeams) {
-  const totalRounds = Math.ceil(Math.log2(totalTeams));
-  const remainRounds = totalRounds - roundNum;
-  
-  if (remainRounds === 0) return '🏆 Chung kết';
-  if (remainRounds === 1) return '🥈 Bán kết';
-  if (remainRounds === 2) return '🥉 Tứ kết';
-  
-  return `Vòng ${roundNum}`;
-}
-
-function renderMbeTeamList() {
-  const container = document.getElementById('mbe-team-list');
-  if (!container) return;
-  
-  let html = '';
-  
-  _mbeFilteredTeams.forEach((team, idx) => {
-    const seedBadge = team.ranking ? 
-      `<span style="font-size:9px;background:var(--ac);color:#fff;padding:1px 6px;border-radius:3px;margin-left:4px;font-weight:700">#${team.ranking}</span>` : '';
-    
-    html += `
-      <div class="mbe-team-item" 
-           draggable="true"
-           data-team-name="${team.name}"
-           data-team-idx="${idx}"
-           ondragstart="mbeDragStart(event, '${team.name}', ${team.ranking || 'null'})"
-           ondragend="mbeDragEnd(event)">
-        <span>${team.name}</span>
-        ${seedBadge}
-      </div>
-    `;
-  });
-  
-  if (_mbeFilteredTeams.length === 0) {
-    html = '<div style="padding:20px;text-align:center;color:var(--tx3);font-size:12px">Không tìm thấy đội</div>';
-  }
-  
-  container.innerHTML = html;
-}
-
-function renderMbeBracketCanvas() {
-  const container = document.getElementById('mbe-bracket-canvas');
-  if (!container) return;
-  
-  let html = '';
-  
-  _mbeState.rounds.forEach((round) => {
-    html += `<div class="mbe-bracket-round">`;
-    html += `<h5>${round.name}</h5>`;
-    
-    for (let i = 0; i < round.slotCount; i++) {
-      const slotId = `R${round.roundId}_S${i}`;
-      const slot = _mbeState.slotTeams[slotId];
-      
-      if (!slot) continue;
-      
-      const isBye = slot.modeA === 'bye' || slot.modeB === 'bye';
-      const isLucky = slot.modeA === 'lucky' || slot.modeB === 'lucky';
-      const hasTeam = !!(slot.teamA || slot.teamB);
-      
-      let classList = ['mbe-bracket-slot'];
-      if (hasTeam) classList.push('has-team');
-      if (isBye) classList.push('bye-mode');
-      if (isLucky) classList.push('lucky-mode');
-      
-      html += `
-        <div class="${classList.join(' ')}"
-             id="slot-${slotId}"
-             onclick="mbeOpenSlotEditor('${slotId}')"
-             ondrop="mbeDropTeam(event, '${slotId}', 'A')"
-             ondragover="event.preventDefault(); event.dataTransfer.dropEffect='move'">
-          
-          <div style="position:relative">
-            ${_renderMbeSlotTeam(slot.teamA, slot.modeA, slot.seedA, 'A')}
-            ${_renderMbeSlotTeam(slot.teamB, slot.modeB, slot.seedB, 'B')}
-          </div>
-          
-          <div class="mbe-slot-mode-badge">
-            ${slot.modeA ? slot.modeA.substring(0, 1).toUpperCase() : '?'}/${slot.modeB ? slot.modeB.substring(0, 1).toUpperCase() : '?'}
-          </div>
-        </div>
-      `;
-    }
-    
-    html += `</div>`;
-  });
-  
-  container.innerHTML = html;
-}
-
-function _renderMbeSlotTeam(teamName, mode, seed, position) {
-  let className = 'mbe-team-slot';
-  let content = '';
-  
-  if (mode === 'bye') {
-    className += ' bye';
-    content = '🏃 BYE';
-  } else if (mode === 'lucky') {
-    className += ' lucky';
-    content = '🍀 LUCKY';
-  } else if (teamName) {
-    content = `${teamName} ${seed ? '(#' + seed + ')' : ''}`;
-  } else {
-    content = `[ ${position} - Trống ]`;
-    className += ' empty';
-  }
-  
-  return `<div class="${className}">${content}</div>`;
-}
-
-function mbeDragStart(event, teamName, ranking) {
-  _mbeDraggedTeam = teamName;
-  _mbeDraggedSeedInfo = ranking;
-  event.target.classList.add('dragging');
-  event.dataTransfer.effectAllowed = 'move';
-}
-
-function mbeDragEnd(event) {
-  event.target.classList.remove('dragging');
-  _mbeDraggedTeam = null;
-  _mbeDraggedSeedInfo = null;
-}
-
-function mbeDropTeam(event, slotId, position) {
-  event.preventDefault();
-  
-  if (!_mbeDraggedTeam) return;
-  
-  if (!_mbeState.slotTeams[slotId]) {
-    _mbeState.slotTeams[slotId] = {
-      teamA: '',
-      teamB: '',
-      modeA: 'seeding',
-      modeB: 'seeding',
-      seedA: null,
-      seedB: null,
-      isByeA: false,
-      isByeB: false
-    };
-  }
-  
-  _mbeState.slotTeams[slotId][`team${position}`] = _mbeDraggedTeam;
-  _mbeState.slotTeams[slotId][`seed${position}`] = _mbeDraggedSeedInfo;
-  _mbeState.slotTeams[slotId][`mode${position}`] = 'seeding';
-  
-  renderMbeBracketCanvas();
-  updateMbeSummary();
-  
-  _mbeDraggedTeam = null;
-  _mbeDraggedSeedInfo = null;
-}
-
-function mbeFilterTeams(searchText) {
-  const term = searchText.toLowerCase().trim();
-  
-  _mbeFilteredTeams = _mbeTeams.filter(team => 
-    team.name.toLowerCase().includes(term)
-  );
-  
-  renderMbeTeamList();
-}
-
-function mbeOpenSlotEditor(slotId) {
-  const slot = _mbeState.slotTeams[slotId] || {};
-  
-  const modalHtml = `
-    <div class="modal-overlay" id="mbe-slot-modal">
-      <div class="modal-content" style="max-width:550px;">
-        <div class="modal-header">
-          <h3>Chỉnh Sửa Slot: <code>${slotId}</code></h3>
-          <button onclick="mbeCloseSlotModal()" class="btn-close">×</button>
-        </div>
-
-        <div style="padding:20px; overflow-y:auto; max-height:70vh">
-          <div style="margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid rgba(0,0,0,.08)">
-            <h4 style="margin:0 0 12px 0">🅰️ Vị Trí A</h4>
-            <label class="lbl">Tên Đội</label>
-            <input type="text" id="mbe-team-a" value="${slot.teamA || ''}" placeholder="Nhập tên đội" class="fi">
-            <label class="lbl" style="margin-top:10px">Chế Độ</label>
-            <div style="display:flex; flex-wrap:wrap; gap:8px;">
-              <label style="display:flex; align-items:center; padding:6px 10px; background:rgba(0,0,0,.02); border-radius:4px; cursor:pointer">
-                <input type="radio" name="mode-a" value="seeding" ${slot.modeA === 'seeding' ? 'checked' : ''}>
-                <span style="margin-left:6px; font-weight:600; font-size:13px">🏆 Seeding</span>
-              </label>
-              <label style="display:flex; align-items:center; padding:6px 10px; background:rgba(241,65,108,.05); border-radius:4px; cursor:pointer">
-                <input type="radio" name="mode-a" value="bye" ${slot.modeA === 'bye' ? 'checked' : ''}>
-                <span style="margin-left:6px; font-weight:600; font-size:13px; color:#f14170">🏃 Bye</span>
-              </label>
-              <label style="display:flex; align-items:center; padding:6px 10px; background:rgba(34,197,94,.05); border-radius:4px; cursor:pointer">
-                <input type="radio" name="mode-a" value="lucky" ${slot.modeA === 'lucky' ? 'checked' : ''}>
-                <span style="margin-left:6px; font-weight:600; font-size:13px; color:#22c55e">🍀 Lucky</span>
-              </label>
-            </div>
-            <label class="lbl" style="margin-top:10px">Thứ Hạng (nếu Seeding)</label>
-            <input type="number" id="mbe-seed-a" min="1" max="999" value="${slot.seedA || ''}" placeholder="VD: 1, 2, 3..." class="fi">
-          </div>
-
-          <div style="margin-bottom:15px">
-            <h4 style="margin:0 0 12px 0">🅱️ Vị Trí B</h4>
-            <label class="lbl">Tên Đội</label>
-            <input type="text" id="mbe-team-b" value="${slot.teamB || ''}" placeholder="Nhập tên đội" class="fi">
-            <label class="lbl" style="margin-top:10px">Chế Độ</label>
-            <div style="display:flex; flex-wrap:wrap; gap:8px;">
-              <label style="display:flex; align-items:center; padding:6px 10px; background:rgba(0,0,0,.02); border-radius:4px; cursor:pointer">
-                <input type="radio" name="mode-b" value="seeding" ${slot.modeB === 'seeding' ? 'checked' : ''}>
-                <span style="margin-left:6px; font-weight:600; font-size:13px">🏆 Seeding</span>
-              </label>
-              <label style="display:flex; align-items:center; padding:6px 10px; background:rgba(241,65,108,.05); border-radius:4px; cursor:pointer">
-                <input type="radio" name="mode-b" value="bye" ${slot.modeB === 'bye' ? 'checked' : ''}>
-                <span style="margin-left:6px; font-weight:600; font-size:13px; color:#f14170">🏃 Bye</span>
-              </label>
-              <label style="display:flex; align-items:center; padding:6px 10px; background:rgba(34,197,94,.05); border-radius:4px; cursor:pointer">
-                <input type="radio" name="mode-b" value="lucky" ${slot.modeB === 'lucky' ? 'checked' : ''}>
-                <span style="margin-left:6px; font-weight:600; font-size:13px; color:#22c55e">🍀 Lucky</span>
-              </label>
-            </div>
-            <label class="lbl" style="margin-top:10px">Thứ Hạng (nếu Seeding)</label>
-            <input type="number" id="mbe-seed-b" min="1" max="999" value="${slot.seedB || ''}" placeholder="VD: 1, 2, 3..." class="fi">
-          </div>
-
-          <div style="padding:12px; background:rgba(59,130,246,.08); border-radius:6px; border-left:3px solid var(--ac); margin-bottom:15px; font-size:12px; color:var(--tx); line-height:1.6">
-            <strong>ℹ️ Hướng dẫn chế độ:</strong><br>
-            • <strong>🏆 Seeding:</strong> Đội được xếp hạng, thi đấu thực sự<br>
-            • <strong>🏃 Bye:</strong> Đội tự động vào vòng tiếp theo (không thi đấu vòng này)<br>
-            • <strong>🍀 Lucky:</strong> Đội may mắn (thi đấu để chứng minh, không tự động advance)
-          </div>
-        </div>
-
-        <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end; padding:15px 20px; border-top:1px solid rgba(0,0,0,.08)">
-          <button onclick="mbeCloseSlotModal()" class="btn" style="background:rgba(0,0,0,.05)">✕ Hủy</button>
-          <button onclick="mbeSaveSlotEdit('${slotId}')" class="btn" style="background:var(--ac);color:#fff;font-weight:700">✓ Lưu</button>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  document.body.insertAdjacentHTML('beforeend', modalHtml);
-}
-
-function mbeCloseSlotModal() {
-  const modal = document.getElementById('mbe-slot-modal');
-  if (modal) modal.remove();
-}
-
-function mbeSaveSlotEdit(slotId) {
-  const teamA = document.getElementById('mbe-team-a')?.value?.trim() || '';
-  const teamB = document.getElementById('mbe-team-b')?.value?.trim() || '';
-  const modeA = document.querySelector('input[name="mode-a"]:checked')?.value || 'seeding';
-  const modeB = document.querySelector('input[name="mode-b"]:checked')?.value || 'seeding';
-  const seedA = parseInt(document.getElementById('mbe-seed-a')?.value) || null;
-  const seedB = parseInt(document.getElementById('mbe-seed-b')?.value) || null;
-  
-  _mbeState.slotTeams[slotId] = {
-    teamA,
-    teamB,
-    modeA,
-    modeB,
-    seedA: modeA === 'seeding' ? seedA : null,
-    seedB: modeB === 'seeding' ? seedB : null,
-    isByeA: modeA === 'bye',
-    isByeB: modeB === 'bye'
-  };
-  
-  mbeCloseSlotModal();
-  renderMbeBracketCanvas();
-  updateMbeSummary();
-}
-
-function updateMbeSummary() {
-  let totalTeams = 0;
-  let totalByes = 0;
-  let totalLucky = 0;
-  let totalSeeding = 0;
-  
-  Object.values(_mbeState.slotTeams).forEach(slot => {
-    if (slot.teamA) {
-      totalTeams++;
-      if (slot.modeA === 'bye') totalByes++;
-      else if (slot.modeA === 'lucky') totalLucky++;
-      else totalSeeding++;
-    }
-    if (slot.teamB) {
-      totalTeams++;
-      if (slot.modeB === 'bye') totalByes++;
-      else if (slot.modeB === 'lucky') totalLucky++;
-      else totalSeeding++;
-    }
-  });
-  
-  const statTeams = document.getElementById('mbe-stat-teams');
-  const statByes = document.getElementById('mbe-stat-byes');
-  const statLucky = document.getElementById('mbe-stat-lucky');
-  const statSeeding = document.getElementById('mbe-stat-seeding');
-  
-  if (statTeams) statTeams.textContent = totalTeams;
-  if (statByes) statByes.textContent = totalByes;
-  if (statLucky) statLucky.textContent = totalLucky;
-  if (statSeeding) statSeeding.textContent = totalSeeding;
-  
-  const reviewText = document.getElementById('mbe-review-text');
-  if (reviewText) {
-    const isComplete = totalTeams === _mbeState.teamCount;
-    reviewText.innerHTML = `
-      <strong>📋 Cấu hình cây thi đấu:</strong><br>
-      • Loại: <strong>${_mbeState.bracketType === 'single' ? 'Single Elimination' : 'Double Elimination'}</strong><br>
-      • Chế độ BYE: <strong>${_mbeState.byeMode === 'bye' ? 'Auto Bye' : 'Lucky Loser'}</strong><br>
-      • Tổng đội: <strong>${totalTeams}/${_mbeState.teamCount}</strong> 
-        (BYE: ${totalByes}, Lucky: ${totalLucky}, Seeding: ${totalSeeding})<br>
-      • Trạng thái: ${isComplete ? '✅ <strong style="color:#16a34a">Đầy đủ</strong>' : '⚠️ <strong style="color:#f59e0b">Chưa đầy đủ</strong>'}
-    `;
-  }
-}
-
-function updateMbeByeMode(mode) {
-  _mbeState.byeMode = mode;
-}
-
-async function mbeApplyAndSave() {
-  let totalTeams = Object.values(_mbeState.slotTeams)
-    .reduce((sum, slot) => sum + (slot.teamA ? 1 : 0) + (slot.teamB ? 1 : 0), 0);
-  
-  if (totalTeams !== _mbeState.teamCount) {
-    toast(`❌ Chưa đủ đội! Cần ${_mbeState.teamCount} đội, hiện có ${totalTeams}`, 'err');
-    return;
-  }
-  
-  const tree = _mbeConvertSlotsToBracketTree(_mbeState);
-  
-  try {
-    const response = await gPost({
-      action: 'saveBracketTree',
-      adminCode: CODE,
-      giai: _bkGiai,
-      nd: _bkNd,
-      tree: tree,
-      _dkMode: true,
-      _byeRule: _mbeState.byeMode,
-      _manualMode: true
-    });
-    
-    if (response?.ok || response?.status === 'ok') {
-      toast('✅ Cây thi đấu đã được áp dụng & lưu!', 'ok');
-      
-      _bkCurrentTree = tree;
-      _bkApplied = true;
-      _bkByeRule = _mbeState.byeMode;
-      _bkLastRenderKey = `${_bkGiai}|${_bkNd}`;
-      
-      if (_bkTreeCache) {
-        _bkTreeCache.delete(`${_bkGiai}|${_bkNd}`);
-      }
-      
-      _ndBkRender();
-      closeManualBracketEditor();
-      
-      await loadMatchesCache();
-    } else {
-      toast('❌ Lỗi khi lưu: ' + (response?.message || 'Unknown error'), 'err');
-    }
-  } catch (err) {
-    console.error('Error saving bracket:', err);
-    toast('❌ Lỗi: ' + err.message, 'err');
-  }
-}
-
-function _mbeConvertSlotsToBracketTree(mbeState) {
-  const tree = {
-    _meta: {
-      totalTeams: 0,
-      byes: 0,
-      lucky: 0,
-      mode: 'manual',
-      byeMode: mbeState.byeMode,
-      createdAt: new Date().toISOString()
-    },
-    matches: []
-  };
-  
-  const byRound = {};
-  
-  Object.entries(mbeState.slotTeams).forEach(([slotId, slotData]) => {
-    const match = /R(\d+)_/.exec(slotId);
-    if (!match) return;
-    
-    const roundNum = parseInt(match[1]);
-    if (!byRound[roundNum]) byRound[roundNum] = [];
-    
-    const matchObj = {
-      code: slotId,
-      round: roundNum,
-      teamA: slotData.teamA || '',
-      teamB: slotData.teamB || '',
-      seedA: slotData.seedA || null,
-      seedB: slotData.seedB || null,
-      
-      modeA: slotData.modeA,
-      modeB: slotData.modeB,
-      
-      isByeA: slotData.modeA === 'bye',
-      isByeB: slotData.modeB === 'bye',
-      
-      luckySourceA: slotData.modeA === 'lucky' ? 'loser_bracket' : null,
-      luckySourceB: slotData.modeB === 'lucky' ? 'loser_bracket' : null,
-      
-      status: 'pending',
-      scoreA: null,
-      scoreB: null,
-      advancerA: null,
-      advancerB: null
-    };
-    
-    byRound[roundNum].push(matchObj);
-    tree.matches.push(matchObj);
-    
-    tree._meta.totalTeams += (slotData.teamA ? 1 : 0) + (slotData.teamB ? 1 : 0);
-    if (matchObj.isByeA) tree._meta.byes++;
-    if (matchObj.isByeB) tree._meta.byes++;
-    if (slotData.modeA === 'lucky') tree._meta.lucky++;
-    if (slotData.modeB === 'lucky') tree._meta.lucky++;
-  });
-  
-  Object.entries(byRound).forEach(([roundNum, matches]) => {
-    tree[`round${roundNum}`] = matches;
-  });
-  
-  return tree;
-}
-
-window._mbeDebug = {
-  state: () => _mbeState,
-  teams: () => _mbeTeams,
-  tree: () => _mbeConvertSlotsToBracketTree(_mbeState),
-  exportJSON: () => JSON.stringify(_mbeConvertSlotsToBracketTree(_mbeState), null, 2)
-};
-
-console.log('✅ Manual Bracket Editor loaded.');
-
 </script>
 <!-- Thanh cuộn ngang cây thi đấu (nd-bk-wrap) — fixed bottom viewport -->
 <div id="nd-bk-scrollbar-wrap"><div id="nd-bk-scrollbar-inner" style="height:1px;background:transparent"></div></div>
 
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<!-- MANUAL BRACKET EDITOR v1.0 - Tạo Cây Thi Đấu Bằng Tay -->
-<!-- Support Bye, Lucky, Seeding đồng thời -->
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-
-<style id="mbe-styles">
-/* Manual Bracket Editor Styles */
-#mbe-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,.4);
-  z-index: 9999;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(4px);
-}
-
-#mbe-overlay.show {
-  display: flex;
-}
-
-#manual-bracket-editor {
-  display: none;
-}
-
-#manual-bracket-editor .modal-overlay {
-  display: flex !important;
-}
-
-.mbe-section {
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid rgba(0,0,0,.06);
-}
-
-.mbe-section:last-child {
-  border-bottom: none;
-}
-
-.mbe-mode-selector label {
-  display: block;
-  padding: 10px 12px;
-  background: rgba(0,0,0,.02);
-  border-radius: 6px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.mbe-mode-selector label:hover {
-  background: rgba(0,0,0,.04);
-}
-
-.mbe-mode-selector input:checked + span {
-  font-weight: 700;
-  color: var(--ac);
-}
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
-
-.mbe-grid-layout {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 20px;
-  margin-top: 15px;
-}
-
-.mbe-panel {
-  background: rgba(0,0,0,.02);
-  border-radius: 8px;
-  padding: 15px;
-  border: 1px solid rgba(0,0,0,.06);
-}
-
-.mbe-panel h4 {
-  margin: 0 0 12px 0;
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--tx2);
-}
-
-.mbe-team-list {
-  max-height: 400px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.mbe-team-item {
-  padding: 8px 10px;
-  background: #fff;
-  border: 1.5px solid rgba(0,0,0,.08);
-  border-radius: 6px;
-  cursor: move;
-  user-select: none;
-  font-size: 13px;
-  transition: all 0.2s;
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.mbe-team-item:hover {
-  border-color: var(--ac);
-  box-shadow: 0 2px 8px rgba(14,165,233,.15);
-  background: rgba(14,165,233,.02);
-}
-
-.mbe-team-item.dragging {
-  opacity: 0.5;
-  background: rgba(14,165,233,.08);
-}
-
-.mbe-bracket-canvas {
-  min-height: 500px;
-  overflow: auto;
-  padding: 20px;
-  background: #fff;
-  border-radius: 6px;
-  border: 1px solid rgba(0,0,0,.08);
-}
-
-.mbe-bracket-round {
-  margin-right: 50px;
-  display: inline-block;
-  vertical-align: top;
-}
-
-.mbe-bracket-round h5 {
-  margin: 0 0 12px 0;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--tx2);
-}
-
-.mbe-bracket-slot {
-  width: 200px;
-  margin-bottom: 60px;
-  padding: 12px;
-  border: 1.5px solid rgba(0,0,0,.12);
-  border-radius: 6px;
-  background: #fff;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-height: 80px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-}
-
-.mbe-bracket-slot:hover {
-  border-color: var(--ac);
-  box-shadow: 0 2px 8px rgba(14,165,233,.15);
-}
-
-.mbe-bracket-slot.has-team {
-  background: rgba(14,165,233,.05);
-  border-color: var(--ac);
-}
-
-.mbe-bracket-slot.bye-mode {
-  background: rgba(241,65,108,.05);
-  border-color: rgba(241,65,108,.3);
-}
-
-.mbe-bracket-slot.lucky-mode {
-  background: rgba(34,197,94,.05);
-  border-color: rgba(34,197,94,.3);
-}
-
-.mbe-team-slot {
-  padding: 8px;
-  margin-bottom: 4px;
-  background: rgba(0,0,0,.05);
-  border-radius: 4px;
-  font-size: 12px;
-  text-align: center;
-}
-
-.mbe-team-slot.bye {
-  background: rgba(241,65,108,.1);
-  color: #f14170;
-  font-weight: 700;
-}
-
-.mbe-team-slot.lucky {
-  background: rgba(34,197,94,.1);
-  color: #22c55e;
-  font-weight: 700;
-}
-
-.mbe-slot-mode-badge {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  font-size: 10px;
-  padding: 2px 6px;
-  background: var(--ac);
-  color: #fff;
-  border-radius: 3px;
-  font-weight: 700;
-}
-
-.mbe-summary {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 15px;
-}
-
-.mbe-stat-card {
-  padding: 12px;
-  background: #fff;
-  border: 1.5px solid rgba(0,0,0,.08);
-  border-radius: 6px;
-  text-align: center;
-}
-
-.mbe-stat-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--tx3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-}
-
-.mbe-stat-value {
-  display: block;
-  font-size: 24px;
-  font-weight: 900;
-  color: var(--ac);
-}
-
-@media (max-width: 768px) {
-  .mbe-grid-layout {
-    grid-template-columns: 1fr;
-  }
-  
-  .mbe-summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .mbe-bracket-slot {
-    width: 150px;
-  }
-}
-</style>
-
+<!-- Manual Bracket Editor Modal -->
 <div id="manual-bracket-editor">
   <div class="modal-overlay" id="mbe-overlay">
     <div class="modal-content" style="max-width:1000px; max-height:85vh; overflow-y:auto">
-      
       <div class="modal-header">
         <h2>🏗️ Tạo Cây Thi Đấu Bằng Tay</h2>
-        <button onclick="closeManualBracketEditor()" class="btn-close">×</button>
+        <button onclick="closeMBE()" class="btn-close">×</button>
       </div>
-
       <div style="padding:20px">
-        <!-- STEP 1 -->
         <div class="mbe-section">
-          <h3>Bước 1️⃣: Chọn Chế độ BYE</h3>
+          <h3>1️⃣ Chọn Chế độ BYE</h3>
           <div class="mbe-mode-selector">
-            <label>
-              <input type="radio" name="bye-mode" value="bye" checked onchange="updateMbeByeMode('bye')">
-              <span>🏃 Auto Bye — Đội trong slot BYE tự động vào vòng tiếp theo</span>
-            </label>
-            <label>
-              <input type="radio" name="bye-mode" value="lucky" onchange="updateMbeByeMode('lucky')">
-              <span>🍀 Lucky — Tất cả đội phải thi đấu thực sự (BYE chọn lucky loser)</span>
-            </label>
+            <label><input type="radio" name="bye-mode" value="bye" checked onchange="updateMbeByeMode('bye')"><span>🏃 Auto Bye</span></label>
+            <label><input type="radio" name="bye-mode" value="lucky" onchange="updateMbeByeMode('lucky')"><span>🍀 Lucky</span></label>
           </div>
         </div>
-
-        <!-- STEP 2 -->
         <div class="mbe-section">
-          <h3>Bước 2️⃣: Cấu Hình Cây</h3>
+          <h3>2️⃣ Cấu Hình Cây</h3>
           <div class="grid-2">
-            <div>
-              <label class="lbl">Số đội tham gia</label>
-              <input type="number" id="mbe-team-count" min="2" max="64" value="16" onchange="mbeRebuildScaffold()" class="fi">
-            </div>
-            <div>
-              <label class="lbl">Loại cây</label>
-              <select id="mbe-bracket-type" class="fi" onchange="mbeRebuildScaffold()">
-                <option value="single">Single Elimination (Loại trực tiếp)</option>
-                <option value="double">Double Elimination (Vòng loại)</option>
-              </select>
-            </div>
+            <div><label class="lbl">Số đội</label><input type="number" id="mbe-team-count" min="2" max="64" value="16" onchange="mbeRebuildScaffold()" class="fi"></div>
+            <div><label class="lbl">Loại cây</label><select id="mbe-bracket-type" class="fi" onchange="mbeRebuildScaffold()"><option value="single">Single Elimination</option><option value="double">Double Elimination</option></select></div>
           </div>
-          <button onclick="mbeRebuildScaffold()" class="btn" style="margin-top:12px">🔄 Tạo Cây Scaffold</button>
+          <button onclick="mbeRebuildScaffold()" class="btn" style="margin-top:12px">🔄 Tạo Cây</button>
         </div>
-
-        <!-- STEP 3 -->
         <div class="mbe-section">
-          <h3>Bước 3️⃣: Đặt Đội & Chọn Chế Độ</h3>
+          <h3>3️⃣ Đặt Đội & Chọn Mode</h3>
           <div class="mbe-grid-layout">
-            <div class="mbe-panel mbe-teams-panel">
-              <h4>📋 Danh Sách Đội</h4>
-              <input type="text" id="mbe-search-teams" placeholder="🔍 Tìm đội..." oninput="mbeFilterTeams(this.value)" class="fi">
-              <div id="mbe-team-list" class="mbe-team-list"></div>
-            </div>
-            <div class="mbe-panel mbe-bracket-preview">
-              <h4>🌳 Cây Thi Đấu</h4>
-              <div id="mbe-bracket-canvas" class="mbe-bracket-canvas"></div>
-            </div>
+            <div class="mbe-panel"><h4>📋 Danh Sách Đội</h4><input type="text" id="mbe-search-teams" placeholder="🔍 Tìm..." oninput="mbeFilterTeams(this.value)" class="fi"><div id="mbe-team-list" class="mbe-team-list"></div></div>
+            <div class="mbe-panel"><h4>🌳 Cây Thi Đấu</h4><div id="mbe-bracket-canvas" class="mbe-bracket-canvas"></div></div>
           </div>
-          <p style="font-size:12px; color:var(--tx3); margin-top:10px">
-            💡 <strong>Hướng dẫn:</strong> Kéo đội từ danh sách sang slot trống. Click vào slot để chỉnh sửa mode.
-          </p>
         </div>
-
-        <!-- STEP 4 -->
         <div class="mbe-section">
-          <h3>Bước 4️⃣: Xem Lại & Áp Dụng</h3>
+          <h3>4️⃣ Xem Lại & Áp Dụng</h3>
           <div class="mbe-summary">
-            <div class="mbe-stat-card">
-              <span class="mbe-stat-label">Tổng đội</span>
-              <span class="mbe-stat-value" id="mbe-stat-teams">0</span>
-            </div>
-            <div class="mbe-stat-card">
-              <span class="mbe-stat-label">Slot BYE</span>
-              <span class="mbe-stat-value" id="mbe-stat-byes">0</span>
-            </div>
-            <div class="mbe-stat-card">
-              <span class="mbe-stat-label">Lucky Loser</span>
-              <span class="mbe-stat-value" id="mbe-stat-lucky">0</span>
-            </div>
-            <div class="mbe-stat-card">
-              <span class="mbe-stat-label">Seeding</span>
-              <span class="mbe-stat-value" id="mbe-stat-seeding">0</span>
-            </div>
+            <div class="mbe-stat-card"><span class="mbe-stat-label">Tổng đội</span><span class="mbe-stat-value" id="mbe-stat-teams">0</span></div>
+            <div class="mbe-stat-card"><span class="mbe-stat-label">Slot BYE</span><span class="mbe-stat-value" id="mbe-stat-byes">0</span></div>
+            <div class="mbe-stat-card"><span class="mbe-stat-label">Lucky</span><span class="mbe-stat-value" id="mbe-stat-lucky">0</span></div>
+            <div class="mbe-stat-card"><span class="mbe-stat-label">Seeding</span><span class="mbe-stat-value" id="mbe-stat-seeding">0</span></div>
           </div>
           <div style="padding:12px; background:rgba(59,130,246,.08); border-radius:6px; border-left:3px solid var(--ac)">
-            <p style="font-size:13px; color:var(--tx); line-height:1.6; margin:0" id="mbe-review-text">
-              Chưa có cây nào được tạo
-            </p>
+            <p style="font-size:13px; margin:0" id="mbe-review-text">Chưa có cây</p>
           </div>
         </div>
-
-        <!-- FOOTER -->
         <div class="modal-footer" style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end">
-          <button onclick="closeManualBracketEditor()" class="btn" style="background:rgba(0,0,0,.05)">✕ Hủy</button>
-          <button onclick="mbeApplyAndSave()" class="btn" style="background:var(--ac); color:#fff; font-weight:700">✓ Áp Dụng & Lưu</button>
+          <button onclick="closeMBE()" class="btn" style="background:rgba(0,0,0,.05)">✕ Hủy</button>
+          <button onclick="mbeApplyAndSave()" class="btn" style="background:var(--ac); color:#fff; font-weight:700">✓ Áp Dụng</button>
         </div>
       </div>
     </div>
