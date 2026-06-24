@@ -1718,6 +1718,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
           <div class="nd-toolbar-actions" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
             <button class="rfbtn" onclick="ndRefresh()" id="nd-refresh-btn" title="Làm mới dữ liệu"><span class="nd-tb-ic">↻</span> Làm mới</button>
             <button class="btn bp bsm" onclick="openAddBangMo()" title="Thêm bảng đấu mới"><span class="nd-tb-ic">＋</span> Thêm bảng</button>
+            <button class="btn bp bsm" onclick="openMBE()" title="Tạo cây thi đấu bằng tay" style="background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.25);font-size:12px"><span class="nd-tb-ic">✏️</span> Tạo Bằng Tay</button>
+
             <button id="btn-cleanup-dup" class="btn bsm" style="background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25);font-size:12px" onclick="cleanupDuplicateMatches()" title="Xóa trận bị trùng"><span class="nd-tb-ic">🧹</span> Dọn trùng</button>
             <button id="btn-fix-time" class="btn bsm" style="background:rgba(245,158,11,.12);color:var(--or);border:1px solid rgba(245,158,11,.25);font-size:12px" onclick="fixMatchTimeFormatsAdmin()" title="Sửa các ô Giờ thi đấu bị Sheets convert sai (lệch ~25 phút)"><span class="nd-tb-ic">⏱</span> Sửa giờ</button>
             <button id="btn-clear-fb-live" class="btn bsm" style="background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25);font-size:12px" onclick="clearAllFirebaseLive()" title="Xóa toàn bộ live score đang kẹt trên Firebase RTDB"><span class="nd-tb-ic">🔥</span> Xóa Firebase Live</button>
@@ -21210,6 +21212,218 @@ window.cpTestNotif = function(type) {
     </div>
   </div>
 </div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- MANUAL BRACKET EDITOR - JavaScript -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<script>
+let _mbeState = {byeMode:'bye',teamCount:16,bracketType:'single',rounds:[],slotTeams:{}};
+let _mbeTeams = [], _mbeFilteredTeams = [], _mbeDraggedTeam = null, _mbeDraggedSeedInfo = null;
+
+function openMBE() {
+  _mbeTeams = (_players || []).map(p => ({name:p.name,code:p.code,ranking:p.ranking||null}));
+  _mbeFilteredTeams = [..._mbeTeams];
+  _mbeState = {byeMode:'bye',teamCount:16,bracketType:'single',rounds:[],slotTeams:{},selectedSlot:null};
+  const modal = document.getElementById('mbe-overlay');
+  if (modal) modal.classList.add('show');
+  renderMbeTeamList();
+  mbeRebuildScaffold();
+}
+
+function closeMBE() {
+  const modal = document.getElementById('mbe-overlay');
+  if (modal) modal.classList.remove('show');
+}
+
+function mbeRebuildScaffold() {
+  const teamCount = parseInt(document.getElementById('mbe-team-count')?.value || 16);
+  const bracketType = document.getElementById('mbe-bracket-type')?.value || 'single';
+  _mbeState.teamCount = teamCount;
+  _mbeState.bracketType = bracketType;
+  const realCount = Math.pow(2, Math.ceil(Math.log2(teamCount)));
+  const byes = realCount - teamCount;
+  const rounds = [];
+  let slotCount = realCount / 2;
+  let roundNum = 1;
+  while (slotCount >= 1) {
+    rounds.push({roundId:roundNum,name:roundNum === Math.ceil(Math.log2(realCount)) ? '🏆 Chung kết' : roundNum === Math.ceil(Math.log2(realCount)) - 1 ? '🥈 Bán kết' : 'Vòng ' + roundNum,slotCount:Math.floor(slotCount),slots:[]});
+    slotCount /= 2;
+    roundNum++;
+  }
+  _mbeState.rounds = rounds;
+  _mbeState.slotTeams = {};
+  rounds.forEach((round) => {
+    for (let i = 0; i < round.slotCount; i++) {
+      const slotId = 'R' + round.roundId + '_S' + i;
+      _mbeState.slotTeams[slotId] = {teamA:'',teamB:'',modeA:'seeding',modeB:'seeding',seedA:null,seedB:null,isByeA:false,isByeB:false};
+    }
+  });
+  renderMbeBracketCanvas();
+  updateMbeSummary();
+}
+
+function renderMbeTeamList() {
+  const container = document.getElementById('mbe-team-list');
+  if (!container) return;
+  let html = '';
+  _mbeFilteredTeams.forEach((team, idx) => {
+    const badge = team.ranking ? '<span style="font-size:9px;background:var(--ac);color:#fff;padding:1px 6px;border-radius:3px;margin-left:4px;font-weight:700">#' + team.ranking + '</span>' : '';
+    html += '<div class="mbe-team-item" draggable="true" ondragstart="mbeDragStart(event, '' + team.name.replace(/'/g, "\'") + '', ' + (team.ranking || 'null') + ')" ondragend="mbeDragEnd(event)"><span>' + team.name + '</span>' + badge + '</div>';
+  });
+  if (_mbeFilteredTeams.length === 0) html = '<div style="padding:20px;text-align:center;color:var(--tx3);font-size:12px">Không tìm thấy đội</div>';
+  container.innerHTML = html;
+}
+
+function renderMbeBracketCanvas() {
+  const container = document.getElementById('mbe-bracket-canvas');
+  if (!container) return;
+  let html = '';
+  _mbeState.rounds.forEach((round) => {
+    html += '<div class="mbe-bracket-round"><h5>' + round.name + '</h5>';
+    for (let i = 0; i < round.slotCount; i++) {
+      const slotId = 'R' + round.roundId + '_S' + i;
+      const slot = _mbeState.slotTeams[slotId];
+      if (!slot) continue;
+      const isBye = slot.modeA === 'bye' || slot.modeB === 'bye';
+      const isLucky = slot.modeA === 'lucky' || slot.modeB === 'lucky';
+      const hasTeam = !!(slot.teamA || slot.teamB);
+      let classList = 'mbe-bracket-slot';
+      if (hasTeam) classList += ' has-team';
+      if (isBye) classList += ' bye-mode';
+      if (isLucky) classList += ' lucky-mode';
+      html += '<div class="' + classList + '" onclick="mbeOpenSlotEditor('' + slotId + '')" ondrop="mbeDropTeam(event, '' + slotId + '', 'A')" ondragover="event.preventDefault(); event.dataTransfer.dropEffect='move'"><div style="position:relative">';
+      html += '<div class="mbe-team-slot' + (slot.modeA === 'bye' ? ' bye' : slot.modeA === 'lucky' ? ' lucky' : '') + '">' + (slot.modeA === 'bye' ? '🏃 BYE' : slot.modeA === 'lucky' ? '🍀 LUCKY' : (slot.teamA ? slot.teamA + (slot.seedA ? ' (#' + slot.seedA + ')' : '') : '[ A - Trống ]')) + '</div>';
+      html += '<div class="mbe-team-slot' + (slot.modeB === 'bye' ? ' bye' : slot.modeB === 'lucky' ? ' lucky' : '') + '">' + (slot.modeB === 'bye' ? '🏃 BYE' : slot.modeB === 'lucky' ? '🍀 LUCKY' : (slot.teamB ? slot.teamB + (slot.seedB ? ' (#' + slot.seedB + ')' : '') : '[ B - Trống ]')) + '</div>';
+      html += '</div><div class="mbe-slot-mode-badge">' + (slot.modeA ? slot.modeA.substring(0,1).toUpperCase() : '?') + '/' + (slot.modeB ? slot.modeB.substring(0,1).toUpperCase() : '?') + '</div></div>';
+    }
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function mbeDragStart(event, teamName, ranking) {
+  _mbeDraggedTeam = teamName;
+  _mbeDraggedSeedInfo = ranking;
+  event.target.classList.add('dragging');
+  event.dataTransfer.effectAllowed = 'move';
+}
+
+function mbeDragEnd(event) {
+  event.target.classList.remove('dragging');
+  _mbeDraggedTeam = null;
+  _mbeDraggedSeedInfo = null;
+}
+
+function mbeDropTeam(event, slotId, position) {
+  event.preventDefault();
+  if (!_mbeDraggedTeam) return;
+  if (!_mbeState.slotTeams[slotId]) {
+    _mbeState.slotTeams[slotId] = {teamA:'',teamB:'',modeA:'seeding',modeB:'seeding',seedA:null,seedB:null,isByeA:false,isByeB:false};
+  }
+  _mbeState.slotTeams[slotId]['team' + position] = _mbeDraggedTeam;
+  _mbeState.slotTeams[slotId]['seed' + position] = _mbeDraggedSeedInfo;
+  _mbeState.slotTeams[slotId]['mode' + position] = 'seeding';
+  renderMbeBracketCanvas();
+  updateMbeSummary();
+  _mbeDraggedTeam = null;
+  _mbeDraggedSeedInfo = null;
+}
+
+function mbeFilterTeams(searchText) {
+  const term = searchText.toLowerCase().trim();
+  _mbeFilteredTeams = _mbeTeams.filter(team => team.name.toLowerCase().includes(term));
+  renderMbeTeamList();
+}
+
+function mbeOpenSlotEditor(slotId) {
+  const slot = _mbeState.slotTeams[slotId] || {};
+  const html = '<div class="modal-overlay" id="mbe-slot-modal" style="z-index:10000"><div class="modal-content" style="max-width:550px"><div class="modal-header"><h3>Chỉnh Sửa: <code>' + slotId + '</code></h3><button onclick="mbeCloseSlotModal()" class="btn-close">×</button></div><div style="padding:20px"><h4>🅰️ Vị Trí A</h4><label class="lbl">Tên Đội</label><input type="text" id="mbe-team-a" value="' + (slot.teamA || '') + '" class="fi"><label class="lbl">Mode: <select id="mbe-mode-a"><option value="seeding" ' + (slot.modeA === 'seeding' ? 'selected' : '') + '>Seeding</option><option value="bye" ' + (slot.modeA === 'bye' ? 'selected' : '') + '>Bye</option><option value="lucky" ' + (slot.modeA === 'lucky' ? 'selected' : '') + '>Lucky</option></select></label><label class="lbl">Seed: <input type="number" id="mbe-seed-a" value="' + (slot.seedA || '') + '" style="width:80px" class="fi"></label><h4 style="margin-top:15px">🅱️ Vị Trí B</h4><label class="lbl">Tên Đội</label><input type="text" id="mbe-team-b" value="' + (slot.teamB || '') + '" class="fi"><label class="lbl">Mode: <select id="mbe-mode-b"><option value="seeding" ' + (slot.modeB === 'seeding' ? 'selected' : '') + '>Seeding</option><option value="bye" ' + (slot.modeB === 'bye' ? 'selected' : '') + '>Bye</option><option value="lucky" ' + (slot.modeB === 'lucky' ? 'selected' : '') + '>Lucky</option></select></label><label class="lbl">Seed: <input type="number" id="mbe-seed-b" value="' + (slot.seedB || '') + '" style="width:80px" class="fi"></label></div><div class="modal-footer"><button onclick="mbeCloseSlotModal()" class="btn" style="background:rgba(0,0,0,.05)">Hủy</button><button onclick="mbeSaveSlotEdit('' + slotId + '')" class="btn" style="background:var(--ac);color:#fff">Lưu</button></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function mbeCloseSlotModal() {
+  const m = document.getElementById('mbe-slot-modal');
+  if (m) m.remove();
+}
+
+function mbeSaveSlotEdit(slotId) {
+  const teamA = document.getElementById('mbe-team-a').value.trim();
+  const teamB = document.getElementById('mbe-team-b').value.trim();
+  const modeA = document.getElementById('mbe-mode-a').value;
+  const modeB = document.getElementById('mbe-mode-b').value;
+  const seedA = parseInt(document.getElementById('mbe-seed-a').value) || null;
+  const seedB = parseInt(document.getElementById('mbe-seed-b').value) || null;
+  _mbeState.slotTeams[slotId] = {teamA:teamA,teamB:teamB,modeA:modeA,modeB:modeB,seedA:modeA==='seeding'?seedA:null,seedB:modeB==='seeding'?seedB:null,isByeA:modeA==='bye',isByeB:modeB==='bye'};
+  mbeCloseSlotModal();
+  renderMbeBracketCanvas();
+  updateMbeSummary();
+}
+
+function updateMbeSummary() {
+  let totalTeams = 0, totalByes = 0, totalLucky = 0, totalSeeding = 0;
+  Object.values(_mbeState.slotTeams).forEach(slot => {
+    if (slot.teamA) { totalTeams++; if (slot.modeA === 'bye') totalByes++; else if (slot.modeA === 'lucky') totalLucky++; else totalSeeding++; }
+    if (slot.teamB) { totalTeams++; if (slot.modeB === 'bye') totalByes++; else if (slot.modeB === 'lucky') totalLucky++; else totalSeeding++; }
+  });
+  const el = document.getElementById('mbe-stat-teams');
+  if (el) el.textContent = totalTeams;
+  if (document.getElementById('mbe-stat-byes')) document.getElementById('mbe-stat-byes').textContent = totalByes;
+  if (document.getElementById('mbe-stat-lucky')) document.getElementById('mbe-stat-lucky').textContent = totalLucky;
+  if (document.getElementById('mbe-stat-seeding')) document.getElementById('mbe-stat-seeding').textContent = totalSeeding;
+  const review = document.getElementById('mbe-review-text');
+  if (review) {
+    const isOk = totalTeams === _mbeState.teamCount;
+    review.innerHTML = '<strong>📊 Tổng: ' + totalTeams + '/' + _mbeState.teamCount + '</strong> (BYE:' + totalByes + ' Lucky:' + totalLucky + ' Seeding:' + totalSeeding + ')<br>' + (isOk ? '✅ Đầy đủ' : '⚠️ Chưa đủ');
+  }
+}
+
+function updateMbeByeMode(mode) {
+  _mbeState.byeMode = mode;
+}
+
+async function mbeApplyAndSave() {
+  let total = Object.values(_mbeState.slotTeams).reduce((s, sl) => s + (sl.teamA ? 1 : 0) + (sl.teamB ? 1 : 0), 0);
+  if (total !== _mbeState.teamCount) {
+    toast('❌ Chưa đủ đội! Cần ' + _mbeState.teamCount + ', có ' + total, 'err');
+    return;
+  }
+  const tree = _mbeConvertSlotsToBracketTree(_mbeState);
+  try {
+    const resp = await gPost({action:'saveBracketTree',adminCode:CODE,giai:_bkGiai,nd:_bkNd,tree:tree,_dkMode:true,_byeRule:_mbeState.byeMode,_manualMode:true});
+    if (resp?.ok) {
+      toast('✅ Cây thi đấu đã lưu!', 'ok');
+      _bkCurrentTree = tree;
+      _ndBkRender();
+      closeMBE();
+      await loadMatchesCache();
+    } else {
+      toast('❌ Lỗi: ' + (resp?.message || 'Không rõ'), 'err');
+    }
+  } catch (err) {
+    toast('❌ ' + err.message, 'err');
+  }
+}
+
+function _mbeConvertSlotsToBracketTree(state) {
+  const tree = {_meta:{totalTeams:0,byes:0,lucky:0,mode:'manual',byeMode:state.byeMode,createdAt:new Date().toISOString()},matches:[]};
+  Object.entries(state.slotTeams).forEach(([slotId, sd]) => {
+    const m = tree.matches.find(x => x.code === slotId);
+    if (!m) {
+      const match = {code:slotId,round:parseInt(slotId.substring(1, slotId.indexOf('_'))),teamA:sd.teamA||'',teamB:sd.teamB||'',seedA:sd.seedA||null,seedB:sd.seedB||null,modeA:sd.modeA,modeB:sd.modeB,isByeA:sd.modeA==='bye',isByeB:sd.modeB==='bye',status:'pending'};
+      tree.matches.push(match);
+      tree._meta.totalTeams += (sd.teamA ? 1 : 0) + (sd.teamB ? 1 : 0);
+      if (match.isByeA) tree._meta.byes++;
+      if (match.isByeB) tree._meta.byes++;
+      if (sd.modeA === 'lucky') tree._meta.lucky++;
+      if (sd.modeB === 'lucky') tree._meta.lucky++;
+    }
+  });
+  return tree;
+}
+
+console.log('✅ Manual Bracket Editor loaded!');
+</script>
 
 </body>
 </html>
