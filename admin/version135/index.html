@@ -13303,12 +13303,12 @@ function _buildFlexSlotList(seeds, bangs, bangDone, rule) {
     var modeLabel = s.slotMode==='bye'?'BYE auto':s.slotMode==='lucky'?'Lucky':'Normal';
     var teamHtml = s.team
       ? '<span class="bkcfg-slot-team">' + esc(s.team) + '</span>'
-      : '<span class="bkcfg-slot-team placeholder" style="cursor:pointer" onclick="_bkFlexPickTeam('' + esc(s.seedCode) + '')">'
+      : '<span class="bkcfg-slot-team placeholder" style="cursor:pointer" onclick="_bkFlexPickTeam(\'' + esc(s.seedCode) + '\')">'
         + esc(s.label) + ' - chua co KQ</span>';
     return '<div class="bkcfg-slot-row">'
       + '<span class="bkcfg-slot-num">' + (i+1) + '</span>'
       + teamHtml
-      + '<button class="bkcfg-slot-mode ' + modeClass + '" onclick="_bkFlexCycleSlotMode('' + esc(s.seedCode) + '')">' + modeLabel + '</button>'
+      + '<button class="bkcfg-slot-mode ' + modeClass + '" onclick="_bkFlexCycleSlotMode(\'' + esc(s.seedCode) + '\')">' + modeLabel + '</button>'
       + '</div>';
   }).join('');
 }
